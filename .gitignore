@@ -1,0 +1,5 @@
+.env.local
+build
+dist
+.env
+node_modules

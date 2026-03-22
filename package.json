@@ -86,4 +86,7 @@
   },
   "pnpm": {
     "overrides": {
-      "vit
+      "vite": "6.3.5"
+    }
+  }
+}

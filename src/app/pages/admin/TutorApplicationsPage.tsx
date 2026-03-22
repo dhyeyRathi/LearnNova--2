@@ -358,4 +358,15 @@ export default function TutorApplicationsPage() {
                           <X className="w-4 h-4 mr-2" />
                           Reject
                         </Button>
-                     
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </motion.div>
+            ))
+          )}
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
