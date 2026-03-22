@@ -126,10 +126,10 @@ export async function getCurrentUser() {
 
 export async function signUp(email: string, password: string, name: string, role: 'learner' | 'tutor' = 'learner') {
   try {
-    // Use env var if available, otherwise use window.location.origin
-    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    // Hardcode to production URL
+    const emailRedirectUrl = 'https://learn-nova-odoo.netlify.app/confirm-email';
+    console.log('🔍 SignUp - Email redirect URL:', emailRedirectUrl);
     
-    // Create auth user with email confirmation
     const { data: { user }, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -138,7 +138,7 @@ export async function signUp(email: string, password: string, name: string, role
           name,
           role,
         },
-        emailRedirectTo: `${appUrl}/confirm-email`,
+        emailRedirectTo: emailRedirectUrl,
       },
     });
 
@@ -283,14 +283,15 @@ export async function verifyEmailToken(token: string) {
 
 export async function resendConfirmationEmail(email: string) {
   try {
-    // Use env var if available, otherwise use window.location.origin
-    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    // Hardcode to production URL
+    const emailRedirectUrl = 'https://learn-nova-odoo.netlify.app/confirm-email';
+    console.log('🔍 Resend - Email redirect URL:', emailRedirectUrl);
     
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: `${appUrl}/confirm-email`,
+        emailRedirectTo: emailRedirectUrl,
       },
     });
 
