@@ -23,8 +23,10 @@ export default function AdminCoursesPage() {
   const [coursesList, setCoursesList] = useState(() => {
     try {
       const saved = localStorage.getItem('coursesList');
-      const userCourses = saved ? JSON.parse(saved) : [];
-      return [...courses, ...userCourses];
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return courses;
     } catch {
       return courses;
     }
@@ -52,7 +54,7 @@ export default function AdminCoursesPage() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('coursesList', JSON.stringify(coursesList.filter(c => c.id.startsWith('course-'))));
+    localStorage.setItem('coursesList', JSON.stringify(coursesList));
   }, [coursesList]);
 
   if (!user || (user.role !== 'admin' && user.role !== 'tutor')) {

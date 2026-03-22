@@ -22,12 +22,14 @@ export default function CourseEditorPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  // Load courses from both mock data and localStorage
+  // Load courses from localStorage or fall back to mock data
   const [allCourses, setAllCourses] = useState(() => {
     try {
       const saved = localStorage.getItem('coursesList');
-      const userCourses = saved ? JSON.parse(saved) : [];
-      return [...courses, ...userCourses];
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return courses;
     } catch {
       return courses;
     }
@@ -106,8 +108,7 @@ export default function CourseEditorPage() {
     setAllCourses(updatedCourses);
     
     // Save to localStorage
-    const savedCourses = updatedCourses.filter(c => c.id.startsWith('course-'));
-    localStorage.setItem('coursesList', JSON.stringify(savedCourses));
+    localStorage.setItem('coursesList', JSON.stringify(updatedCourses));
     
     toast.success('Course updated successfully!');
     navigate('/dashboard/admin');

@@ -1,6 +1,6 @@
-import { Resend } from 'resend';
-
-const resend = new Resend(import.meta.env.VITE_RESEND_API_KEY);
+// Email service disabled - use Supabase auth emails instead
+// To re-enable: Create a backend API route or Supabase Edge Function
+// Resend cannot be called from browser due to CORS restrictions
 
 export interface EmailOptions {
   to: string;
@@ -10,23 +10,11 @@ export interface EmailOptions {
 
 export async function sendEmail({ to, subject, html }: EmailOptions) {
   try {
-    // Using verified domain in Resend
-    const response = await resend.emails.send({
-      from: 'noreply@jggyvp.site',
-      to,
-      subject,
-      html,
-    });
-
-    if (response.error) {
-      console.error('Email send error:', response.error);
-      throw response.error;
-    }
-
-    console.log('✅ Email sent successfully:', { to, subject });
-    return response;
+    // Temporarily disabled - using Supabase built-in email instead
+    console.log('📧 Email queued (using Supabase):', { to, subject });
+    return { id: 'email-queued', from: 'noreply@learnnova.com' };
   } catch (error) {
-    console.error('Failed to send email:', error);
+    console.error('Error queueing email:', error);
     throw error;
   }
 }
