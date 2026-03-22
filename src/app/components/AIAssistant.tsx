@@ -4,6 +4,7 @@ import { Sparkles, X, Send, Bot, User, Loader2, Minimize2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { toolAwareChatResponse } from '../../utils/novaAgent';
 import { initializeChat } from '../../utils/geminiService';
+import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
 interface Message {
@@ -20,6 +21,7 @@ const quickReplies = [
 ];
 
 export default function AIAssistant() {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -62,8 +64,8 @@ export default function AIAssistant() {
     setIsTyping(true);
 
     try {
-      // Use tool-aware agent instead of direct Gemini
-      const response = await toolAwareChatResponse(msg);
+      // Use tool-aware agent with current user context
+      const response = await toolAwareChatResponse(msg, user);
       
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),

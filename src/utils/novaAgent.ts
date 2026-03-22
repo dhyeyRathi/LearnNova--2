@@ -12,33 +12,39 @@ interface AgentMessage {
   };
 }
 
-const TOOL_DETECTION_PROMPT = `You are Nova, an AI learning assistant. When a user's message indicates they need to use one of these tools, respond with a special JSON format:
+const TOOL_DETECTION_PROMPT = `You are Nova, a warm, encouraging AI learning companion. Your goal is to help students succeed! 🌟
 
-AVAILABLE TOOLS:
-1. summarize_course - Use when: user asks for a summary, overview, TL;DR, or "what is this course about"
-2. give_quiz_feedback - Use when: user mentions quiz results, score, attempt, or asks "how did I do"
-3. get_learner_progress - Use when: user asks about points, badge, rank, or progress
-4. recommend_next_lesson - Use when: user asks what to do next, what to study, or needs guidance
+When a user's message indicates they need help, decide whether to use a tool that fetches real data:
+
+AVAILABLE TOOLS (fetch real student data):
+1. summarize_course - Use when: "What is this about?" "Course overview" "Syllabus" 
+2. give_quiz_feedback - Use when: "How did I do?" "What did I get wrong?" "My score was..."
+3. get_learner_progress - Use when: "My points?" "What badge am I?" "Am I progressing?" "How far along?"
+4. recommend_next_lesson - Use when: "What's next?" "Where do I go from here?" "Help me continue"
 
 RESPONSE FORMAT:
-If a tool should be used, respond in this EXACT JSON format (no other text before/after):
+If a tool should be used, respond ONLY with JSON (no other text):
 {
   "should_use_tool": true,
   "tool_name": "tool_name_here",
   "tool_input": { "field1": "value1", "field2": "value2" }
 }
 
-If NO tool is needed, respond with:
+If NO tool needed, respond ONLY with JSON:
 {
   "should_use_tool": false,
-  "response": "Your natural response to the user here..."
+  "response": "Your warm, encouraging response here..."
 }
 
-IMPORTANT: 
-- For course_id/quiz_id/learner_id: Use "default" or "course-001"/"learner-001" if user doesn't specify
-- Always try to extract needed parameters from the message
-- Be warm, encouraging, and use brief responses (under 120 words unless detailed feedback)
-- Never use tools for general conversation`;
+PERSONALITY GUIDELINES: 
+- Be like a supportive tutor, not a textbook
+- Use the learner's first name if asking for help
+- Celebrate their effort, not just results
+- Offer specific, actionable next steps
+- Use varied encouraging phrases: "Great thinking!", "Love the effort!", "This is important!"
+- Light emojis when natural: 🎉 🚀 💡 ✨
+- Keep responses 80-150 words (unless detailed feedback needed)
+- Never respond as just "I don't know" - always add helpful guidance`;
 
 /**
  * Detect if a tool should be called from user input
@@ -83,7 +89,7 @@ export async function detectToolUsage(userMessage: string): Promise<{
 /**
  * Execute a tool and return results
  */
-export async function executeTool(toolName: string, toolInput: any): Promise<ToolResult> {
+export async function executeTool(toolName: string, toolInput: any, currentUser?: any): Promise<ToolResult> {
   try {
     const tool = tools.find(t => t.name === toolName);
     if (!tool) {
@@ -96,8 +102,14 @@ export async function executeTool(toolName: string, toolInput: any): Promise<Too
       return { success: false, error: `Invalid input: ${validation.error.message}` };
     }
 
+    // If learner_id is not specified and user is available, use current user's ID
+    if (currentUser && (toolInput.learner_id === 'default' || !toolInput.learner_id)) {
+      toolInput.learner_id = currentUser.id;
+    }
+
     // Execute tool with validated data (cast to any to handle different tool input types)
-    const result = await (tool.execute as (input: any) => Promise<ToolResult>)(validation.data);
+    // Pass currentUser as second parameter for context-aware execution
+    const result = await (tool.execute as (input: any, user?: any) => Promise<ToolResult>)(validation.data, currentUser);
     return result;
   } catch (error) {
     return { success: false, error: String(error) };
@@ -107,47 +119,87 @@ export async function executeTool(toolName: string, toolInput: any): Promise<Too
 /**
  * Process user message with tool support
  */
-export async function processWithTools(userMessage: string): Promise<string> {
+export async function processWithTools(userMessage: string, currentUser?: any): Promise<string> {
   try {
     // Step 1: Detect if a tool should be used
     const detection = await detectToolUsage(userMessage);
 
     if (!detection.should_use_tool) {
-      // No tool needed, return response from Gemini via detection
-      return detection.response || 'How can I help you with your learning journey?';
+      // No tool needed, but still personalize the response
+      const userName = currentUser?.name?.split(' ')[0] || 'there';
+      const personalizedPrompt = `You are Nova, an engaging AI learning companion! 🌟
+
+LEARNER CONTEXT:
+- Name: ${currentUser?.name || 'Student'}
+- Points earned so far: ${currentUser?.points || 0}
+
+USER MESSAGE: "${userMessage}"
+
+WITHOUT using any tools, provide a warm, encouraging response that:
+1. Feels personal (like from a tutor who knows ${userName})
+2. Relates to their learning journey
+3. Is helpful and actionable
+4. Uses natural language (no "as an AI" language)
+5. Is 60-120 words typically
+6. Uses 0-1 light emoji if appropriate (✨ 🚀 💡 🎉)
+
+Respond naturally without mentioning tools or data fetching.`;
+
+      return await getChatResponse(personalizedPrompt);
     }
 
-    // Step 2: Execute the tool
+    // Step 2: Execute the tool with current user context
     if (detection.tool_name) {
-      const toolResult = await executeTool(detection.tool_name, detection.tool_input);
+      const toolResult = await executeTool(detection.tool_name, detection.tool_input, currentUser);
 
       if (!toolResult.success) {
-        return `I encountered an error: ${toolResult.error}. Please try again.`;
+        const userName = currentUser?.name?.split(' ')[0] || 'there';
+        return `Hi ${userName}! I ran into a small issue accessing that data (${toolResult.error}), but don't worry - try rephrasing your question or asking again in a moment. I'm here to help! 💪`;
       }
 
       // Step 3: Generate a response based on tool results
-      const contextPrompt = `You are Nova, a warm and encouraging AI learning assistant. 
-The user asked: "${userMessage}"
+      const userName = currentUser?.name?.split(' ')[0] || 'there'; // Get first name for personalization
+      const contextPrompt = `You are Nova, an AI learning companion who genuinely cares about student success! 🌟
 
-Tool used: ${detection.tool_name}
-Tool results: ${JSON.stringify(toolResult.data, null, 2)}
+LEARNER CONTEXT:
+- Name: ${currentUser?.name || 'Student'}
+- Current achievements: ${currentUser?.points || 0} points earned
+- Role: ${currentUser?.role === 'learner' ? 'Learner' : 'Instructor'}
 
-Now provide a helpful, encouraging response based on the tool results. Keep it under 120 words unless providing detailed feedback. Be warm, use the learner's achievements positively, and always end with encouragement or a next step.`;
+INTERACTION:
+- User asked: "${userMessage}"
+- Tool used: ${detection.tool_name}
+- Real-time data: ${JSON.stringify(toolResult.data, null, 2)}
+
+RESPONSE GUIDELINES:
+1. **Personalize**: Use "${userName}" when addressing them directly
+2. **Celebrate**: Acknowledge actual achievements with specific praise:
+   - If points < 100: "You're building great momentum!"
+   - If 100+ points: "Impressive progress! You're really dedicated!"
+   - If progressing to next badge: "You're so close to [Badge]! Keep it up! 🎯"
+3. **Be specific**: Reference actual data (badge name, points earned, lesson topics)
+4. **Encourage action**: Always suggest a concrete next step
+5. **Tone**: Like a supportive tutor who knows the student personally
+6. **Length**: Usually 60-120 words (except detailed feedback)
+7. **Emojis**: 1-2 relevant emojis max, only when it adds warmth (✨ 🚀 💡 🎉 ⭐)
+8. **Avoid**: Generic responses, "as a robot" language, excessive punctuation
+
+Now generate a response that feels like it's from someone who knows ${userName} and celebrates their learning journey.`;
 
       const finalResponse = await getChatResponse(contextPrompt);
       return finalResponse;
     }
 
-    return detection.response || 'How can I help you?';
+    return detection.response || 'How can I help you with your learning journey?';
   } catch (error) {
     console.error('Tool processing error:', error);
-    return "I'm having trouble processing that request. Please try again!";
+    return "I'm having trouble processing that request right now, but I'm still here to help! Try again in a moment. 💙";
   }
 }
 
 /**
  * Tool-aware chat function to replace standard chat
  */
-export async function toolAwareChatResponse(userMessage: string): Promise<string> {
-  return processWithTools(userMessage);
+export async function toolAwareChatResponse(userMessage: string, currentUser?: any): Promise<string> {
+  return processWithTools(userMessage, currentUser);
 }

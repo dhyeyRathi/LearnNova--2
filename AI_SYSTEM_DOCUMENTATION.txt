@@ -1,0 +1,693 @@
+================================================================================
+                    LEARNNOVA AI SYSTEM DOCUMENTATION
+================================================================================
+
+PROJECT: LearnNova LMS
+AI ASSISTANT: Nova (Powered by Google Gemini API)
+DATE: March 22, 2026
+VERSION: 1.0
+
+================================================================================
+                            TABLE OF CONTENTS
+================================================================================
+
+1. LLM INTEGRATION OVERVIEW
+2. GEMINI API SETUP & CONFIGURATION
+3. NOVA AGENT SYSTEM ARCHITECTURE
+4. AVAILABLE TOOLS & FUNCTIONS
+5. AI WORKFLOW & DECISION MAKING
+6. IMPLEMENTATION DETAILS
+7. USER COMPONENTS & AI INTEGRATION
+8. ERROR HANDLING & FALLBACKS
+9. DATA FLOW DIAGRAM
+
+================================================================================
+1. LLM INTEGRATION OVERVIEW
+================================================================================
+
+The LearnNova LMS integrates Google's Gemini API as its core AI engine powering
+the "Nova" AI learning assistant. Nova is a context-aware chatbot that:
+
+  - Provides intelligent learning recommendations
+  - Generates personalized quiz feedback
+  - Tracks student progress and achievements
+  - Suggests next learning steps
+  - Summarizes course content
+  - Gives encouragement and motivation
+
+KEY INTEGRATION FILES:
+  ├─ src/utils/geminiService.ts      (Gemini API connection & initialization)
+  ├─ src/utils/novaAgent.ts           (Tool detection & execution orchestration)
+  ├─ src/utils/novaTools.ts           (Tool definitions & implementations)
+  ├─ src/app/components/AIAssistant.tsx (Nova chat UI component)
+  └─ src/app/context/AuthContext.tsx  (User context passed to tools)
+
+================================================================================
+2. GEMINI API SETUP & CONFIGURATION
+================================================================================
+
+FILE: src/utils/geminiService.ts
+
+INITIAL SETUP:
+  - API Key: Stored in environment variable VITE_GOOGLE_AI_KEY
+  - Model: google/gemini-2.0-flash
+  - Library: @google/generative-ai (npm package)
+
+INITIALIZATION:
+  function initializeChat()
+  ├─ Validates API key exists
+  ├─ Creates GenAI instance with credentials
+  ├─ Initializes model for chat sessions
+  └─ Returns initialized model ready for use
+
+API COMMUNICATION:
+  function getChatResponse(prompt: string)
+  ├─ Sends user prompt to Gemini API
+  ├─ Receives streamed response
+  ├─ Aggregates response chunks
+  ├─ Returns complete textual response
+  └─ Includes error handling for network issues
+
+ERROR HANDLING:
+  - Missing API Key → User sees: "Gemini API key not configured"
+  - Network Error → Returns fallback message
+  - Invalid Request → Logs error, shows user-friendly message
+
+================================================================================
+3. NOVA AGENT SYSTEM ARCHITECTURE
+================================================================================
+
+The Nova Agent uses a tool-aware decision system that determines WHEN to use
+tools vs. when to respond with pure text generation.
+
+ARCHITECTURE FLOW:
+  User Input → Tool Detection → Decision → Tool Execution → Response Generation
+
+FILE: src/utils/novaAgent.ts
+
+CORE FUNCTIONS:
+
+  1) detectToolUsage(userMessage: string)
+     Purpose: Determine if a tool should be called
+     Process:
+       - Analyzes user message for intent keywords
+       - Sends to Gemini with TOOL_DETECTION_PROMPT
+       - Gemini returns JSON with tool decision
+       - Parses JSON response safely
+     Output: { should_use_tool: boolean, tool_name?: string, tool_input?: any }
+     
+     TOOL DETECTION PROMPT TELLS GEMINI:
+       "If user asks about: points/badge/progress → Use get_learner_progress"
+       "If user asks about: quiz results/score → Use give_quiz_feedback"
+       "If user asks about: course summary/overview → Use summarize_course"
+       "If user asks about: what's next/next lesson → Use recommend_next_lesson"
+       "Otherwise, respond naturally without tools"
+
+  2) executeTool(toolName: string, toolInput: any, currentUser?: any)
+     Purpose: Execute a selected tool with validated inputs
+     Process:
+       - Finds tool by name from tools array
+       - Validates input against Zod schema
+       - If no learner_id provided, uses currentUser.id
+       - Executes tool's handler function
+       - Returns ToolResult { success: boolean, data?: any, error?: string }
+
+  3) processWithTools(userMessage: string, currentUser?: any)
+     Purpose: Orchestrate the full tool-aware workflow
+     Process:
+       STEP 1: Call detectToolUsage() → Gemini decides if tool needed
+       STEP 2: If NO tool needed → Return Gemini's natural response
+       STEP 3: If TOOL NEEDED:
+         - Call executeTool() with user context
+         - Get tool result
+         - Send tool result back to Gemini with context prompt
+         - Gemini generates friendly response based on results
+   
+  4) toolAwareChatResponse(userMessage: string, currentUser?: any)
+     Purpose: Main function called by UI components
+     Returns: Promise<string> → Final AI response ready for display
+     Accepts: currentUser (from AuthContext) to provide real data
+
+================================================================================
+4. AVAILABLE TOOLS & FUNCTIONS
+================================================================================
+
+FILE: src/utils/novaTools.ts
+
+TOOL #1: summarize_course
+────────────────────────────
+Input Schema:
+  {
+    course_id: string (e.g., "course-001"),
+    lesson_ids?: string[] (optional: specific lessons to summarize)
+  }
+
+Execution: async function summarize_course(input: CourseSummaryInput)
+
+Logic:
+  - Looks up course from mockCourses database
+  - Retrieves course title, description, objectives
+  - If lesson_ids provided, includes those lesson summaries
+  - Returns formatted course overview with key learning outcomes
+
+Use Cases:
+  User: "What is this course about?" → Tool triggers
+  User: "Give me a summary of JavaScript course" → Tool triggers
+  User: "Tell me about course-001" → Tool triggers
+
+Output:
+  {
+    success: true,
+    data: {
+      course_id: string,
+      title: string,
+      description: string,
+      objectives: string[],
+      lesson_count: number,
+      estimated_duration: string
+    }
+  }
+
+
+TOOL #2: give_quiz_feedback
+────────────────────────────
+Input Schema:
+  {
+    quiz_id: string,
+    attempt_number: number,
+    answers: [
+      {
+        question: string,
+        selected: string,
+        correct: string,
+        is_correct: boolean
+      }
+    ]
+  }
+
+Execution: async function give_quiz_feedback(input: QuizFeedbackInput)
+
+Logic:
+  - Analyzes all answers in the quiz attempt
+  - Identifies weak areas (questions marked is_correct = false)
+  - Calculates score and performance percentage
+  - Generates personalized feedback for improvement areas
+  - Provides encouragement and specific study recommendations
+
+Triggered When:
+  - User completes a quiz in lesson player
+  - QuizFeedbackModal calls this tool
+  - Learner asks: "How did I do?" after quiz
+
+Output:
+  {
+    success: true,
+    data: {
+      score: number (0-100),
+      total_questions: number,
+      correct_answers: number,
+      performance_level: "excellent" | "good" | "needs-improvement",
+      weak_areas: string[],
+      strengths: string[],
+      recommendations: string[],
+      personalized_feedback: string
+    }
+  }
+
+
+TOOL #3: get_learner_progress
+──────────────────────────────
+Input Schema:
+  {
+    learner_id: string (e.g., "learner-001" or current user id)
+  }
+
+Execution: async function get_learner_progress(input: LearnerProgressInput, currentUser?: any)
+
+IMPORTANT: This tool now fetches REAL USER DATA when currentUser is provided!
+
+Logic (WITH REAL DATA):
+  - If currentUser provided: Uses currentUser.points from auth context
+  - Calculates badge level based on points:
+    • 0-99 points → "Newbie"
+    • 100-299 points → "Learner"
+    • 300-599 points → "Scholar"
+    • 600-999 points → "Expert"
+    • 1000+ points → "Master"
+  - Determines points needed for next badge
+  - Returns accurate progress data
+
+Fallback (Mock Data):
+  - If currentUser not provided, uses mockLearners data
+  - Used for demo/testing purposes
+
+Triggered When:
+  User: "How many points do I have?" → Tool triggers
+  User: "What's my current badge?" → Tool triggers
+  User: "Show my progress" → Tool triggers
+  User: "What do I need for the next level?" → Tool triggers
+
+Output:
+  {
+    success: true,
+    data: {
+      points_total: number,        /* REAL: from user.points */
+      current_badge: string,      /* Calculated from points */
+      lessons_completed: number,
+      points_needed_for_next_badge: number,
+      next_badge: string,
+      progress_percentage: number (0-100),
+      recent_quizzes: array,
+      streak_days: number
+    }
+  }
+
+
+TOOL #4: recommend_next_lesson
+───────────────────────────────
+Input Schema:
+  {
+    learner_id: string,
+    course_id: string
+  }
+
+Execution: async function recommend_next_lesson(input: RecommendLessonInput)
+
+Logic:
+  - Looks up course to find all lessons
+  - Calculates learner's completion progress
+  - Identifies next incomplete lesson
+  - Returns structured recommendation with difficulty estimate
+  - Suggests related resources or prerequisites
+
+Triggered When:
+  User: "What should I learn next?" → Tool triggers
+  User: "What's the next lesson?" → Tool triggers
+  User: "Help me continue where I left off" → Tool triggers
+
+Output:
+  {
+    success: true,
+    data: {
+      recommended_lesson: {
+        lesson_id: string,
+        title: string,
+        description: string,
+        duration: string,
+        difficulty: "beginner" | "intermediate" | "advanced",
+        topics: string[]
+      },
+      progress_summary: string,
+      motivation_message: string
+    }
+  }
+
+================================================================================
+5. AI WORKFLOW & DECISION MAKING
+================================================================================
+
+DETAILED STEP-BY-STEP WORKFLOW:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    USER SENDS MESSAGE TO NOVA: "How many points do I have?" │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 1: INPUT PROCESSING                                                     │
+│ • Message captured in AIAssistant.tsx                                       │
+│ • User context (name, id, points) extracted from AuthContext                │
+│ • Call: toolAwareChatResponse(message, currentUser)                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 2: TOOL DETECTION                                                       │
+│ • Function: detectToolUsage(userMessage)                                    │
+│ • Sends to Gemini with TOOL_DETECTION_PROMPT that says:                    │
+│   "If user mentions points/badge/progress → get_learner_progress"         │
+│ • Gemini analyzes message and returns JSON:                                │
+│   {                                                                          │
+│     "should_use_tool": true,                                               │
+│     "tool_name": "get_learner_progress",                                   │
+│     "tool_input": { "learner_id": "default" }                              │
+│   }                                                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 3: DECISION POINT                                                       │
+│ • Check: should_use_tool = true?                                           │
+│   YES → Continue to Step 4 (Execute Tool)                                  │
+│   NO → Jump to Step 7 (Natural Response)                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 4: TOOL EXECUTION                                                       │
+│ • Function: executeTool("get_learner_progress", toolInput, currentUser)    │
+│ • Validates input against schema                                            │
+│ • Replaces learner_id "default" with currentUser.id                        │
+│ • Calls: get_learner_progress({ learner_id: "user-123" }, currentUser)   │
+│ • Returns:                                                                   │
+│   {                                                                          │
+│     "success": true,                                                        │
+│     "data": {                                                               │
+│       "points_total": 0,              ← REAL: from user.points             │
+│       "current_badge": "Newbie",      ← Calculated from 0 points           │
+│       "points_needed_for_next_badge": 100,                                 │
+│       "next_badge": "Learner"                                              │
+│     }                                                                        │
+│   }                                                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 5: CONTEXT PROMPT GENERATION                                            │
+│ • Create contextPrompt with:                                               │
+│   - User's original question                                               │
+│   - Tool name that was used                                                │
+│   - Tool results (points_total: 0, current_badge: Newbie)                 │
+│   - System message: "You are Nova, a warm AI learning assistant"          │
+│   - Instruction: "Provide encouraging response under 120 words"           │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 6: AI RESPONSE GENERATION                                               │
+│ • Call: getChatResponse(contextPrompt)                                     │
+│ • Gemini receives complete context (question + real data)                  │
+│ • Generates warm, encouraging response like:                              │
+│   "Great question! Right now you have 0 points. You're just getting       │
+│    started – that's exciting! Complete lessons and quizzes to earn        │
+│    points toward your first badge (Newbie). You need 100 points to       │
+│    reach the Learner badge. Keep going! 🌟"                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 7: RESPONSE DISPLAY                                                     │
+│ • Return final response to AIAssistant component                           │
+│ • Display in chat bubble with Nova's avatar                               │
+│ • Message shows accurate points (0) instead of mock data (450)            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+6. IMPLEMENTATION DETAILS
+================================================================================
+
+HOW REAL USER DATA IS PASSED TO TOOLS:
+
+Location: src/app/components/AIAssistant.tsx
+
+  export default function AIAssistant() {
+    const { user } = useAuth();  ← Gets current user from AuthContext
+    
+    const handleSend = async (text?: string) => {
+      ...
+      const response = await toolAwareChatResponse(msg, user);
+      //                                             ↑
+      //                        USER DATA PASSED HERE!
+    }
+  }
+
+In novaAgent.ts:
+
+  export async function toolAwareChatResponse(
+    userMessage: string,
+    currentUser?: any  ← Receives user object
+  ): Promise<string> {
+    return processWithTools(userMessage, currentUser);
+                                          ↑
+                           PASSED TO processWithTools
+  }
+
+In processWithTools():
+
+  if (detection.tool_name) {
+    const toolResult = await executeTool(
+      detection.tool_name,
+      detection.tool_input,
+      currentUser  ← PASSED TO EXECUTOR
+    );
+  }
+
+In executeTool():
+
+  if (currentUser && toolInput.learner_id === 'default') {
+    toolInput.learner_id = currentUser.id;  ← Uses real user ID
+  }
+
+In get_learner_progress():
+
+  if (currentUser) {
+    learner = {
+      points_total: currentUser.points || 0,  ← REAL POINTS!
+      current_badge: getCurrentBadgeLevel(currentUser.points),
+      ...
+    };
+  }
+
+RESULT: Nova now says "You have 0 points" instead of "You have 450 points"
+
+================================================================================
+7. USER COMPONENTS & AI INTEGRATION
+================================================================================
+
+PRIMARY UI COMPONENT: src/app/components/AIAssistant.tsx
+
+Location on Page: Bottom-right corner (floating chat bubble)
+
+Features:
+  ✓ Floating button with Nova icon (Sparkles)
+  ✓ Expandable chat window
+  ✓ Message history display
+  ✓ Quick reply suggestions
+  ✓ Typing indicator
+  ✓ Auto-scroll to latest message
+  ✓ Focus management (auto-focus input when opened)
+
+Message Flow:
+  1. User types message → handleSend()
+  2. Message appears in chat with User avatar
+  3. isTyping = true → "Nova is typing..." shown
+  4. Call toolAwareChatResponse(msg, user)
+  5. Tool detection & execution happens
+  6. Response received → Add to messages
+  7. isTyping = false → Display response
+
+SECONDARY INTEGRATION: QuizFeedbackModal (auto-triggered)
+
+Location: Appears after learner completes a quiz
+
+Triggers: When handleQuizAnswer() detects quiz completion
+
+Tool Called: give_quiz_feedback with quiz answers
+
+Features:
+  ✓ Auto-opens 500ms after quiz completion
+  ✓ Shows score card with color coding
+  ✓ Displays AI-generated feedback
+  ✓ Lists areas to review
+  ✓ Shows performance tips
+
+================================================================================
+8. ERROR HANDLING & FALLBACKS
+================================================================================
+
+ERROR SCENARIO 1: Missing API Key
+────────────────────────────────────
+Where: initializeChat()
+Detection: typeof process.env.VITE_GOOGLE_AI_KEY === 'undefined'
+User Message: "Gemini API key not configured"
+Fallback: Returns mock response
+
+ERROR SCENARIO 2: Network Error During Tool Detection
+──────────────────────────────────────────────────────
+Where: detectToolUsage() → getChatResponse()
+Detection: Catch block in getChatResponse()
+Behavior: Returns { should_use_tool: false, response: "I encountered an error..." }
+Result: User sees error message, can retry
+
+ERROR SCENARIO 3: Invalid Tool Input
+──────────────────────────────────────
+Where: executeTool() → validation.success check
+Detection: Zod schema validation fails
+Response: { success: false, error: "Invalid input: ..." }
+User Message: "I encountered an error: Invalid input..."
+
+ERROR SCENARIO 4: Tool Execution Fails
+────────────────────────────────────────
+Where: catch block in tool function
+Detection: Unexpected error during execution
+Response: { success: false, error: String(error) }
+User Message: "I encountered an error. Please try again."
+
+ERROR SCENARIO 5: Tool Not Found
+──────────────────────────────────
+Where: executeTool() → tool lookup
+Detection: tools.find() returns undefined
+Response: { success: false, error: "Tool {toolName} not found" }
+
+FALLBACK MECHANISMS:
+  1. If API Key Missing → Use text-based responses only
+  2. If Network Error → Show "Connection issue, trying again..."
+  3. If Tool Failed → Provide general helpful response
+  4. If JSON Invalid → Assume no tool needed, continue with text
+
+================================================================================
+9. DATA FLOW DIAGRAM
+================================================================================
+
+                            USER (LearnNova Platform)
+                                     │
+                                     ↓
+                          AIAssistant.tsx Component
+                                     │
+                    ┌────────────────┼────────────────┐
+                    │                │                │
+              Gets User Data    Message Input    Sends Message
+              from AuthContext      Input         + User Object
+                    │                │                │
+                    └────────────────┴────────────────┘
+                                     │
+                                     ↓
+                       toolAwareChatResponse()
+                             (novaAgent.ts)
+                                     │
+                                     ↓
+                          processWithTools()
+                                     │
+                 ┌───────────────────┼───────────────────┐
+                 │                   │                   │
+               STEP 1             STEP 2             STEP 3
+             Tool Detection      Decision      Tool Execution
+                 │                   │              │
+                 ↓                   ↓              ↓
+         detectToolUsage()       if (tool)?    executeTool()
+              │                      │              │
+              ↓                  YES │ NO           ↓
+         Send to Gemini         │    │      Find tool by name
+              │              ┌──┘    └─┐        │
+              ↓              │         │        ↓
+         Gimini Responds   Execute  Return    Validate input
+              │             Tool    Text      │
+              ↓              │       Only     ↓
+         Return JSON         │              With currentUser
+              │              │              │
+              └──────────────┼──────────────┘
+                             │
+                             ↓
+                    ToolResult.data received
+                             │
+                             ├─ success: true
+                             ├─ data: { real user points, etc }
+                             └─ error: null
+                             │
+                             ↓
+                   Send to Gemini with Context:
+                   • User question
+                   • Tool used
+                   • Tool results (REAL DATA)
+                   • Instruction: Be warm & encouraging
+                             │
+                             ↓
+                      Gemini Response:
+                    Warm response using real data
+                  "You have 0 points! That's a great start..."
+                             │
+                             ↓
+                        Return to Component
+                             │
+                             ↓
+                      Display in Chat UI
+                             │
+                             ↓
+                        USER SEES ACCURATE DATA
+
+================================================================================
+10. KEY IMPROVEMENTS MADE
+================================================================================
+
+BEFORE: Nova showed incorrect data (450 points when user had 0)
+REASON: Used hardcoded mockLearners data
+
+AFTER: Nova shows real user data
+HOW:
+  ✓ AuthContext provides currentUser object
+  ✓ AIAssistant passes currentUser to Nova
+  ✓ Nova passes it through detection → execution chain
+  ✓ Tools use currentUser.points instead of mockLearners data
+  ✓ Responses based on ACTUAL learner progress
+
+RESULT: Users get accurate, personalized feedback from Nova
+
+================================================================================
+11. ENVIRONMENT SETUP
+================================================================================
+
+Required Environment Variables:
+
+  VITE_GOOGLE_AI_KEY=your_gemini_api_key_here
+  
+To get API key:
+  1. Go to: https://makersuite.google.com/app/apikey
+  2. Create new API key
+  3. Add to .env.local:
+     VITE_GOOGLE_AI_KEY=sk_...
+
+Files requiring access:
+  └─ .env.local (local development only, not in git)
+
+================================================================================
+12. TESTING THE AI SYSTEM
+================================================================================
+
+TEST 1: Check Nova Shows Correct Points
+  1. Log in to LearnNova
+  2. Note your current points (shown in ProfilePage)
+  3. Open Nova chat (bottom right corner)
+  4. Ask: "How many points do I have?"
+  5. Verify Nova shows SAME number (not 450)
+
+TEST 2: Tool Detection
+  1. Ask Nova: "What should I learn next?"
+  2. Should trigger recommend_next_lesson tool
+  3. Nova returns lesson recommendation
+
+TEST 3: Quiz Feedback
+  1. Complete a quiz in a course
+  2. QuizFeedbackModal auto-opens after 500ms
+  3. Shows quiz score and AI feedback
+  4. Feedback uses give_quiz_feedback tool
+
+TEST 4: Error Handling
+  1. Disconnect internet
+  2. Try to send message to Nova
+  3. Should see error message, not crash
+
+================================================================================
+13. SECURITY & BEST PRACTICES
+================================================================================
+
+API Key Security:
+  ✓ Stored in .env.local (NOT in code)
+  ✓ Vite prefixes with VITE_ to make it public-safe
+  ✓ Only used for API calls, not exposed to users
+
+Data Privacy:
+  ✓ User data only sent when tool needs it
+  ✓ No personal info logged in console (production)
+  ✓ Error messages don't expose API details
+  ✓ Zod validation prevents injection attacks
+
+Rate Limiting:
+  ✓ No built-in rate limiting (consider adding in production)
+  ✓ Gemini API has server-side quotas
+  ✓ Monitor usage at: https://aistudio.google.com
+
+================================================================================
+                               END OF DOCUMENTATION
+================================================================================
+
+For questions or updates, refer to:
+  - src/utils/novaAgent.ts (AI orchestration)
+  - src/utils/novaTools.ts (Tool definitions)
+  - src/app/components/AIAssistant.tsx (UI component)
+  - README.md (General project info)
+
+Last Updated: March 22, 2026
+System Version: Nova v1.0 (Real Data Integration)

@@ -12,9 +12,18 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const [loginSuccess, setLoginSuccess] = useState(false);
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Redirect based on user role after successful login
+  useEffect(() => {
+    if (loginSuccess && user) {
+      const redirectPath = user.role === 'admin' ? '/admin' : '/courses';
+      navigate(redirectPath);
+    }
+  }, [loginSuccess, user, navigate]);
 
   useEffect(() => {
     // Pre-fill email if coming from confirm-email page
@@ -36,7 +45,7 @@ export default function LoginPage() {
       const result = await login(email, password);
       if (result.success) {
         toast.success('Welcome back!');
-        setTimeout(() => navigate('/courses'), 500);
+        setLoginSuccess(true);
       } else {
         // Check if error is about email not being confirmed
         if (result.error?.includes('email') || result.error?.toLowerCase().includes('confirm')) {

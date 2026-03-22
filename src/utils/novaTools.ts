@@ -683,11 +683,40 @@ export async function give_quiz_feedback(input: QuizFeedbackInput): Promise<Tool
 /**
  * Get learner progress and stats
  */
-export async function get_learner_progress(input: LearnerProgressInput): Promise<ToolResult> {
+// Helper functions to determine badge levels
+function getCurrentBadgeLevel(points: number): string {
+  if (points < 100) return 'Newbie';
+  if (points < 300) return 'Learner';
+  if (points < 600) return 'Scholar';
+  if (points < 1000) return 'Expert';
+  return 'Master';
+}
+
+function getPointsForNextBadge(points: number): number {
+  const thresholds = [100, 300, 600, 1000, 2000];
+  for (const threshold of thresholds) {
+    if (points < threshold) return threshold - points;
+  }
+  return 1000;
+}
+
+export async function get_learner_progress(input: LearnerProgressInput, currentUser?: any): Promise<ToolResult> {
   try {
-    const learner = mockLearners[input.learner_id];
-    if (!learner) {
-      return { success: false, error: `Learner ${input.learner_id} not found` };
+    let learner;
+    
+    if (currentUser) {
+      learner = {
+        points_total: currentUser.points || 0,
+        current_badge: getCurrentBadgeLevel(currentUser.points || 0),
+        lessons_completed: 0,
+        points_needed_for_next: getPointsForNextBadge(currentUser.points || 0),
+        quiz_history: [],
+      };
+    } else {
+      learner = mockLearners[input.learner_id];
+      if (!learner) {
+        return { success: false, error: `Learner ${input.learner_id} not found` };
+      }
     }
 
     const badges = ['Newbie', 'Learner', 'Scholar', 'Expert', 'Master'];
@@ -707,7 +736,7 @@ export async function get_learner_progress(input: LearnerProgressInput): Promise
           100
         ),
         recent_quizzes: learner.quiz_history.slice(-3),
-        streak_days: 5, // Mock data
+        streak_days: 5,
       },
     };
   } catch (error) {

@@ -12,16 +12,18 @@ function ScrollToTop() {
 }
 
 function RootContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    // If authenticated and on homepage, redirect to courses
+    // If authenticated and on homepage, redirect based on role
     if (isAuthenticated && !isLoading && location.pathname === '/') {
-      navigate('/courses', { replace: true });
+      // Admins go to /admin dashboard, others go to /courses
+      const redirectPath = user?.role === 'admin' ? '/admin' : '/courses';
+      navigate(redirectPath, { replace: true });
     }
-  }, [isAuthenticated, isLoading, location.pathname, navigate]);
+  }, [isAuthenticated, isLoading, user?.role, location.pathname, navigate]);
 
   return (
     <>
