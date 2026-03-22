@@ -209,7 +209,10 @@ export default function CourseDetailPage() {
       </AnimatePresence>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton label={fromMyCourses ? "Back to My Courses" : "Back to Courses"} to={fromMyCourses ? "/my-courses" : "/courses"} />
+        <BackButton 
+          label={user?.role === 'admin' ? "Back to Courses" : (fromMyCourses ? "Back to My Courses" : "Back to Courses")} 
+          to={user?.role === 'admin' ? "/admin/courses" : (fromMyCourses ? "/my-courses" : "/courses")} 
+        />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
