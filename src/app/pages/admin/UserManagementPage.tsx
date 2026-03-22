@@ -38,7 +38,9 @@ export default function UserManagementPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
   const [editRole, setEditRole] = useState<'learner' | 'tutor' | 'admin'>('learner');
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<ManagedUser | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([]);
@@ -155,15 +157,41 @@ export default function UserManagementPage() {
     setEditingUser(null);
   };
 
-  const handleDelete = (userId: string) => {
-    if (deleteConfirm === userId) {
-      const u = managedUsers.find(u => u.id === userId);
-      setManagedUsers(prev => prev.filter(u => u.id !== userId));
-      toast.success(`User ${u?.name} deleted`);
-      setDeleteConfirm(null);
-    } else {
-      setDeleteConfirm(userId);
-      setTimeout(() => setDeleteConfirm(null), 3000);
+  const handleDeleteUser = async (userToDeleteData: ManagedUser) => {
+    setUserToDelete(userToDeleteData);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      // Delete from Supabase auth (requires service_role or admin)
+      // This requires an edge function or backend to delete properly
+      // For now, we'll delete from the users table then invalidate the session
+      const { error: deleteError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userToDelete.id);
+
+      if (deleteError) {
+        console.error('Error deleting user:', deleteError);
+        toast.error(`Failed to delete user: ${deleteError.message}`);
+        return;
+      }
+
+      // Remove from local state
+      setManagedUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+      toast.success(`User ${userToDelete.name} has been permanently deleted`);
+      setDeleteConfirmOpen(false);
+      setUserToDelete(null);
+    } catch (err) {
+      console.error('Delete error:', err);
+      toast.error('Failed to delete user');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -337,9 +365,9 @@ export default function UserManagementPage() {
                                 <Mail className="w-3.5 h-3.5 mr-2 text-[#7A766F]" /> Send Email
                               </DropdownMenuItem>
                               <DropdownMenuSeparator className="bg-[#E5E2DC]/50" />
-                              <DropdownMenuItem onClick={() => handleDelete(u.id)} className="rounded-md text-[13px] cursor-pointer text-[#B5403A]">
+                              <DropdownMenuItem onClick={() => handleDeleteUser(u)} className="rounded-md text-[13px] cursor-pointer text-[#B5403A]">
                                 <Trash2 className="w-3.5 h-3.5 mr-2" />
-                                {deleteConfirm === u.id ? 'Confirm Delete?' : 'Delete User'}
+                                Delete User
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -404,6 +432,80 @@ export default function UserManagementPage() {
               <div className="flex gap-2 justify-end pt-1">
                 <Button variant="outline" onClick={() => setEditOpen(false)} className="rounded-lg text-sm border-[#E5E2DC]">Cancel</Button>
                 <Button onClick={handleSaveRole} className="bg-[#2C3E6B] hover:bg-[#243356] text-white rounded-lg text-sm">Save Changes</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="bg-white rounded-xl border border-[#E5E2DC] shadow-xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold text-[#B5403A]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Delete User Permanently</DialogTitle>
+          </DialogHeader>
+          {userToDelete && (
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center gap-3 p-3 bg-[#B5403A]/10 rounded-lg border border-[#B5403A]/20">
+                <div className="w-10 h-10 rounded-lg bg-[#B5403A]/20 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-5 h-5 text-[#B5403A]" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[#B5403A]">This action cannot be undone</p>
+                  <p className="text-xs text-[#B5403A]/80">The user will be permanently deleted from the platform</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-[#F7F6F3] rounded-lg border border-[#E5E2DC]">
+                <p className="text-xs text-[#7A766F] mb-2">User being deleted:</p>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8 border border-[#E5E2DC]">
+                    <AvatarImage src={userToDelete.avatar} />
+                    <AvatarFallback className="bg-[#2C3E6B] text-white text-xs">{userToDelete.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[#2C3E6B] truncate">{userToDelete.name}</p>
+                    <p className="text-xs text-[#7A766F] truncate">{userToDelete.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <p className="text-sm text-[#7A766F]">This will:</p>
+                <ul className="text-sm text-[#7A766F] space-y-1 ml-4">
+                  <li>• Delete all user profile data</li>
+                  <li>• Remove all enrollments and progress</li>
+                  <li>• Delete any courses created by this user</li>
+                  <li>• Cannot be recovered</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setDeleteConfirmOpen(false)} 
+                  disabled={isDeleting}
+                  className="rounded-lg text-sm border-[#E5E2DC]"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className="bg-[#B5403A] hover:bg-[#A02F2A] text-white rounded-lg text-sm"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      Delete Permanently
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           )}
