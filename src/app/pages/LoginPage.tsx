@@ -20,7 +20,7 @@ export default function LoginPage() {
   // Redirect based on user role after successful login
   useEffect(() => {
     if (loginSuccess && user) {
-      const redirectPath = user.role === 'admin' ? '/admin' : '/courses';
+      const redirectPath = user.role === 'admin' ? '/dashboard/admin' : '/courses';
       navigate(redirectPath);
     }
   }, [loginSuccess, user, navigate]);

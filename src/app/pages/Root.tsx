@@ -19,8 +19,8 @@ function RootContent() {
   useEffect(() => {
     // If authenticated and on homepage, redirect based on role
     if (isAuthenticated && !isLoading && location.pathname === '/') {
-      // Admins go to /admin dashboard, others go to /courses
-      const redirectPath = user?.role === 'admin' ? '/admin' : '/courses';
+      // Admins go to /dashboard/admin, others go to /courses
+      const redirectPath = user?.role === 'admin' ? '/dashboard/admin' : '/courses';
       navigate(redirectPath, { replace: true });
     }
   }, [isAuthenticated, isLoading, user?.role, location.pathname, navigate]);
