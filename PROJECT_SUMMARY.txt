@@ -1,0 +1,199 @@
+=============================================================================
+                        LEARNNOVA PROJECT SUMMARY
+                   An AI-Powered Learning Management System
+=============================================================================
+
+PROJECT OVERVIEW
+================
+LearnNova is an intelligent learning platform where students can take courses, 
+earn points, unlock badges, and get personalized help from an AI assistant 
+powered by Google Gemini. Teachers can create courses and quizzes, while admins 
+manage the entire platform.
+
+MAIN TECHNOLOGIES USED
+======================
+
+Frontend (What users see):
+- React: Framework for building the user interface
+- TypeScript: Programming language that adds safety to JavaScript
+- Vite: Fast tool for building and running the application
+- Tailwind CSS: Framework for styling the website
+- Framer Motion: Library for creating smooth animations
+
+Backend & Database:
+- Supabase: Cloud platform for storing user data, courses, and grades
+- Resend: Email service for sending credentials and notifications to instructors
+
+AI & Intelligent Features:
+- Google Gemini API: AI model that powers the learning assistant (Nova)
+- Tool System: Special commands that let Nova help with specific tasks:
+  * Summarize Course: Gives brief overview of what's in a course
+  * Give Quiz Feedback: Explains which answers were wrong and why
+  * Get Learner Progress: Shows points, badges, and how much you've completed
+  * Recommend Next Lesson: Suggests what to study based on your progress
+
+KEY USER ROLES
+==============
+
+Student/Learner:
+- Enrolls in courses
+- Takes lessons and completes quizzes
+- Earns points and badges
+- Chats with Nova AI for help
+- Tracks their progress on a dashboard
+
+Instructor/Tutor:
+- Creates new courses with lessons
+- Builds quizzes and assessments
+- Views student progress
+- Gets credentials via email when approved
+
+Admin:
+- Manages all users (students, instructors, admins)
+- Reviews tutor applications and approves/rejects them
+- Manages all courses and quizzes
+- Generates reports and analytics
+
+APPLICATION FLOW
+================
+
+1. USER AUTHENTICATION
+   - Users sign up or log in
+   - Email verification required
+   - Role assigned (student, instructor, admin)
+   - Session stored in Supabase
+
+2. DASHBOARD & NAVIGATION
+   - After login, users see their personalized dashboard
+   - Students see "My Courses" and available courses
+   - Instructors see course management tools
+   - Admins see user management and reports
+
+3. LEARNING EXPERIENCE
+   - Students browse and enroll in courses
+   - Each course has multiple lessons
+   - Students watch lessons, complete quizzes
+   - System calculates scores and awards points
+   - Points unlock new badges and achievements
+
+4. AI ASSISTANT (NOVA)
+   - Available to authenticated users only
+   - Chat widget at bottom right of screen
+   - User types questions in natural language
+   - AI detects if a special tool is needed:
+     * If asking about progress → uses "Get Progress" tool
+     * If asking about quiz results → uses "Quiz Feedback" tool
+     * If asking what to study → uses "Recommend Lesson" tool
+     * Otherwise → has normal conversation
+   - AI responds in the user's language automatically
+
+5. TUTOR APPLICATION FLOW
+   - New instructors fill 3-step application form
+   - Submit with experience, qualifications, documents
+   - System prevents duplicate applications within 30 days
+   - Admin reviews and approves/rejects
+   - Approved instructor gets email with login credentials
+   - Login credentials sent via Resend email service
+
+6. EMAIL NOTIFICATIONS
+   - Welcome emails to new users
+   - Tutor approval/rejection notifications
+   - Course enrollment confirmations
+   - Beautifully formatted HTML emails
+
+SECURITY & PRIVACY
+==================
+
+Protected Information:
+- API Keys: Stored in .env.local (NEVER in public code)
+- User Passwords: Stored securely in Supabase
+- Email Addresses: Protected database records
+- Tutor Credentials: Sent via email, never stored in plaintext
+
+Environment Variables (Must Keep Secret):
+- VITE_SUPABASE_URL: Database connection
+- VITE_SUPABASE_ANON_KEY: Public database access
+- VITE_GEMINI_API_KEY: AI service access
+- VITE_RESEND_API_KEY: Email service access
+
+Git Protection:
+- .env.local file is in .gitignore (never uploaded)
+- build/ folder ignored
+- node_modules/ ignored
+- All sensitive files prevented from accidental upload
+
+DATA STORAGE
+============
+
+In Database (Supabase):
+- User profiles (name, email, role, points, badges)
+- Courses with lessons and topics
+- Quiz questions and student answers
+- Tutor applications and approvals
+- Student progress and completion records
+- Leaderboard rankings
+
+In Local Memory:
+- Conversation history with AI (cleared on logout)
+- Tutor applications (temporary before approval)
+- User session data
+
+CORE FEATURES
+=============
+
+✅ User Authentication (signup, login, logout)
+✅ Role-Based Access (different views for students/instructors/admins)
+✅ Course Catalog with filtering
+✅ Interactive Lessons with progress tracking
+✅ Quiz System with automatic grading
+✅ Points & Badge System (gamification)
+✅ Leaderboard (rankings)
+✅ AI Assistant (Nova) with tool detection
+✅ Tutor Application & Approval System
+✅ Email Notifications (Resend)
+✅ User Management (admin panel)
+✅ Analytics & Reports
+✅ Responsive Design (works on phones, tablets, desktop)
+✅ Multilingual AI Support
+
+KEYWORDS
+========
+
+Onboarding: First-time user experience
+Authentication: Login and security verification
+Role-Based Access Control: Different features for different user types
+Gamification: Points, badges, leaderboards to encourage learning
+Tool Detection: AI understanding what task to perform
+Schema Validation: Checking data is correct format before use
+Progress Tracking: Recording what lessons/quizzes user completed
+Email Template: Formatted message designs for notifications
+Application Workflow: Multi-step form for tutor signup
+RLS Policies: Database-level security rules in Supabase
+
+FILE STRUCTURE
+==============
+
+Main Folders:
+- src/app/pages/: All user-facing screens (courses, profiles, admin, etc)
+- src/app/components/: Reusable UI elements (buttons, cards, chat widget)
+- src/utils/: Core functionality (Gemini AI, email, Supabase)
+- src/app/context/: User session management
+- src/app/data/: Sample data for testing
+- supabase/: Database setup files
+
+FUTURE IMPROVEMENTS
+===================
+
+- Video hosting for lessons
+- Live class scheduling
+- Discussion forums for students
+- Payment integration for paid courses
+- Advanced analytics dashboard
+- Mobile app versions
+- Certificate generation
+- Two-factor authentication
+- API for third-party integrations
+
+=============================================================================
+                            END OF SUMMARY
+=============================================================================
