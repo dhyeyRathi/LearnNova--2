@@ -22,6 +22,13 @@ const enrichedCourses = mockCourses.map(course => ({
 export default function CoursesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // Redirect admins to their dashboard
+  if (user?.role === 'admin') {
+    navigate('/dashboard/admin', { replace: true });
+    return null;
+  }
+
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());

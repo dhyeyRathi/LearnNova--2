@@ -15,6 +15,13 @@ import { motion } from 'motion/react';
 export default function MyCoursesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Redirect admins to their dashboard
+  if (user?.role === 'admin') {
+    navigate('/dashboard/admin', { replace: true });
+    return null;
+  }
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'in-progress' | 'completed'>('all');
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());

@@ -44,6 +44,12 @@ export default function LessonPlayerPage() {
   const progress = user ? userProgress.find(p => p.userId === user.id && p.courseId === courseId) : null;
 
   useEffect(() => {
+    // Redirect admins to dashboard
+    if (user?.role === 'admin') {
+      navigate('/dashboard/admin', { replace: true });
+      return;
+    }
+    
     if (!user) {
       navigate('/login');
       return;

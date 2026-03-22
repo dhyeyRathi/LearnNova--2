@@ -13,6 +13,13 @@ import { toast } from 'sonner';
 export default function QuizzesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Redirect admins to their dashboard
+  if (user?.role === 'admin') {
+    navigate('/dashboard/admin', { replace: true });
+    return null;
+  }
+  
   const [activeQuiz, setActiveQuiz] = useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
