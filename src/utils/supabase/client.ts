@@ -126,6 +126,9 @@ export async function getCurrentUser() {
 
 export async function signUp(email: string, password: string, name: string, role: 'learner' | 'tutor' = 'learner') {
   try {
+    // Use env var if available, otherwise use window.location.origin
+    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    
     // Create auth user with email confirmation
     const { data: { user }, error: authError } = await supabase.auth.signUp({
       email,
@@ -135,7 +138,7 @@ export async function signUp(email: string, password: string, name: string, role
           name,
           role,
         },
-        emailRedirectTo: `${window.location.origin}/confirm-email`,
+        emailRedirectTo: `${appUrl}/confirm-email`,
       },
     });
 
@@ -280,11 +283,14 @@ export async function verifyEmailToken(token: string) {
 
 export async function resendConfirmationEmail(email: string) {
   try {
+    // Use env var if available, otherwise use window.location.origin
+    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/confirm-email`,
+        emailRedirectTo: `${appUrl}/confirm-email`,
       },
     });
 
