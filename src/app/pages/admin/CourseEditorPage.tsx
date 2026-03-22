@@ -552,11 +552,6 @@ export default function CourseEditorPage() {
               {/* Type-specific fields */}
               {lessonType === 'video' && (
                 <div className="space-y-4 p-4 bg-red-50/50 rounded-xl border border-red-100">
-                  <div className="space-y-2">
-                    <Label>Video URL / Upload *</Label>
-                    <Input value={lessonContent} onChange={e => setLessonContent(e.target.value)} placeholder="https://youtube.com/watch?v=... or video file URL" className="rounded-xl bg-white/80" />
-                  </div>
-                  
                   {/* Drag & Drop Upload Area */}
                   <div 
                     className="border-2 border-dashed border-red-200 rounded-xl p-6 text-center bg-white/50 cursor-pointer hover:bg-red-100/30 transition-colors"
