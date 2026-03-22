@@ -10,7 +10,7 @@ import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { courses, lessons } from '../../data/mockData';
-import { Search, Plus, Eye, Clock, Tag, LayoutGrid, List, Edit, Share2, Crown, BookOpen, Copy, Check, ExternalLink, GripVertical, Trash2, GraduationCap } from 'lucide-react';
+import { Search, Plus, Eye, Clock, Tag, LayoutGrid, List, Edit, Share2, Crown, BookOpen, Copy, Check, ExternalLink, GripVertical, Trash2, GraduationCap, Video, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
@@ -41,6 +41,8 @@ export default function AdminCoursesPage() {
   const [newCourseResourceLinks, setNewCourseResourceLinks] = useState('');
   const [newCourseThumbnail, setNewCourseThumbnail] = useState<File | null>(null);
   const [newCourseThumbnailPreview, setNewCourseThumbnailPreview] = useState('');
+  const [newCourseVideo, setNewCourseVideo] = useState<File | null>(null);
+  const [newCourseVideoPreview, setNewCourseVideoPreview] = useState('');
   const [newCourseTags, setNewCourseTags] = useState('');
   const [newCourseQuizIntegration, setNewCourseQuizIntegration] = useState('');
   const [shareOpen, setShareOpen] = useState(false);
@@ -137,6 +139,8 @@ export default function AdminCoursesPage() {
       setNewCourseResourceLinks('');
       setNewCourseThumbnail(null);
       setNewCourseThumbnailPreview('');
+      setNewCourseVideo(null);
+      setNewCourseVideoPreview('');
       setNewCourseTags('');
       setNewCourseQuizIntegration('');
       setCourseCreationStep(1);
@@ -146,6 +150,14 @@ export default function AdminCoursesPage() {
 
   const handleGoBack = () => {
     setCourseCreationStep(1);
+  };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewCourseVideo(file);
+      setNewCourseVideoPreview(`[UPLOAD] ${file.name}`);
+    }
   };
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,6 +180,8 @@ export default function AdminCoursesPage() {
     setNewCourseResourceLinks('');
     setNewCourseThumbnail(null);
     setNewCourseThumbnailPreview('');
+    setNewCourseVideo(null);
+    setNewCourseVideoPreview('');
     setNewCourseTags('');
     setNewCourseQuizIntegration('');
     setCreateOpen(false);
@@ -457,6 +471,59 @@ export default function AdminCoursesPage() {
                   </div>
                   {newCourseThumbnailPreview && (
                     <img src={newCourseThumbnailPreview} alt="Preview" className="rounded-lg h-20 w-20 object-cover" />
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[13px] text-[#1A1F2E]">Video Upload</Label>
+                  <div 
+                    className="border-2 border-dashed border-[#E5E2DC] rounded-lg p-4 text-center bg-[#F9F7F3] cursor-pointer hover:border-[#D5D0CB] hover:bg-[#F5F1EA] transition-colors"
+                    onClick={() => document.getElementById('course-video-upload')?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add('border-orange-500', 'bg-orange-50');
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.classList.remove('border-orange-500', 'bg-orange-50');
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files?.[0];
+                      if (file?.type.startsWith('video/')) {
+                        setNewCourseVideo(file);
+                        setNewCourseVideoPreview(`[UPLOAD] ${file.name}`);
+                      }
+                    }}
+                  >
+                    <Video className="w-6 h-6 mx-auto mb-1 text-orange-400" />
+                    <p className="text-sm font-medium text-[#1A1F2E]">Click or drag video</p>
+                    <p className="text-xs text-[#7A766F]">MP4, WebM, OGG (Max 500MB)</p>
+                    <input 
+                      type="file" 
+                      accept="video/*" 
+                      onChange={handleVideoChange} 
+                      className="hidden" 
+                      id="course-video-upload"
+                    />
+                  </div>
+                  {newCourseVideo && (
+                    <div className="flex items-center justify-between p-2 bg-[#F9F7F3] rounded-lg border border-[#E5E2DC]">
+                      <div className="flex items-center gap-2">
+                        <Video className="w-4 h-4 text-orange-500" />
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-[#1A1F2E]">{newCourseVideo.name}</p>
+                          <p className="text-xs text-[#7A766F]">{(newCourseVideo.size / 1024 / 1024).toFixed(1)} MB</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setNewCourseVideo(null);
+                          setNewCourseVideoPreview('');
+                        }}
+                        className="text-orange-400 hover:text-orange-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
                 <div className="space-y-1.5">
