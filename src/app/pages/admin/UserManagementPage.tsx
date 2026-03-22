@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -10,9 +10,10 @@ import { Badge } from '../../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { users as mockUsers, enrollments, userProgress, courses, getBadgeLevel } from '../../data/mockData';
+import { supabase } from '../../../utils/supabase/client';
 import {
   Search, UsersRound, Shield, GraduationCap, BookOpen, MoreHorizontal,
-  Mail, Pencil, Trash2, UserCheck, UserX, ChevronDown, Crown
+  Mail, Pencil, Trash2, UserCheck, UserX, ChevronDown, Crown, Loader
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -38,14 +39,59 @@ export default function UserManagementPage() {
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
   const [editRole, setEditRole] = useState<'learner' | 'tutor' | 'admin'>('learner');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>(() =>
-    mockUsers.map(u => ({
-      ...u,
-      status: 'active' as const,
-      joinedAt: '2026-01-15',
-    }))
-  );
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([]);
+
+  // Fetch users from Supabase
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        const { data: supabaseUsers, error } = await supabase
+          .from('users')
+          .select('id, email, name, role, points, avatar_url, is_active, created_at')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching users:', error);
+          // Fallback to mock users if Supabase fails
+          setManagedUsers(mockUsers.map(u => ({
+            ...u,
+            status: 'active' as const,
+            joinedAt: '2026-01-15',
+          })));
+        } else if (supabaseUsers) {
+          const formattedUsers: ManagedUser[] = supabaseUsers.map(u => ({
+            id: u.id,
+            email: u.email,
+            name: u.name,
+            role: u.role as 'learner' | 'tutor' | 'admin',
+            points: u.points || 0,
+            avatar: u.avatar_url,
+            status: u.is_active ? 'active' : 'disabled',
+            joinedAt: u.created_at ? new Date(u.created_at).toISOString().split('T')[0] : '2026-01-15',
+          }));
+          setManagedUsers(formattedUsers);
+        }
+      } catch (err) {
+        console.error('Failed to fetch users:', err);
+        toast.error('Failed to load users');
+        // Fallback to mock data
+        setManagedUsers(mockUsers.map(u => ({
+          ...u,
+          status: 'active' as const,
+          joinedAt: '2026-01-15',
+        })));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user?.role === 'admin') {
+      fetchUsers();
+    }
+  }, [user]);
 
   if (!user || user.role !== 'admin') {
     return (
@@ -189,7 +235,18 @@ export default function UserManagementPage() {
         </div>
 
         {/* User list */}
-        <div className="space-y-2">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader className="w-8 h-8 text-[#2C3E6B] animate-spin mb-3" />
+            <p className="text-[#7A766F]">Loading users...</p>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="text-center py-12 bg-[#F7F6F3] rounded-lg border border-[#E5E2DC]">
+            <UsersRound className="w-12 h-12 text-[#7A766F]/30 mx-auto mb-3" />
+            <p className="text-[#7A766F]">No users found matching your search.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
           {/* Table header - desktop */}
           <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-[11px] text-[#7A766F] uppercase tracking-wider font-medium">
             <div className="col-span-4">User</div>
@@ -294,17 +351,8 @@ export default function UserManagementPage() {
               );
             })}
           </AnimatePresence>
-
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-16">
-              <div className="w-14 h-14 rounded-xl bg-[#2C3E6B]/[0.06] flex items-center justify-center mx-auto mb-3">
-                <UsersRound className="w-7 h-7 text-[#2C3E6B]/25" />
-              </div>
-              <h3 className="text-base font-semibold text-[#2C3E6B] mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>No users found</h3>
-              <p className="text-sm text-[#7A766F]">Try adjusting your search or filter</p>
-            </div>
-          )}
         </div>
+        )}
       </div>
 
       {/* Edit Role Dialog */}
