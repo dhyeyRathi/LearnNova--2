@@ -76,6 +76,8 @@ export default function CourseEditorPage() {
   const [lessonDuration, setLessonDuration] = useState('');
   const [lessonResponsible, setLessonResponsible] = useState('');
   const [allowDownload, setAllowDownload] = useState(false);
+  const [videoUploadMode, setVideoUploadMode] = useState<'url' | 'upload'>('url'); // 'url' or 'upload'
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [resources, setResources] = useState<Array<{ title: string; type: 'file' | 'link'; url: string }>>([]);
   const [newResTitle, setNewResTitle] = useState('');
   const [newResUrl, setNewResUrl] = useState('');
@@ -149,6 +151,8 @@ export default function CourseEditorPage() {
       setLessonTitle(''); setLessonDescription(''); setLessonType('video');
       setLessonContent(''); setLessonDuration(''); setResources([]);
       setLessonResponsible(''); setAllowDownload(false);
+      setVideoUploadMode('url');
+      setVideoFile(null);
     }
     setLessonTab('content');
     setLessonDialogOpen(true);
@@ -550,10 +554,87 @@ export default function CourseEditorPage() {
               {/* Type-specific fields */}
               {lessonType === 'video' && (
                 <div className="space-y-4 p-4 bg-red-50/50 rounded-xl border border-red-100">
-                  <div className="space-y-2">
-                    <Label>Video URL *</Label>
-                    <Input value={lessonContent} onChange={e => setLessonContent(e.target.value)} placeholder="https://youtube.com/watch?v=..." className="rounded-xl bg-white/80" />
+                  {/* Toggle between URL and Upload */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant={videoUploadMode === 'url' ? 'default' : 'outline'}
+                      onClick={() => setVideoUploadMode('url')}
+                      className={`flex-1 rounded-lg ${videoUploadMode === 'url' ? 'bg-gradient-to-r from-red-500 to-amber-500 text-white' : ''}`}
+                    >
+                      <LinkIcon className="w-4 h-4 mr-2" />URL
+                    </Button>
+                    <Button
+                      variant={videoUploadMode === 'upload' ? 'default' : 'outline'}
+                      onClick={() => setVideoUploadMode('upload')}
+                      className={`flex-1 rounded-lg ${videoUploadMode === 'upload' ? 'bg-gradient-to-r from-red-500 to-amber-500 text-white' : ''}`}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />Upload
+                    </Button>
                   </div>
+
+                  {/* URL Input */}
+                  {videoUploadMode === 'url' && (
+                    <div className="space-y-2">
+                      <Label>Video URL *</Label>
+                      <Input
+                        value={lessonContent}
+                        onChange={e => setLessonContent(e.target.value)}
+                        placeholder="https://youtube.com/watch?v=... or video file URL"
+                        className="rounded-xl bg-white/80"
+                      />
+                      <p className="text-xs text-slate-400">YouTube, Vimeo, or direct video file URL</p>
+                    </div>
+                  )}
+
+                  {/* File Upload */}
+                  {videoUploadMode === 'upload' && (
+                    <div className="space-y-2">
+                      <Label>Choose Video File *</Label>
+                      <div className="border-2 border-dashed border-red-200 rounded-xl p-6 text-center bg-white/50 cursor-pointer hover:bg-white/70 transition-colors"
+                        onClick={() => document.getElementById('video-input')?.click()}
+                      >
+                        <Video className="w-8 h-8 mx-auto mb-2 text-red-400" />
+                        <p className="text-sm font-medium text-slate-700">Click to upload or drag & drop</p>
+                        <p className="text-xs text-slate-400">MP4, WebM, OGG (Max 500MB)</p>
+                        <input
+                          id="video-input"
+                          type="file"
+                          accept="video/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setVideoFile(file);
+                              setLessonContent(`[UPLOAD] ${file.name}`);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </div>
+                      {videoFile && (
+                        <div className="p-3 bg-white/60 rounded-lg flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Video className="w-4 h-4 text-red-500" />
+                            <div>
+                              <p className="text-sm font-medium">{videoFile.name}</p>
+                              <p className="text-xs text-slate-400">{(videoFile.size / 1024 / 1024).toFixed(1)} MB</p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setVideoFile(null);
+                              setLessonContent('');
+                            }}
+                            className="h-6 w-6 p-0 text-red-400 hover:text-red-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label>Duration</Label>
                     <Input value={lessonDuration} onChange={e => setLessonDuration(e.target.value)} placeholder="e.g. 45 min" className="rounded-xl bg-white/80" />
