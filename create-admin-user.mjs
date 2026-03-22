@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
 // Create admin client with service role key (bypasses RLS)
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-async function createAdminUser() {
+async function createAdminUser() { //fesfsefs
   const email = 'admin@learnnova.com';
   const password = 'admin@123';
   const name = 'Admin User';
