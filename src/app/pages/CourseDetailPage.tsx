@@ -608,7 +608,19 @@ export default function CourseDetailPage() {
                   </motion.div>
                 )}
 
-                {isAuthenticated && !enrollment && course.accessRule === 'open' && (
+                {/* Admin Can Only Preview */}
+                {isAuthenticated && user?.role === 'admin' && (
+                  <div className="w-full p-4 bg-blue-50 border border-blue-200 rounded-xl text-center">
+                    <p className="text-sm font-semibold text-blue-700">
+                      📊 Admin View Only
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Admins can preview course details but cannot enroll.
+                    </p>
+                  </div>
+                )}
+
+                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.accessRule === 'open' && (
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button onClick={handleEnroll} className="w-full h-12 bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-xl shadow-emerald-500/20 rounded-xl">
                       <Play className="w-4 h-4 mr-2" /> Start Learning <ArrowRight className="w-4 h-4 ml-2" />
@@ -616,7 +628,7 @@ export default function CourseDetailPage() {
                   </motion.div>
                 )}
 
-                {isAuthenticated && !enrollment && course.accessRule === 'payment' && (
+                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.accessRule === 'payment' && (
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button onClick={handleEnroll} className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xl shadow-amber-500/20 rounded-xl">
                       <ShoppingCart className="w-4 h-4 mr-2" /> Buy Course
@@ -624,7 +636,7 @@ export default function CourseDetailPage() {
                   </motion.div>
                 )}
 
-                {isAuthenticated && !enrollment && course.accessRule === 'invitation' && (
+                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.accessRule === 'invitation' && (
                   <>
                     {courseInvitations.some(i => i.courseId === course.id && i.userId === user?.id) ? (
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
