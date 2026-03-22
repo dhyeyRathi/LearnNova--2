@@ -44,7 +44,7 @@ function RootContent() {
             <Outlet />
           )}
         </div>
-        <AIAssistant />
+        {isAuthenticated && <AIAssistant />}
         <Toaster position="top-right" richColors />
       </div>
     </>

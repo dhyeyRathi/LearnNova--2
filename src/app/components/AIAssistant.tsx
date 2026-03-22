@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, X, Send, Bot, User, Loader2, Minimize2 } from 'lucide-react';
 import { Button } from './ui/button';
+import { toolAwareChatResponse } from '../../utils/novaAgent';
+import { initializeChat } from '../../utils/geminiService';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -16,32 +19,13 @@ const quickReplies = [
   'How can I track my progress?',
 ];
 
-const aiResponses: Record<string, string> = {
-  'enroll': "To enroll in a course, simply browse our course catalog, click on a course you're interested in, and hit the **Start** or **Join Course** button. Some courses may require an invitation or payment.",
-  'points': "Our gamification system awards points for completing lessons and quizzes. There are 7 badge levels: Newbie (20pts), Learner (40pts), Scholar (60pts), Expert (80pts), Master (100pts), Legend (120pts), and Grandmaster (140pts). Keep learning to level up!",
-  'progress': "You can track your progress on the **My Courses** page. Each enrolled course shows a progress bar, completed lessons, and your quiz scores. You can also see your overall stats and badge level.",
-  'quiz': "Quizzes are available for most courses. Navigate to the **Quizzes** page to see all available quizzes. Complete them to earn bonus points and test your knowledge!",
-  'meeting': "Instructors can schedule live meetings with students. If you're a learner, check your email for meeting invitations. If you're an instructor, go to the Meetings page to schedule sessions.",
-  'default': "I'm Nova, your AI learning assistant! I can help you navigate courses, understand the points system, track progress, and answer questions about the platform. What would you like to know?",
-};
-
-function getAIResponse(message: string): string {
-  const lower = message.toLowerCase();
-  if (lower.includes('enroll') || lower.includes('join') || lower.includes('course') && lower.includes('how')) return aiResponses['enroll'];
-  if (lower.includes('point') || lower.includes('badge') || lower.includes('gamif') || lower.includes('level')) return aiResponses['points'];
-  if (lower.includes('progress') || lower.includes('track') || lower.includes('dashboard')) return aiResponses['progress'];
-  if (lower.includes('quiz') || lower.includes('test') || lower.includes('exam')) return aiResponses['quiz'];
-  if (lower.includes('meeting') || lower.includes('live') || lower.includes('session')) return aiResponses['meeting'];
-  return aiResponses['default'];
-}
-
 export default function AIAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: "Hi! I'm **Nova**, your AI learning companion. How can I help you today?",
+      content: "Hi! I'm **Nova**, your AI learning companion powered by Gemini. I'm here to help you with your learning journey in any language. How can I help you today? 🌟",
       timestamp: new Date(),
     },
   ]);
@@ -51,6 +35,11 @@ export default function AIAssistant() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Initialize chat on component mount
+    initializeChat();
+  }, []);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
@@ -58,9 +47,9 @@ export default function AIAssistant() {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
 
-  const handleSend = (text?: string) => {
+  const handleSend = async (text?: string) => {
     const msg = text || input.trim();
-    if (!msg) return;
+    if (!msg || isTyping) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -72,16 +61,34 @@ export default function AIAssistant() {
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      // Use tool-aware agent instead of direct Gemini
+      const response = await toolAwareChatResponse(msg);
+      
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: getAIResponse(msg),
+        content: response,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, aiMsg]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: "I apologize, but I'm having trouble connecting right now. Please make sure your Gemini API key is configured correctly. Try again in a moment! 💙",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMsg]);
+      
+      toast.error('Failed to get response from Nova', {
+        description: 'Please check your API configuration and try again.',
+      });
+    } finally {
       setIsTyping(false);
-    }, 800 + Math.random() * 700);
+    }
   };
 
   const renderContent = (content: string) => {
