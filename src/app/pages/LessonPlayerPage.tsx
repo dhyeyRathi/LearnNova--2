@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import PointsPopup from '../components/PointsPopup';
+import QuizFeedbackModal from '../components/QuizFeedbackModal';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { ScrollArea } from '../components/ui/scroll-area';
@@ -28,6 +29,13 @@ export default function LessonPlayerPage() {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
   const [quizStarted, setQuizStarted] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [quizAnswersForFeedback, setQuizAnswersForFeedback] = useState<Array<{
+    question: string;
+    selected: string;
+    correct: string;
+    is_correct: boolean;
+  }>>([]);
 
   const course = courses.find(c => c.id === courseId);
   const lesson = lessons.find(l => l.id === lessonId);
@@ -85,6 +93,16 @@ export default function LessonPlayerPage() {
     setSelectedAnswers([...selectedAnswers, answerIndex]);
     setShowAnswer(true);
 
+    // Track answer for feedback
+    const feedbackAnswers = [...quizAnswersForFeedback];
+    feedbackAnswers[currentQuestionIndex] = {
+      question: question.text,
+      selected: question.options[answerIndex],
+      correct: question.options[question.correctAnswer],
+      is_correct: isCorrect,
+    };
+    setQuizAnswersForFeedback(feedbackAnswers);
+
     // Calculate attempts for this question
     const attempts = (quizAttempts[currentQuestionIndex] || 0) + 1;
     const newAttempts = [...quizAttempts];
@@ -111,6 +129,8 @@ export default function LessonPlayerPage() {
       setShowAnswer(false);
     } else {
       setQuizCompleted(true);
+      // Auto-show feedback modal after brief delay
+      setTimeout(() => setShowFeedbackModal(true), 500);
     }
   };
 
@@ -745,6 +765,18 @@ export default function LessonPlayerPage() {
         show={showPointsPopup}
         onClose={() => setShowPointsPopup(false)}
       />
+
+      {/* Quiz Feedback Modal */}
+      {quiz && (
+        <QuizFeedbackModal
+          isOpen={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          quizTitle={quiz.title}
+          score={quizScore}
+          maxScore={quiz.questions.reduce((sum, q) => sum + q.basePoints, 0)}
+          answers={quizAnswersForFeedback}
+        />
+      )}
     </div>
   );
 }

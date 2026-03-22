@@ -7,88 +7,17 @@ import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Star, Users, Clock, TrendingUp, Image as ImageIcon, Zap, Target } from 'lucide-react';
 import { motion } from 'motion/react';
+import { courses as mockCourses } from '../data/mockData';
 
-// Mock courses data - replace with API call later
-const mockCourses = [
-  {
-    id: '1',
-    title: 'React Fundamentals',
-    description: 'Master React basics and build interactive UIs',
-    instructor: 'John Doe',
-    level: 'beginner',
-    rating: 4.8,
-    students: 1240,
-    duration: '4 weeks',
-    price: 49.99,
-    cover_image: 'https://images.unsplash.com/photo-1633356122544-f134324ef6db?w=400&h=300&fit=crop',
-    tags: ['React', 'JavaScript', 'Web'],
-  },
-  {
-    id: '2',
-    title: 'Advanced TypeScript',
-    description: 'Deep dive into TypeScript for scalable applications',
-    instructor: 'Jane Smith',
-    level: 'advanced',
-    rating: 4.9,
-    students: 890,
-    duration: '6 weeks',
-    price: 79.99,
-    cover_image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop',
-    tags: ['TypeScript', 'JavaScript', 'Backend'],
-  },
-  {
-    id: '3',
-    title: 'Next.js Full Stack',
-    description: 'Build modern full-stack applications with Next.js',
-    instructor: 'Mike Johnson',
-    level: 'intermediate',
-    rating: 4.7,
-    students: 1560,
-    duration: '8 weeks',
-    price: 99.99,
-    cover_image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop',
-    tags: ['Next.js', 'React', 'Full Stack'],
-  },
-  {
-    id: '4',
-    title: 'Node.js & Express',
-    description: 'Create robust backend APIs with Node.js',
-    instructor: 'Sarah Wilson',
-    level: 'intermediate',
-    rating: 4.6,
-    students: 2100,
-    duration: '5 weeks',
-    price: 69.99,
-    cover_image: 'https://images.unsplash.com/photo-1633356122544-f134324ef6db?w=400&h=300&fit=crop',
-    tags: ['Node.js', 'Backend', 'API'],
-  },
-  {
-    id: '5',
-    title: 'Web Design Principles',
-    description: 'Learn modern UI/UX design principles',
-    instructor: 'Emma Brown',
-    level: 'beginner',
-    rating: 4.5,
-    students: 980,
-    duration: '3 weeks',
-    price: 39.99,
-    cover_image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop',
-    tags: ['Design', 'UI/UX', 'Web'],
-  },
-  {
-    id: '6',
-    title: 'Database Design',
-    description: 'Master SQL and NoSQL database design',
-    instructor: 'David Lee',
-    level: 'advanced',
-    rating: 4.8,
-    students: 1340,
-    duration: '7 weeks',
-    price: 89.99,
-    cover_image: 'https://images.unsplash.com/photo-1516534775068-bb0428e3b874?w=400&h=300&fit=crop',
-    tags: ['Database', 'SQL', 'Backend'],
-  },
-];
+// Enrich mockData courses with additional UI properties for display
+const enrichedCourses = mockCourses.map(course => ({
+  ...course,
+  instructor: course.instructorName,
+  level: 'intermediate', // Default level
+  students: course.views,
+  price: course.accessRule === 'payment' ? 99.99 : 0,
+  cover_image: course.coverImage,
+}));
 
 export default function CoursesPage() {
   const navigate = useNavigate();
@@ -102,7 +31,7 @@ export default function CoursesPage() {
   };
 
   const filteredCourses = useMemo(() => {
-    return mockCourses.filter((course) => {
+    return enrichedCourses.filter((course) => {
       const matchesLevel = !selectedLevel || course.level === selectedLevel;
       const matchesSearch =
         course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -113,7 +42,7 @@ export default function CoursesPage() {
   }, [selectedLevel, searchQuery]);
 
   const stats = [
-    { label: 'Total Courses', value: mockCourses.length, icon: Target },
+    { label: 'Total Courses', value: enrichedCourses.length, icon: Target },
     { label: 'Average Rating', value: '4.7★', icon: Star },
     { label: 'Total Students', value: '9k+', icon: Users },
   ];
@@ -158,7 +87,7 @@ export default function CoursesPage() {
             </h2>
             <p className="text-[#7A766F] flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-500" />
-              Choose from {mockCourses.length} world-class courses
+              Choose from {enrichedCourses.length} world-class courses
             </p>
           </motion.div>
 
