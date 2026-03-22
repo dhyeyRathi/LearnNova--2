@@ -38,14 +38,28 @@ export default function LoginPage() {
         toast.success('Welcome back!');
         setTimeout(() => navigate('/courses'), 500);
       } else {
-        toast.error(result.error || 'Invalid email or password');
-        setIsLoading(false);
+        // Check if error is about email not being confirmed
+        if (result.error?.includes('email') || result.error?.toLowerCase().includes('confirm')) {
+          toast.error(result.error || 'Please confirm your email first');
+          // Redirect to confirm-email page
+          setTimeout(() => navigate('/confirm-email', { state: { email } }), 1000);
+        } else {
+          toast.error(result.error || 'Invalid email or password');
+          setIsLoading(false);
+        }
       }
     } catch (error: any) {
       const errorMsg = error?.message || 'An error occurred during login';
-      toast.error(errorMsg);
+      
+      // Handle email-not-confirmed error
+      if (errorMsg.includes('email') || errorMsg.toLowerCase().includes('confirm')) {
+        toast.error('Please confirm your email first');
+        setTimeout(() => navigate('/confirm-email', { state: { email } }), 1000);
+      } else {
+        toast.error(errorMsg);
+        setIsLoading(false);
+      }
       console.error('Login error:', error);
-      setIsLoading(false);
     }
   };
 

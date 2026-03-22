@@ -125,101 +125,173 @@ export async function getCurrentUser() {
 }
 
 export async function signUp(email: string, password: string, name: string, role: 'learner' | 'tutor' = 'learner') {
-  // Create auth user
-  const { data: { user }, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
+  try {
+    // Create auth user with email confirmation
+    const { data: { user }, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          role,
+        },
+        emailRedirectTo: `${window.location.origin}/confirm-email`,
+      },
+    });
+
+    if (authError) {
+      throw authError;
+    }
+    if (!user) throw new Error('Sign up failed');
+
+    // Create user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .insert({
+        id: user.id,
+        email,
         name,
         role,
-      },
-    },
-  });
+        points: 0,
+        badge_level: 0,
+        is_verified: false,  // Require email verification
+        is_active: true,
+      })
+      .select()
+      .single();
 
-  if (authError) {
-    throw authError;
+    if (profileError) throw profileError;
+    return profile as User;
+  } catch (error) {
+    console.error('SignUp error:', error);
+    throw error;
   }
-  if (!user) throw new Error('Sign up failed');
-
-  // Create user profile
-  const { data: profile, error: profileError } = await supabase
-    .from('users')
-    .insert({
-      id: user.id,
-      email,
-      name,
-      role,
-      points: 0,
-      badge_level: 0,
-      is_verified: false,
-      is_active: true,
-    })
-    .select()
-    .single();
-
-  if (profileError) throw profileError;
-  return profile as User;
 }
 
 export async function signIn(email: string, password: string) {
-  const { data: { user }, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) throw error;
-  if (!user) throw new Error('Sign in failed');
-
-  // Wait a moment for auth locks to settle
-  await new Promise(resolve => setTimeout(resolve, 500));
-
   try {
-    // Get user profile with timeout
-    const profilePromise = supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    const { data: { user }, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    // Add a 5 second timeout
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
-    );
+    if (error) {
+      if (error.message.includes('Email not confirmed')) {
+        throw new Error('email-not-confirmed');
+      }
+      throw error;
+    }
+    if (!user) throw new Error('Sign in failed');
 
-    const { data: profile, error: profileError } = await Promise.race([
-      profilePromise,
-      timeoutPromise
-    ]) as any;
+    // Check if email is verified
+    if (!user.email_confirmed_at) {
+      throw new Error('email-not-confirmed');
+    }
 
-    if (profileError) {
-      console.warn('Profile fetch error, creating profile:', profileError);
-      
-      // If profile doesn't exist, create it
-      const { data: newProfile, error: createError } = await supabase
+    // Wait a moment for auth locks to settle
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    try {
+      // Get user profile with timeout
+      const profilePromise = supabase
         .from('users')
-        .insert({
-          id: user.id,
-          email: user.email || email,
-          name: user.user_metadata?.name || email.split('@')[0] || 'User',
-          role: user.user_metadata?.role || 'learner',
-          points: 0,
-          badge_level: 0,
-          is_verified: false,
-          is_active: true,
-        })
-        .select()
+        .select('*')
+        .eq('id', user.id)
         .single();
 
-      if (createError) throw createError;
-      return newProfile as User;
-    }
+      // Add a 5 second timeout
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+      );
 
-    return profile as User;
-  } catch (error: any) {
-    if (error.message === 'Profile fetch timeout') {
-      throw new Error('Sign in timeout. Please check your internet connection.');
+      const { data: profile, error: profileError } = await Promise.race([
+        profilePromise,
+        timeoutPromise
+      ]) as any;
+
+      if (profileError) {
+        console.warn('Profile fetch error, creating profile:', profileError);
+        
+        // If profile doesn't exist, create it
+        const { data: newProfile, error: createError } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email || email,
+            name: user.user_metadata?.name || email.split('@')[0] || 'User',
+            role: user.user_metadata?.role || 'learner',
+            points: 0,
+            badge_level: 0,
+            is_verified: true,  // Mark as verified since email is confirmed
+            is_active: true,
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        return newProfile as User;
+      }
+
+      // Update is_verified in database if not already
+      if (!profile.is_verified) {
+        await supabase
+          .from('users')
+          .update({ is_verified: true })
+          .eq('id', user.id);
+      }
+
+      return profile as User;
+    } catch (error: any) {
+      if (error.message === 'Profile fetch timeout') {
+        throw new Error('Sign in timeout. Please check your internet connection.');
+      }
+      throw error;
     }
+  } catch (error: any) {
+    console.error('SignIn error:', error);
+    throw error;
+  }
+}
+
+export async function verifyEmailToken(token: string) {
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash: token,
+      type: 'email',
+    });
+
+    if (error) throw error;
+    if (!data.user) throw new Error('Email verification failed');
+
+    // Update user as verified
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ is_verified: true })
+      .eq('id', data.user.id);
+
+    if (updateError) throw updateError;
+
+    return data.user;
+  } catch (error) {
+    console.error('Email verification error:', error);
+    throw error;
+  }
+}
+
+export async function resendConfirmationEmail(email: string) {
+  try {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/confirm-email`,
+      },
+    });
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Resend confirmation email error:', error);
     throw error;
   }
 }

@@ -35,9 +35,22 @@ export default function CourseEditorPage() {
     }
   });
   
+  // Load quizzes from localStorage or fall back to mock data
+  const [allQuizzes, setAllQuizzes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('quizzesList');
+      if (saved) {
+        return [...quizzes, ...JSON.parse(saved)];
+      }
+      return quizzes;
+    } catch {
+      return quizzes;
+    }
+  });
+  
   const course = allCourses.find(c => c.id === id);
   const courseLessons = lessons.filter(l => l.courseId === id).sort((a, b) => a.order - b.order);
-  const courseQuizzes = quizzes.filter(q => lessons.some(l => l.courseId === id && l.type === 'quiz' && l.content === q.id));
+  const courseQuizzes = allQuizzes.filter(q => lessons.some(l => l.courseId === id && l.type === 'quiz' && l.content === q.id));
 
   // Course fields
   const [title, setTitle] = useState(course?.title || '');

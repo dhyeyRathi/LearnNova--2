@@ -137,6 +137,44 @@ export default function QuizBuilderPage() {
       if (!questions[i].options.some(o => o.isCorrect)) { toast.error(`Question ${i + 1} needs a correct answer`); setActiveQuestion(i); return; }
       if (questions[i].options.some(o => !o.text.trim())) { toast.error(`Question ${i + 1} has empty options`); setActiveQuestion(i); return; }
     }
+    
+    // Create quiz object
+    const newQuiz = {
+      id: quizId || `quiz-${Date.now()}`,
+      title: quizTitle,
+      questions: questions.map((q, idx) => ({
+        id: q.id,
+        text: q.text,
+        options: q.options.map(o => o.text),
+        correctAnswer: q.options.findIndex(o => o.isCorrect),
+        basePoints: rewards.attempt1,
+        pointsPerAttempt: rewards.attempt2,
+      })),
+      published: existingQuiz?.published || false,
+      publishedAt: existingQuiz?.publishedAt,
+      studentIds: existingQuiz?.studentIds || [],
+    };
+    
+    // Save to localStorage
+    try {
+      const saved = localStorage.getItem('quizzesList');
+      const userQuizzes = saved ? JSON.parse(saved) : [];
+      
+      if (quizId) {
+        // Update existing
+        const idx = userQuizzes.findIndex(q => q.id === quizId);
+        if (idx !== -1) userQuizzes[idx] = newQuiz;
+        else userQuizzes.push(newQuiz);
+      } else {
+        // Add new
+        userQuizzes.push(newQuiz);
+      }
+      
+      localStorage.setItem('quizzesList', JSON.stringify(userQuizzes));
+    } catch (error) {
+      console.error('Error saving quiz:', error);
+    }
+    
     toast.success('Quiz saved successfully!');
     navigate(`/admin/courses/${courseId}/edit`);
   };

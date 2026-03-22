@@ -19,13 +19,26 @@ export default function QuizzesPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
+  
+  // Load quizzes from localStorage or fall back to mock data
+  const allQuizzes = (() => {
+    try {
+      const saved = localStorage.getItem('quizzesList');
+      if (saved) {
+        return [...quizzes, ...JSON.parse(saved)];
+      }
+      return quizzes;
+    } catch {
+      return quizzes;
+    }
+  })();
 
   if (!user) {
     navigate('/login');
     return null;
   }
 
-  const quizData = quizzes.map(quiz => {
+  const quizData = allQuizzes.map(quiz => {
     const lesson = lessons.find(l => l.content === quiz.id);
     const course = lesson ? courses.find(c => c.id === lesson.courseId) : null;
     return { ...quiz, courseName: course?.title || 'General', lessonTitle: lesson?.title || quiz.title };

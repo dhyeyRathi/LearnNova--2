@@ -19,6 +19,17 @@ export default function AdminQuizzesPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [allQuizzes, setAllQuizzes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('quizzesList');
+      if (saved) {
+        return [...quizzes, ...JSON.parse(saved)];
+      }
+      return quizzes;
+    } catch {
+      return quizzes;
+    }
+  });
 
   if (!user || (user.role !== 'admin' && user.role !== 'tutor')) {
     return (
@@ -43,11 +54,11 @@ export default function AdminQuizzesPage() {
   };
 
   const getQuizQuestionCount = (quizId: string) => {
-    const quiz = quizzes.find(q => q.id === quizId);
+    const quiz = allQuizzes.find(q => q.id === quizId);
     return quiz?.questions.length || 0;
   };
 
-  const filteredQuizzes = quizzes.filter(q => {
+  const filteredQuizzes = allQuizzes.filter(q => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return q.title.toLowerCase().includes(query) || getCourseForQuiz(q.id).toLowerCase().includes(query);
@@ -63,6 +74,13 @@ export default function AdminQuizzesPage() {
 
   const handleDeleteQuiz = (quizId: string) => {
     if (deleteConfirm === quizId) {
+      setAllQuizzes(allQuizzes.filter(q => q.id !== quizId));
+      try {
+        const userQuizzes = allQuizzes.filter(q => q.id !== quizId && q.id.startsWith('quiz-'));
+        localStorage.setItem('quizzesList', JSON.stringify(userQuizzes));
+      } catch (error) {
+        console.error('Error deleting quiz:', error);
+      }
       toast.success('Quiz deleted successfully');
       setDeleteConfirm(null);
     } else {
@@ -72,19 +90,48 @@ export default function AdminQuizzesPage() {
   };
 
   const handleDuplicateQuiz = (quizId: string) => {
+    const quiz = allQuizzes.find(q => q.id === quizId);
+    if (!quiz) return;
+    
+    const duplicate = {
+      ...quiz,
+      id: `quiz-${Date.now()}`,
+      title: `${quiz.title} (Copy)`,
+    };
+    
+    const updated = [...allQuizzes, duplicate];
+    setAllQuizzes(updated);
+    
+    try {
+      const userQuizzes = updated.filter(q => q.id.startsWith('quiz-'));
+      localStorage.setItem('quizzesList', JSON.stringify(userQuizzes));
+    } catch (error) {
+      console.error('Error duplicating quiz:', error);
+    }
+    
     toast.success('Quiz duplicated!');
   };
 
   const handlePublishQuiz = (quizId: string) => {
-    const quiz = quizzes.find(q => q.id === quizId);
-    if (!quiz) return;
+    const updated = allQuizzes.map(q => {
+      if (q.id === quizId) {
+        return { ...q, published: true, publishedAt: new Date().toISOString() };
+      }
+      return q;
+    });
     
-    // Mark quiz as published
-    quiz.published = true;
-    quiz.publishedAt = new Date().toISOString();
+    setAllQuizzes(updated);
     
+    try {
+      const userQuizzes = updated.filter(q => q.id.startsWith('quiz-'));
+      localStorage.setItem('quizzesList', JSON.stringify(userQuizzes));
+    } catch (error) {
+      console.error('Error publishing quiz:', error);
+    }
+    
+    const quiz = updated.find(q => q.id === quizId);
     toast.success('Quiz published! Students will now have access to this quiz.', {
-      description: `${quiz.studentIds?.length || 0} students notified`,
+      description: `${quiz?.studentIds?.length || 0} students notified`,
     });
   };
 

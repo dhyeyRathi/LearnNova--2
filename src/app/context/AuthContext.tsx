@@ -71,13 +71,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Parse specific error messages from Supabase
       let errorMessage = 'Invalid email or password';
-      const errorMsg = (error?.message || '').toLowerCase();
+      const errorMsg = error?.message || '';
       
-      if (errorMsg.includes('email not confirmed')) {
+      // Check for email not confirmed error (exact match)
+      if (errorMsg === 'email-not-confirmed' || errorMsg.includes('Email not confirmed') || errorMsg.toLowerCase().includes('email not confirmed')) {
         errorMessage = 'Please confirm your email before signing in';
-      } else if (errorMsg.includes('invalid login credentials') || errorMsg.includes('invalid') || errorMsg.includes('password')) {
+      } else if (errorMsg.includes('invalid login credentials') || errorMsg.toLowerCase().includes('invalid') || errorMsg.toLowerCase().includes('password')) {
         errorMessage = 'Invalid email or password';
-      } else if (errorMsg.includes('user was not found') || errorMsg.includes('user not found')) {
+      } else if (errorMsg.includes('user was not found') || errorMsg.toLowerCase().includes('user not found')) {
         errorMessage = 'No account found with this email';
       }
       

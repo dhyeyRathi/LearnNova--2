@@ -1,58 +1,134 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router';
+import { useNavigate, useLocation, useSearchParams } from 'react-router';
 import { Mail, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
-import { supabase } from '../../utils/supabase/client';
+import { supabase, resendConfirmationEmail, verifyEmailToken } from '../../utils/supabase/client';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 
 export default function ConfirmEmailPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [resendCount, setResendCount] = useState(0);
   const [canResend, setCanResend] = useState(true);
-  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
+  const [isVerified, setIsVerified] = useState(false);
+  const [verifyError, setVerifyError] = useState('');
+  const [redirectCountdown, setRedirectCountdown] = useState(5);
 
-  // Get email from location state or localStorage
+  // Handle email verification flow
   useEffect(() => {
-    const state = location.state as { email?: string };
-    const storedEmail = localStorage.getItem('signupEmail');
-    const emailToUse = state?.email || storedEmail;
+    const verifyEmailConfirmation = async () => {
+      try {
+        setIsVerifying(true);
+        
+        // Check if user is already authenticated (Supabase set session after verification)
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+        
+        console.log('=== Email Verification Debug ===');
+        console.log('Full URL:', window.location.href);
+        console.log('Auth User:', authUser?.email);
+        console.log('Auth Error:', authError);
+        
+        // If user is authenticated, they successfully verified their email
+        if (authUser?.email && authUser?.email_confirmed_at) {
+          console.log('User already verified via Supabase session:', authUser.email);
+          setEmail(authUser.email);
+          
+          // Update database to mark as verified
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', authUser.id)
+              .single();
+            
+            if (!profileError && profile && !profile.is_verified) {
+              await supabase
+                .from('users')
+                .update({ is_verified: true })
+                .eq('id', authUser.id);
+            }
+          } catch (error) {
+            console.error('Error updating user profile:', error);
+          }
+          
+          setIsVerified(true);
+          toast.success('Email verified successfully!');
+          return;
+        }
+        
+        // Check for manual token verification (fallback)
+        const token = new URLSearchParams(window.location.search).get('token') ||
+                      new URLSearchParams(window.location.search).get('code');
+        
+        if (token) {
+          console.log('Found token in URL, verifying manually');
+          try {
+            const user = await verifyEmailToken(token);
+            setEmail(user.email);
+            setIsVerified(true);
+            toast.success('Email verified successfully!');
+            return;
+          } catch (error) {
+            console.error('Token verification error:', error);
+            setVerifyError('Invalid or expired confirmation link. Please resend the email.');
+          }
+        }
+        
+        // No verification - show resend form
+        console.log('No authentication detected, showing resend form');
+        const storedEmail = localStorage.getItem('signupEmail');
+        if (storedEmail) {
+          setEmail(storedEmail);
+        } else {
+          navigate('/signup');
+        }
+      } catch (error) {
+        console.error('Verification error:', error);
+      } finally {
+        setIsVerifying(false);
+      }
+    };
+
+    verifyEmailConfirmation();
+  }, [navigate]);
+
+  // Handle countdown and auto-redirect on success
+  useEffect(() => {
+    if (!isVerified) return;
     
-    if (emailToUse) {
-      setEmail(emailToUse);
-      localStorage.setItem('signupEmail', emailToUse);
-    } else {
-      navigate('/signup');
-    }
-  }, [location, navigate]);
+    const interval = setInterval(() => {
+      setRedirectCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          navigate('/login');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isVerified, navigate]);
 
   const handleResendEmail = async () => {
     if (!email || !canResend) return;
 
     try {
       setCanResend(false);
-      // Resend confirmation email
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email,
-      });
-
-      if (error) {
-        toast.error('Failed to resend email. Please try again.');
-        setCanResend(true);
-        return;
-      }
-
+      await resendConfirmationEmail(email);
+      
       setResendCount(prev => prev + 1);
-      toast.success('Confirmation email resent!');
+      toast.success('Confirmation email resent! Check your inbox.');
       
       // Re-enable after 30 seconds
       setTimeout(() => setCanResend(true), 30000);
     } catch (error) {
       console.error('Error resending email:', error);
-      toast.error('Failed to resend email');
+      toast.error('Failed to resend email. Please try again.');
       setCanResend(true);
     }
   };
@@ -63,12 +139,60 @@ export default function ConfirmEmailPage() {
   };
 
   const handleProceedToLogin = () => {
-    setIsRedirecting(true);
-    toast.success('Proceeding to login...');
-    setTimeout(() => {
-      navigate('/login', { state: { email } });
-    }, 500);
+    navigate('/login', { state: { email } });
   };
+
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          className="w-20 h-20"
+        >
+          <Loader2 className="w-20 h-20 text-red-500" />
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (isVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-white rounded-2xl border border-green-200 p-8 shadow-lg text-center">
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="flex justify-center mb-8"
+            >
+              <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-green-500" />
+              </div>
+            </motion.div>
+            <h1 className="text-3xl font-bold mb-2 text-green-600">Email Verified!</h1>
+            <p className="text-slate-600 mb-8">Your email has been successfully confirmed. You're all set!</p>
+            
+            <Button 
+              onClick={handleProceedToLogin}
+              className="w-full bg-red-500 hover:bg-red-600 text-white rounded-xl h-12 font-semibold text-lg mb-4"
+            >
+              Go to Login
+            </Button>
+            
+            <p className="text-sm text-slate-500">
+              Redirecting in <span className="font-semibold text-slate-700">{redirectCountdown}</span> seconds...
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
@@ -102,6 +226,12 @@ export default function ConfirmEmailPage() {
             <p className="text-slate-600 text-sm">
               Click the link in the email to verify your account.
             </p>
+            
+            {verifyError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{verifyError}</p>
+              </div>
+            )}
           </div>
 
           {/* Steps */}
@@ -110,7 +240,7 @@ export default function ConfirmEmailPage() {
             <ol className="text-sm text-blue-800 space-y-2">
               <li>✓ Check your email inbox</li>
               <li>✓ Click the verification link</li>
-              <li>✓ Return here and proceed to login</li>
+              <li>✓ Your account will be verified automatically</li>
             </ol>
           </div>
 
@@ -141,20 +271,6 @@ export default function ConfirmEmailPage() {
           {/* Action Buttons */}
           <div className="space-y-3">
             <Button
-              onClick={handleProceedToLogin}
-              disabled={isRedirecting}
-              className="w-full bg-red-500 hover:bg-red-600 text-white h-10"
-            >
-              {isRedirecting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Redirecting...
-                </>
-              ) : (
-                "I've Confirmed My Email"
-              )}
-            </Button>
-            <Button
               onClick={handleGoBack}
               variant="outline"
               className="w-full"
@@ -167,7 +283,7 @@ export default function ConfirmEmailPage() {
         {/* Additional info */}
         <div className="mt-6 text-center text-sm text-slate-600 px-4">
           <p>
-            After confirming your email, you'll be able to sign in with your new account.
+            A confirmation email has been sent. Click the link to verify your email and then log in.
           </p>
         </div>
       </motion.div>
