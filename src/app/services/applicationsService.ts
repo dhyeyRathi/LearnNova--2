@@ -27,8 +27,65 @@ export const getApplications = (): TutorApplication[] => {
   return initializeStorage();
 };
 
+/**
+ * Check if user has already applied in the past month
+ * Returns the existing application if found, null otherwise
+ */
+export const checkDuplicateApplication = (email: string): TutorApplication | null => {
+  const applications = getApplications();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  // Find application from same email within past 30 days
+  const existingApp = applications.find(app => {
+    if (app.userEmail.toLowerCase() !== email.toLowerCase()) return false;
+    
+    const submittedDate = new Date(app.submittedAt);
+    return submittedDate >= thirtyDaysAgo;
+  });
+
+  return existingApp || null;
+};
+
+/**
+ * Get rejection reason if applicant was rejected recently
+ */
+export const getRecentRejectionReason = (email: string): { rejectedAt: string; reason?: string } | null => {
+  const applications = getApplications();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const rejectedApp = applications.find(app => {
+    if (app.userEmail.toLowerCase() !== email.toLowerCase()) return false;
+    if (app.status !== 'rejected') return false;
+    
+    const rejectedDate = app.reviewedAt ? new Date(app.reviewedAt) : null;
+    return rejectedDate && rejectedDate >= thirtyDaysAgo;
+  });
+
+  return rejectedApp ? { rejectedAt: rejectedApp.reviewedAt || '', reason: 'Please reapply after 30 days' } : null;
+};
+
 // Submit new application (saves to localStorage)
-export const submitApplication = (application: Omit<TutorApplication, 'id'>): TutorApplication => {
+export const submitApplication = (application: Omit<TutorApplication, 'id'>): TutorApplication | null => {
+  // Check for duplicate applications
+  const existingApp = checkDuplicateApplication(application.userEmail);
+  if (existingApp) {
+    console.warn('Duplicate application:', {
+      existingId: existingApp.id,
+      existingStatus: existingApp.status,
+      submittedAt: existingApp.submittedAt
+    });
+    return null; // Return null to indicate duplicate
+  }
+
+  // Check if recently rejected
+  const recentRejection = getRecentRejectionReason(application.userEmail);
+  if (recentRejection) {
+    console.warn('Recently rejected application:', recentRejection);
+    return null; // Return null to indicate cannot reapply yet
+  }
+
   const applications = getApplications();
   
   const newApplication: TutorApplication = {

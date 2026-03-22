@@ -12,7 +12,7 @@ import { motion } from 'motion/react';
 import { GraduationCap, ArrowLeft, Upload, CheckCircle2, Sparkles, Rocket, User, Briefcase, FileText, Camera, Crown } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
-import { submitApplication } from '../services/applicationsService';
+import { submitApplication, checkDuplicateApplication, getRecentRejectionReason } from '../services/applicationsService';
 import DashboardLayout from '../components/DashboardLayout';
 
 export default function TutorApplicationPage() {
@@ -75,7 +75,7 @@ export default function TutorApplicationPage() {
 
   const handleSubmit = useCallback(() => {
     // Save to applications service so admin sees it
-    submitApplication({
+    const result = submitApplication({
       userId: user?.id || `applicant-${Date.now()}`,
       userName: form.fullName,
       userEmail: form.email,
@@ -84,6 +84,26 @@ export default function TutorApplicationPage() {
       submittedAt: new Date().toISOString().split('T')[0],
       message: `Expertise: ${form.expertise} | ${form.yearsExperience} years experience\n\n${form.motivation}\n\nBio: ${form.bio}`,
     });
+
+    // Handle submission result
+    if (result === null) {
+      // Check if duplicate or recently rejected
+      const existingApp = checkDuplicateApplication(form.email);
+      if (existingApp) {
+        toast.error('Application Already Submitted', {
+          description: `You already have an application submitted on ${existingApp.submittedAt}. Please wait for the admin to review it.`
+        });
+        return;
+      }
+
+      const recentRejection = getRecentRejectionReason(form.email);
+      if (recentRejection) {
+        toast.error('Cannot Reapply Yet', {
+          description: 'Your previous application was rejected. Please wait 30 days before reapplying.'
+        });
+        return;
+      }
+    }
 
     // Confetti
     const duration = 3000;
