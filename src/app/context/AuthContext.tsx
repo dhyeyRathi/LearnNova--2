@@ -129,7 +129,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    // Return a default context instead of throwing
+    console.warn('useAuth called outside AuthProvider, returning default');
+    return {
+      user: null,
+      login: async () => ({ success: false, error: 'Auth not initialized' }),
+      signup: async () => ({ success: false, error: 'Auth not initialized' }),
+      logout: async () => {},
+      isAuthenticated: false,
+      isLoading: false,
+    };
   }
   return context;
 };
