@@ -43,7 +43,7 @@ Score: ${score}/${maxScore} (${scorePercent}%)
 Correct: ${correctCount}/${answers.length}
 
 Quiz details:
-${answers.map((a, i) => `Q${i + 1}: "${a.question}" - I answered "${a.selected}" (${a.is_correct ? 'Correct ✓' : 'Incorrect ✗', Answer: "${a.correct}")`).join('\n')}
+${answers.map((a, i) => `Q${i + 1}: "${a.question}" - I answered "${a.selected}" (${a.is_correct ? 'Correct ✓' : 'Incorrect ✗'}) - Correct Answer: "${a.correct}"`).join('\n')}
 
 Please provide detailed feedback and insights on my performance.`;
 
