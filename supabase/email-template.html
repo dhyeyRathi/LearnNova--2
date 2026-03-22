@@ -1,79 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email - LearnNova</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; background-color: #f8f9fa;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        
-        <!-- Header -->
-        <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 40px 30px; text-align: center;">
-            <h1 style="font-size: 28px; font-weight: 700; color: white; margin: 0; letter-spacing: 1px;">LearnNova</h1>
-            <p style="font-size: 14px; color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0;">Learning Made Easy</p>
-        </div>
+<body style="margin:0; padding:0; background-color:#f8f9fa; font-family:Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8f9fa;">
+        <tr>
+            <td align="center" style="padding:20px;">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding:40px 30px; text-align:center;">
+                            <h1 style="font-size:28px; font-weight:700; color:white; margin:0; letter-spacing:1px;">LearnNova</h1>
+                            <p style="font-size:14px; color:rgba(255,255,255,0.9); margin:8px 0 0 0;">Learning Made Easy</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding:40px 30px; text-align:center;">
+                            <h2 style="font-size:24px; font-weight:600; color:#1f2937; margin:0 0 16px 0;">Verify Your Email</h2>
+                            <p style="font-size:16px; color:#6b7280; margin:0 0 32px 0; line-height:1.6;">Welcome to LearnNova! Please verify your email address to get started.</p>
+                            
+                            <!-- CTA Button -->
+                            <table cellpadding="0" cellspacing="0" style="margin:32px auto;">
+                                <tr>
+                                    <td style="background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border-radius:8px; padding:14px 40px;">
+                                        <a href="{{ .ConfirmationURL }}" style="color:white; text-decoration:none; font-size:16px; font-weight:600; display:block;">Verify Email Address</a>
+                                    </td>
+                                </tr>
+                            </table>
 
-        <!-- Main Content -->
-        <div style="padding: 40px 30px; text-align: center;">
-            <h2 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0 0 16px 0;">Verify Your Email</h2>
-            <p style="font-size: 16px; color: #6b7280; margin: 0 0 32px 0; line-height: 1.6;">
-                Welcome to LearnNova! We're excited to have you on board. Please verify your email address to get started with your learning journey.
-            </p>
+                            <!-- Info Box -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef2f2; border-left:4px solid #ef4444; margin:32px 0;">
+                                <tr>
+                                    <td style="padding:16px;">
+                                        <p style="font-size:14px; font-weight:700; color:#dc2626; margin:0 0 8px 0;">⏱️ Link Expires In 24 Hours</p>
+                                        <p style="font-size:14px; color:#7f1d1d; margin:0; line-height:1.5;">If you didn't request this, you can safely ignore this email.</p>
+                                    </td>
+                                </tr>
+                            </table>
 
-            <!-- CTA Button -->
-            <div style="margin: 32px 0;">
-                <a href="{{ .ConfirmationURL }}" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
-                    Verify Email Address
-                </a>
-            </div>
+                            <!-- Fallback -->
+                            <p style="font-size:13px; color:#9ca3af; margin:20px 0;">Or copy this link:<br><a href="{{ .ConfirmationURL }}" style="color:#ef4444; word-break:break-all;">{{ .ConfirmationURL }}</a></p>
 
-            <!-- Process Steps -->
-            <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; padding: 20px; margin: 24px 0; border-radius: 8px; text-align: left;">
-                <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0 0 12px 0;">📋 What Happens Next</p>
-                <div style="font-size: 13px; color: #1e40af; margin: 8px 0; line-height: 1.5;">
-                    <strong>Step 1:</strong> Click the "Verify Email Address" button above
-                </div>
-                <div style="font-size: 13px; color: #1e40af; margin: 8px 0; line-height: 1.5;">
-                    <strong>Step 2:</strong> You'll see a confirmation page showing your email is verified
-                </div>
-                <div style="font-size: 13px; color: #1e40af; margin: 8px 0; line-height: 1.5;">
-                    <strong>Step 3:</strong> You'll be automatically redirected to the login page
-                </div>
-                <div style="font-size: 13px; color: #1e40af; margin: 8px 0; line-height: 1.5;">
-                    <strong>Step 4:</strong> Log in with your email and password to start learning!
-                </div>
-            </div>
+                            <!-- Security -->
+                            <p style="font-size:12px; color:#047857; background:#ecfdf5; padding:8px 12px; border-radius:6px; display:inline-block; margin-top:16px;">🔒 Secure Verification</p>
+                        </td>
+                    </tr>
 
-            <!-- Info Box -->
-            <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 32px 0; text-align: left; border-radius: 4px;">
-                <p style="font-size: 14px; font-weight: 700; color: #dc2626; margin: 0 0 8px 0;">⏱️ Link Expires In</p>
-                <p style="font-size: 14px; color: #7f1d1d; margin: 0; line-height: 1.5;">This verification link will expire in 24 hours. If you didn't request this, you can safely ignore this email.</p>
-            </div>
-
-            <!-- Fallback Link -->
-            <p style="font-size: 14px; color: #9ca3af; margin-top: 20px; word-break: break-all;">
-                Or copy and paste this link in your browser:<br>
-                <a href="{{ .ConfirmationURL }}" style="color: #ef4444; text-decoration: none; font-weight: 500;">{{ .ConfirmationURL }}</a>
-            </p>
-
-            <!-- Security Badge -->
-            <div style="display: inline-block; background-color: #ecfdf5; color: #047857; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-top: 16px;">
-                🔒 Secure Verification
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div style="background-color: #f3f4f6; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-            <p style="font-size: 12px; color: #9ca3af; margin: 0; line-height: 1.6;">
-                © {{ .Date | formatDate "2006" }} LearnNova. All rights reserved.<br>
-                This is an automated message, please do not reply to this email.
-            </p>
-            <div style="margin-top: 16px;">
-                <a href="https://learn-nova-odoo.netlify.app" style="color: #6b7280; text-decoration: none; font-size: 12px; margin: 0 12px;">Visit LearnNova</a>
-                <a href="https://learn-nova-odoo.netlify.app/contact" style="color: #6b7280; text-decoration: none; font-size: 12px; margin: 0 12px;">Contact Support</a>
-            </div>
-        </div>
-    </div>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color:#f3f4f6; padding:30px; text-align:center; border-top:1px solid #e5e7eb;">
+                            <p style="font-size:12px; color:#9ca3af; margin:0; line-height:1.6;">© LearnNova. All rights reserved.<br>This is an automated message, please do not reply.</p>
+                            <p style="margin-top:12px; font-size:12px;">
+                                <a href="https://learn-nova-odoo.netlify.app" style="color:#6b7280; text-decoration:none; margin:0 12px;">Visit LearnNova</a>
+                                <a href="https://learn-nova-odoo.netlify.app/contact" style="color:#6b7280; text-decoration:none; margin:0 12px;">Contact Support</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
