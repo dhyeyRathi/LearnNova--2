@@ -1,6 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+// Check if API key exists
+if (!import.meta.env.VITE_GEMINI_API_KEY) {
+  console.error('❌ CRITICAL: VITE_GEMINI_API_KEY is not set in .env.local');
+}
+
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || 'dummy-key');
+console.log('✅ Gemini Service initialized');
 
 // System prompt defining strict rules for the AI Assistant
 const SYSTEM_PROMPT = `You are LearnNova's empathetic and intelligent learning assistant. You are helping students on their educational journey with kindness, clarity, and professionalism.
@@ -98,6 +104,11 @@ export async function initializeChat() {
 
 export async function getChatResponse(userMessage: string): Promise<string> {
   try {
+    if (!import.meta.env.VITE_GEMINI_API_KEY) {
+      console.error('❌ Gemini API key missing');
+      return 'I need a Gemini API key to work. Please check your .env.local file.';
+    }
+
     const model = genAI.getGenerativeModel({
       model: 'gemini-3.1-flash-lite-preview',
       systemInstruction: SYSTEM_PROMPT,

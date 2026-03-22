@@ -50,24 +50,29 @@ export async function detectToolUsage(userMessage: string): Promise<{
   response?: string;
 }> {
   try {
+    console.log('🔍 Detecting tool usage for:', userMessage);
+    
     // Send to Gemini for tool detection
     const detectionPrompt = `${TOOL_DETECTION_PROMPT}\n\nUser message: "${userMessage}"\n\nRespond with ONLY valid JSON.`;
     
     const response = await getChatResponse(detectionPrompt);
+    console.log('📩 Tool detection response:', response);
     
     // Parse JSON response
     try {
       const parsed = JSON.parse(response);
+      console.log('✅ Parsed tool detection:', parsed);
       return parsed;
     } catch {
       // If parsing fails, assume no tool needed
+      console.log('⚠️ Could not parse JSON, treating as no-tool response');
       return {
         should_use_tool: false,
         response: response,
       };
     }
   } catch (error) {
-    console.error('Tool detection error:', error);
+    console.error('🔴 Tool detection error:', error);
     return {
       should_use_tool: false,
       response: 'I encountered an error processing your request. Please try again.',
@@ -91,8 +96,8 @@ export async function executeTool(toolName: string, toolInput: any): Promise<Too
       return { success: false, error: `Invalid input: ${validation.error.message}` };
     }
 
-    // Execute tool
-    const result = await tool.execute(validation.data);
+    // Execute tool with validated data (cast to any to handle different tool input types)
+    const result = await (tool.execute as (input: any) => Promise<ToolResult>)(validation.data);
     return result;
   } catch (error) {
     return { success: false, error: String(error) };
