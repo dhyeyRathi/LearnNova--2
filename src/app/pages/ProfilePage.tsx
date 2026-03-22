@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
@@ -51,6 +51,8 @@ export default function ProfilePage() {
       toast.error('Name cannot be empty');
       return;
     }
+    // Update user context with new name
+    updateUser({ name: editName });
     toast.success('Profile updated successfully');
     setIsEditing(false);
   };
