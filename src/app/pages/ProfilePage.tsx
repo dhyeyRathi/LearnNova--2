@@ -12,7 +12,7 @@ import { Progress } from '../components/ui/progress';
 import { enrollments, userProgress, courses, lessons, getBadgeLevel, badges } from '../data/mockData';
 import {
   User, Mail, Phone, FileText, Camera, Save, BookOpen, Trophy,
-  Clock, Target, TrendingUp, Award, Pencil, X, Check
+  Clock, Target, TrendingUp, Award, Pencil, X, Check, Edit2, AlertCircle
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
@@ -46,6 +46,11 @@ export default function ProfilePage() {
   const progressToNext = nextBadge ? Math.min(100, Math.round((user.points / nextBadge.minPoints) * 100)) : 100;
 
   const handleSave = () => {
+    // Validate name
+    if (!editName.trim()) {
+      toast.error('Name cannot be empty');
+      return;
+    }
     toast.success('Profile updated successfully');
     setIsEditing(false);
   };
@@ -76,120 +81,240 @@ export default function ProfilePage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Cover + Avatar */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="relative mb-8">
-          <div className="h-36 sm:h-44 rounded-xl overflow-hidden bg-gradient-to-r from-red-400 to-amber-500">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Section with Cover */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="relative mb-12">
+          <div className="h-40 sm:h-48 rounded-2xl overflow-hidden bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1679193559674-860ef78899bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMG1pbmltYWwlMjBncmFkaWVudCUyMGJhY2tncm91bmR8ZW58MXx8fHwxNzc0MTI4NjgxfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
               alt="Cover"
-              className="w-full h-full object-cover opacity-40"
+              className="w-full h-full object-cover opacity-60"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           </div>
 
-          <div className="absolute -bottom-10 left-6 sm:left-8">
-            <div className="relative">
-              <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-white shadow-md">
+          {/* Avatar and Edit Button */}
+          <div className="absolute -bottom-12 left-6 sm:left-8">
+            <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="relative">
+              <Avatar className="h-28 w-28 sm:h-32 sm:w-32 border-4 border-white shadow-2xl ring-4 ring-indigo-100">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="bg-[#2C3E6B] text-white text-2xl font-medium">{user.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-4xl font-bold">{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <button className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#2C3E6B] text-white flex items-center justify-center shadow-sm hover:bg-[#243356] transition-colors">
-                <Camera className="w-3.5 h-3.5" />
+              <button className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-white border-2 border-white shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all">
+                <Camera className="w-4.5 h-4.5 text-gray-600" />
               </button>
-            </div>
+            </motion.div>
           </div>
 
-          <div className="absolute -bottom-10 right-6 sm:right-8">
-            {!isEditing ? (
-              <Button onClick={() => setIsEditing(true)} variant="outline" className="rounded-lg text-[13px] border-[#E5E2DC] h-9 px-4">
-                <Pencil className="w-3.5 h-3.5 mr-1.5" /> Edit Profile
-              </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Button onClick={() => setIsEditing(false)} variant="outline" className="rounded-lg text-[13px] border-[#E5E2DC] h-9 px-3">
-                  <X className="w-3.5 h-3.5 mr-1" /> Cancel
+          {/* Edit Profile Button */}
+          <div className="absolute -bottom-12 right-6 sm:right-8">
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+              {!isEditing ? (
+                <Button 
+                  onClick={() => setIsEditing(true)} 
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-6 h-10 shadow-lg flex items-center gap-2"
+                >
+                  <Edit2 className="w-4 h-4" /> Edit Profile
                 </Button>
-                <Button onClick={handleSave} className="bg-[#2C3E6B] hover:bg-[#243356] text-white rounded-lg text-[13px] h-9 px-3">
-                  <Save className="w-3.5 h-3.5 mr-1" /> Save
-                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => setIsEditing(false)} 
+                    variant="outline" 
+                    className="rounded-full h-10 px-5 border-gray-200"
+                  >
+                    <X className="w-4 h-4 mr-1" /> Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleSave} 
+                    className="bg-green-600 hover:bg-green-700 text-white rounded-full h-10 px-5 flex items-center gap-2"
+                  >
+                    <Check className="w-4 h-4" /> Save
+                  </Button>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Profile Header Section */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="mt-16 mb-10 px-2">
+          <div className="flex flex-col gap-3">
+            {isEditing ? (
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Full Name</Label>
+                <Input 
+                  value={editName} 
+                  onChange={e => setEditName(e.target.value)} 
+                  className="h-12 rounded-xl border-2 border-indigo-200 bg-white text-lg font-bold focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
+            ) : (
+              <div>
+                <h1 className="text-4xl sm:text-5xl font-bold text-gray-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  {editName}
+                </h1>
+              </div>
+            )}
+            
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <Badge className="w-fit bg-indigo-100 text-indigo-700 font-semibold capitalize px-4 py-1 rounded-full text-sm">
+                {user.role}
+              </Badge>
+              <p className="text-gray-500 font-medium">{user.email}</p>
+            </div>
+            
+            {user.bio && !isEditing && (
+              <p className="text-gray-600 text-base max-w-2xl">{user.bio}</p>
             )}
           </div>
         </motion.div>
 
-        {/* Name + Role */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="mt-14 mb-8 px-2">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
-            <h1 className="text-2xl font-semibold text-[#1A1F2E]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{user.name}</h1>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-[#2C3E6B]/[0.07] text-[#2C3E6B] capitalize w-fit">{user.role}</span>
-          </div>
-          <p className="text-sm text-[#7A766F]">{user.email}</p>
-          {user.bio && <p className="text-sm text-[#7A766F] mt-1">{user.bio}</p>}
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        {/* Stats Grid */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 0.15 }} 
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10"
+        >
           {stats.map((stat, i) => (
-            <Card key={stat.label} className="p-4 rounded-lg border border-[#E5E2DC] bg-white">
-              <div className="w-8 h-8 rounded-lg bg-[#2C3E6B]/[0.06] flex items-center justify-center mb-2.5">
-                <stat.icon className="w-4 h-4 text-[#2C3E6B]" />
-              </div>
-              <p className="text-xl font-semibold text-[#1A1F2E]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{stat.value}</p>
-              <p className="text-xs text-[#7A766F]">{stat.label}</p>
-            </Card>
+            <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.05 }}>
+              <Card className="p-5 rounded-xl border border-gray-200 bg-white hover:shadow-md transition-shadow">
+                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mb-3">
+                  <stat.icon className="w-5 h-5 text-indigo-600" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  {stat.value}
+                </p>
+                <p className="text-xs text-gray-600 font-medium mt-1">{stat.label}</p>
+              </Card>
+            </motion.div>
           ))}
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Profile info */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-2">
-            <Card className="p-6 rounded-xl border border-[#E5E2DC] bg-white">
-              <h2 className="text-base font-semibold text-[#1A1F2E] mb-5" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Personal Information</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content Area */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ delay: 0.2 }} 
+            className="lg:col-span-2 space-y-6"
+          >
+            {/* Personal Information Card */}
+            <Card className="p-8 rounded-2xl border border-gray-200 bg-white shadow-sm">
+              <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200">
+                <User className="w-5 h-5 text-indigo-600" />
+                <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Personal Information
+                </h2>
+              </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-[13px] text-[#7A766F] flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> Full Name</Label>
+              <div className="space-y-6">
+                {/* Name Field - Always Editable in Edit Mode */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <User className="w-4 h-4 text-indigo-600" /> 
+                        Full Name
+                      </Label>
+                      {!isEditing && (
+                        <button 
+                          onClick={() => setIsEditing(true)} 
+                          className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
                     {isEditing ? (
-                      <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-10 rounded-lg border-[#E5E2DC] bg-[#F7F6F3] text-sm" />
+                      <Input 
+                        value={editName} 
+                        onChange={e => setEditName(e.target.value)} 
+                        className="h-11 rounded-lg border-2 border-indigo-200 bg-white text-sm font-semibold focus:ring-2 focus:ring-indigo-500" 
+                      />
                     ) : (
-                      <p className="text-sm font-medium text-[#1A1F2E] px-3 py-2 bg-[#F7F6F3] rounded-lg">{user.name}</p>
+                      <div className="h-11 px-4 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 flex items-center">
+                        <p className="text-sm font-semibold text-gray-900">{editName}</p>
+                      </div>
                     )}
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[13px] text-[#7A766F] flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> Email</Label>
-                    <p className="text-sm font-medium text-[#1A1F2E] px-3 py-2 bg-[#F7F6F3] rounded-lg">{user.email}</p>
+
+                  <div className="space-y-2.5">
+                    <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-indigo-600" /> 
+                      Email
+                    </Label>
+                    <div className="h-11 px-4 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 flex items-center">
+                      <p className="text-sm font-semibold text-gray-900">{user.email}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-[13px] text-[#7A766F] flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> Phone</Label>
+
+                {/* Phone Field */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2.5">
+                    <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-indigo-600" /> 
+                      Phone
+                    </Label>
                     {isEditing ? (
-                      <Input value={editPhone} onChange={e => setEditPhone(e.target.value)} placeholder="Add phone number" className="h-10 rounded-lg border-[#E5E2DC] bg-[#F7F6F3] text-sm" />
+                      <Input 
+                        value={editPhone} 
+                        onChange={e => setEditPhone(e.target.value)} 
+                        placeholder="Add phone number" 
+                        className="h-11 rounded-lg border-2 border-indigo-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500" 
+                      />
                     ) : (
-                      <p className="text-sm text-[#1A1F2E] px-3 py-2 bg-[#F7F6F3] rounded-lg">{user.phone || 'Not provided'}</p>
+                      <div className="h-11 px-4 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 flex items-center">
+                        <p className="text-sm text-gray-900">{user.phone || 'Not provided'}</p>
+                      </div>
                     )}
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[13px] text-[#7A766F] flex items-center gap-1.5"><Award className="w-3.5 h-3.5" /> Role</Label>
-                    <p className="text-sm font-medium text-[#1A1F2E] px-3 py-2 bg-[#F7F6F3] rounded-lg capitalize">{user.role}</p>
+
+                  <div className="space-y-2.5">
+                    <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <Award className="w-4 h-4 text-indigo-600" /> 
+                      Role
+                    </Label>
+                    <div className="h-11 px-4 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 flex items-center">
+                      <span className="text-sm font-semibold text-gray-900 capitalize">{user.role}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[13px] text-[#7A766F] flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Bio</Label>
+
+                {/* Bio Field */}
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-indigo-600" /> 
+                    Bio
+                  </Label>
                   {isEditing ? (
-                    <textarea value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Tell us about yourself..." className="w-full h-24 px-3 py-2 rounded-lg bg-[#F7F6F3] border border-[#E5E2DC] text-sm resize-none focus:ring-1 focus:ring-[#2C3E6B]/15 focus:border-[#2C3E6B]/30 outline-none" />
+                    <textarea 
+                      value={editBio} 
+                      onChange={e => setEditBio(e.target.value)} 
+                      placeholder="Tell us about yourself..." 
+                      className="w-full h-24 px-4 py-3 rounded-lg bg-white border-2 border-indigo-200 text-sm resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none" 
+                    />
                   ) : (
-                    <p className="text-sm text-[#1A1F2E] px-3 py-2 bg-[#F7F6F3] rounded-lg min-h-[60px]">{user.bio || 'No bio added yet.'}</p>
+                    <div className="min-h-24 px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-900">{user.bio || 'No bio added yet.'}</p>
+                    </div>
                   )}
                 </div>
               </div>
             </Card>
 
-            {/* Recent courses (learner only) */}
+            {/* Enrolled/Created Courses Section */}
             {user.role === 'learner' && userEnrollments.length > 0 && (
-              <Card className="p-6 rounded-xl border border-[#E5E2DC] bg-white mt-6">
-                <h2 className="text-base font-semibold text-[#1A1F2E] mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Enrolled Courses</h2>
+              <Card className="p-8 rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200">
+                  <BookOpen className="w-5 h-5 text-indigo-600" />
+                  <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Enrolled Courses
+                  </h2>
+                  <Badge className="ml-auto bg-indigo-100 text-indigo-700">{userEnrollments.length}</Badge>
+                </div>
                 <div className="space-y-3">
                   {userEnrollments.map(enrollment => {
                     const course = courses.find(c => c.id === enrollment.courseId);
@@ -198,114 +323,127 @@ export default function ProfilePage() {
                     const lessonCount = lessons.filter(l => l.courseId === course.id).length;
                     const pct = prog && lessonCount > 0 ? Math.round((prog.completedLessons.length / lessonCount) * 100) : 0;
                     return (
-                      <div key={enrollment.courseId} className="flex items-center gap-3 p-3 rounded-lg bg-[#F7F6F3] hover:bg-[#F0EEEA] transition-colors cursor-pointer" onClick={() => navigate(`/course/${course.id}`)}>
-                        <img src={course.coverImage} alt={course.title} className="w-12 h-9 rounded object-cover flex-shrink-0" />
+                      <motion.div 
+                        key={enrollment.courseId} 
+                        whileHover={{ scale: 1.01 }}
+                        className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 hover:shadow-md transition-all cursor-pointer border border-gray-200" 
+                        onClick={() => navigate(`/course/${course.id}`)}
+                      >
+                        <img src={course.coverImage} alt={course.title} className="w-14 h-10 rounded-lg object-cover flex-shrink-0 shadow-sm" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[#1A1F2E] truncate">{course.title}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="flex-1 h-1 bg-[#E5E2DC] rounded-full overflow-hidden">
-                              <div className="h-full bg-[#2C3E6B] rounded-full" style={{ width: `${pct}%` }} />
+                          <p className="text-sm font-semibold text-gray-900 truncate">{course.title}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <div className="flex-1 h-1.5 bg-gray-300 rounded-full overflow-hidden">
+                              <motion.div 
+                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{ duration: 0.8 }}
+                              />
                             </div>
-                            <span className="text-[11px] text-[#7A766F] font-medium">{pct}%</span>
+                            <span className="text-xs font-bold text-gray-700">{pct}%</span>
                           </div>
                         </div>
                         {enrollment.completed && (
-                          <Badge className="bg-[#2C3E6B]/[0.08] text-[#2C3E6B] text-[10px] font-medium rounded">Done</Badge>
+                          <Badge className="bg-green-100 text-green-700 rounded-lg font-semibold">Done</Badge>
                         )}
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
               </Card>
             )}
 
-            {/* Tutor courses */}
+            {/* Tutor Courses */}
             {user.role === 'tutor' && tutoredCourses.length > 0 && (
-              <Card className="p-6 rounded-xl border border-[#E5E2DC] bg-white mt-6">
-                <h2 className="text-base font-semibold text-[#1A1F2E] mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Your Courses</h2>
+              <Card className="p-8 rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200">
+                  <BookOpen className="w-5 h-5 text-indigo-600" />
+                  <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Your Courses
+                  </h2>
+                  <Badge className="ml-auto bg-indigo-100 text-indigo-700">{tutoredCourses.length}</Badge>
+                </div>
                 <div className="space-y-3">
                   {tutoredCourses.map(course => (
-                    <div key={course.id} className="flex items-center gap-3 p-3 rounded-lg bg-[#F7F6F3] hover:bg-[#F0EEEA] transition-colors cursor-pointer" onClick={() => navigate(`/admin/courses/${course.id}/edit`)}>
-                      <img src={course.coverImage} alt={course.title} className="w-12 h-9 rounded object-cover flex-shrink-0" />
+                    <motion.div 
+                      key={course.id} 
+                      whileHover={{ scale: 1.01 }}
+                      className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 hover:shadow-md transition-all cursor-pointer border border-gray-200" 
+                      onClick={() => navigate(`/admin/courses/${course.id}/edit`)}
+                    >
+                      <img src={course.coverImage} alt={course.title} className="w-14 h-10 rounded-lg object-cover flex-shrink-0 shadow-sm" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#1A1F2E] truncate">{course.title}</p>
-                        <p className="text-[11px] text-[#7A766F]">{course.views} views · {course.duration}</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">{course.title}</p>
+                        <p className="text-xs text-gray-600 mt-1">{course.views} views · {course.duration}</p>
                       </div>
-                      <Badge className={`text-[10px] font-medium rounded ${course.published ? 'bg-[#2C3E6B]/[0.08] text-[#2C3E6B]' : 'bg-[#7A766F]/10 text-[#7A766F]'}`}>
+                      <Badge className={`rounded-lg font-semibold ${course.published ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-700'}`}>
                         {course.published ? 'Published' : 'Draft'}
                       </Badge>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </Card>
             )}
           </motion.div>
 
-          {/* Right sidebar */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="space-y-5">
-            {/* Badge card (learner) */}
+          {/* Sidebar */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="space-y-6">
+            {/* Badge Card */}
             {user.role === 'learner' && (
-              <Card className="p-5 rounded-xl border border-[#E5E2DC] bg-white">
-                <h3 className="text-sm font-semibold text-[#1A1F2E] mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Current Level</h3>
-                <div className="text-center mb-4">
-                  <div className="w-16 h-16 rounded-xl bg-[#2C3E6B]/[0.06] flex items-center justify-center mx-auto mb-2">
-                    <span className="text-3xl">{badge.icon}</span>
+              <Card className="p-6 rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <h3 className="text-sm font-bold text-gray-900 mb-6 uppercase tracking-wide" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Current Level
+                </h3>
+                <div className="text-center mb-6">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mx-auto mb-3 shadow-sm">
+                    <span className="text-4xl">{badge.icon}</span>
                   </div>
-                  <p className="text-base font-semibold text-[#2C3E6B]">{badge.level}</p>
-                  <p className="text-xs text-[#7A766F]">{user.points} points earned</p>
+                  <p className="text-lg font-bold text-indigo-600">{badge.level}</p>
+                  <p className="text-xs text-gray-600 mt-1 font-semibold">{user.points} points earned</p>
                 </div>
                 {nextBadge && (
-                  <div>
-                    <div className="flex items-center justify-between text-[11px] mb-1.5">
-                      <span className="text-[#7A766F]">Next: {nextBadge.level} {nextBadge.icon}</span>
-                      <span className="font-medium text-[#2C3E6B]">{user.points}/{nextBadge.minPoints}</span>
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span className="text-gray-600 font-semibold">Next: {nextBadge.level} {nextBadge.icon}</span>
+                      <span className="font-bold text-indigo-600">{user.points}/{nextBadge.minPoints}</span>
                     </div>
-                    <div className="h-1.5 bg-[#E5E2DC] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#2C3E6B] rounded-full transition-all" style={{ width: `${progressToNext}%` }} />
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <motion.div 
+                        className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progressToNext}%` }}
+                        transition={{ duration: 1 }}
+                      />
                     </div>
                   </div>
                 )}
               </Card>
             )}
 
-            {/* All badges */}
-            {user.role === 'learner' && (
-              <Card className="p-5 rounded-xl border border-[#E5E2DC] bg-white">
-                <h3 className="text-sm font-semibold text-[#1A1F2E] mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>All Badges</h3>
-                <div className="space-y-2">
-                  {badges.map(b => {
-                    const unlocked = user.points >= b.minPoints;
-                    return (
-                      <div key={b.level} className={`flex items-center gap-3 p-2 rounded-lg ${unlocked ? 'bg-[#2C3E6B]/[0.04]' : 'opacity-40'}`}>
-                        <span className="text-lg">{b.icon}</span>
-                        <div className="flex-1">
-                          <p className={`text-xs font-medium ${unlocked ? 'text-[#2C3E6B]' : 'text-[#7A766F]'}`}>{b.level}</p>
-                          <p className="text-[10px] text-[#7A766F]">{b.minPoints} pts required</p>
-                        </div>
-                        {unlocked && <Check className="w-3.5 h-3.5 text-[#2C3E6B]" />}
-                      </div>
-                    );
-                  })}
+            {/* Account Information */}
+            <Card className="p-6 rounded-2xl border border-gray-200 bg-white shadow-sm">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                <Award className="w-4 h-4 text-indigo-600" />
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Account
+                </h3>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 font-semibold">Member since</span>
+                  <span className="text-gray-900 font-bold">Jan 2026</span>
                 </div>
-              </Card>
-            )}
-
-            {/* Account info */}
-            <Card className="p-5 rounded-xl border border-[#E5E2DC] bg-white">
-              <h3 className="text-sm font-semibold text-[#1A1F2E] mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Account</h3>
-              <div className="space-y-2.5 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-[#7A766F]">Member since</span>
-                  <span className="text-[#1A1F2E] font-medium">Jan 2026</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#7A766F]">Status</span>
-                  <span className="text-[#2C3E6B] font-medium">Active</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 font-semibold">Status</span>
+                  <Badge className="bg-green-100 text-green-700 font-bold">Active</Badge>
                 </div>
                 {user.verified !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-[#7A766F]">Verified</span>
-                    <span className={`font-medium ${user.verified ? 'text-[#2C3E6B]' : 'text-[#7A766F]'}`}>{user.verified ? 'Yes' : 'No'}</span>
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span className="text-gray-600 font-semibold">Verified</span>
+                    <span className={`font-bold ${user.verified ? 'text-green-600' : 'text-gray-600'}`}>
+                      {user.verified ? '✓ Yes' : 'No'}
+                    </span>
                   </div>
                 )}
               </div>
