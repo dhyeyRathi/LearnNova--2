@@ -211,7 +211,7 @@ export default function CourseDetailPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BackButton 
           label={user?.role === 'admin' ? "Back to Courses" : (fromMyCourses ? "Back to My Courses" : "Back to Courses")} 
-          to={user?.role === 'admin' ? "/admin/courses" : (fromMyCourses ? "/my-courses" : "/courses")} 
+          to={user?.role === 'admin' ? "/dashboard/admin" : (fromMyCourses ? "/my-courses" : "/courses")} 
         />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
