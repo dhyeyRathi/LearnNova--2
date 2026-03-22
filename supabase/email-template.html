@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - LearnNova</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header-logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+        .header-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 8px 0 0 0;
+        }
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .welcome-text {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0 0 16px 0;
+        }
+        .description {
+            font-size: 16px;
+            color: #6b7280;
+            margin: 0 0 32px 0;
+            line-height: 1.6;
+        }
+        .cta-section {
+            margin: 32px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            text-decoration: none;
+            padding: 14px 40px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        .cta-button:hover {
+            opacity: 0.9;
+        }
+        .fallback-text {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-top: 20px;
+            word-break: break-all;
+        }
+        .fallback-link {
+            color: #ef4444;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .info-box {
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 16px;
+            margin: 32px 0;
+            text-align: left;
+            border-radius: 4px;
+        }
+        .info-box-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #dc2626;
+            margin: 0 0 8px 0;
+        }
+        .info-box-text {
+            font-size: 14px;
+            color: #7f1d1d;
+            margin: 0;
+            line-height: 1.5;
+        }
+        .process-steps {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 20px;
+            margin: 24px 0;
+            border-radius: 8px;
+            text-align: left;
+        }
+        .steps-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e40af;
+            margin: 0 0 12px 0;
+        }
+        .step-item {
+            font-size: 13px;
+            color: #1e40af;
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        .step-item strong {
+            font-weight: 700;
+        }
+        .footer {
+            background-color: #f3f4f6;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        .footer-text {
+            font-size: 12px;
+            color: #9ca3af;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .footer-links {
+            margin-top: 16px;
+        }
+        .footer-link {
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 12px;
+            margin: 0 12px;
+        }
+        .security-badge {
+            display: inline-block;
+            background-color: #ecfdf5;
+            color: #047857;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 16px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 0;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .header {
+                padding: 30px 20px;
+            }
+            .header-logo {
+                font-size: 24px;
+            }
+            .welcome-text {
+                font-size: 20px;
+            }
+            .cta-button {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="header-logo">LearnNova</h1>
+            <p class="header-subtitle">Learning Made Easy</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <h2 class="welcome-text">Verify Your Email</h2>
+            <p class="description">
+                Welcome to LearnNova! We're excited to have you on board. Please verify your email address to get started with your learning journey.
+            </p>
+
+            <!-- CTA Button -->
+            <div class="cta-section">
+                <a href="{{ .ConfirmationURL }}" class="cta-button">Verify Email Address</a>
+            </div>
+
+            <!-- Process Steps -->
+            <div class="process-steps">
+                <p class="steps-title">📋 What Happens Next</p>
+                <div class="step-item">
+                    <strong>Step 1:</strong> Click the "Verify Email Address" button above
+                </div>
+                <div class="step-item">
+                    <strong>Step 2:</strong> You'll see a confirmation page showing your email is verified
+                </div>
+                <div class="step-item">
+                    <strong>Step 3:</strong> You'll be automatically redirected to the login page
+                </div>
+                <div class="step-item">
+                    <strong>Step 4:</strong> Log in with your email and password to start learning!
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="info-box">
+                <p class="info-box-title">⏱️ Link Expires In</p>
+                <p class="info-box-text">This verification link will expire in 24 hours. If you didn't request this, you can safely ignore this email.</p>
+            </div>
+
+            <!-- Fallback Link -->
+            <p class="fallback-text">
+                Or copy and paste this link in your browser:<br>
+                <a href="{{ .ConfirmationURL }}" class="fallback-link">{{ .ConfirmationURL }}</a>
+            </p>
+
+            <!-- Security Badge -->
+            <div class="security-badge">
+                🔒 Secure Verification
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">
+                © {{ .Date | formatDate "2006" }} LearnNova. All rights reserved.<br>
+                This is an automated message, please do not reply to this email.
+            </p>
+            <div class="footer-links">
+                <a href="https://learn-nova-odoo.netlify.app" class="footer-link">Visit LearnNova</a>
+                <a href="https://learn-nova-odoo.netlify.app/contact" class="footer-link">Contact Support</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

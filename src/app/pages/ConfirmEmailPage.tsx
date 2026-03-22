@@ -96,11 +96,23 @@ export default function ConfirmEmailPage() {
     verifyEmailConfirmation();
   }, [navigate]);
 
-  // Redirect immediately on successful verification
+  // Handle countdown and auto-redirect on success
   useEffect(() => {
     if (!isVerified) return;
-    navigate('/login', { state: { email } });
-  }, [isVerified, navigate, email]);
+    
+    const interval = setInterval(() => {
+      setRedirectCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          navigate('/login');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isVerified, navigate]);
 
   const handleResendEmail = async () => {
     if (!email || !canResend) return;
@@ -139,6 +151,44 @@ export default function ConfirmEmailPage() {
           className="w-20 h-20"
         >
           <Loader2 className="w-20 h-20 text-red-500" />
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (isVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-white rounded-2xl border border-green-200 p-8 shadow-lg text-center">
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="flex justify-center mb-8"
+            >
+              <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-green-500" />
+              </div>
+            </motion.div>
+            <h1 className="text-3xl font-bold mb-2 text-green-600">Email Verified!</h1>
+            <p className="text-slate-600 mb-8">Your email has been successfully confirmed. You're all set!</p>
+            
+            <Button 
+              onClick={handleProceedToLogin}
+              className="w-full bg-red-500 hover:bg-red-600 text-white rounded-xl h-12 font-semibold text-lg mb-4"
+            >
+              Go to Login
+            </Button>
+            
+            <p className="text-sm text-slate-500">
+              Redirecting in <span className="font-semibold text-slate-700">{redirectCountdown}</span> seconds...
+            </p>
+          </div>
         </motion.div>
       </div>
     );
