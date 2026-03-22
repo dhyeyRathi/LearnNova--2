@@ -166,15 +166,11 @@ export default function ConfirmEmailPage() {
           className="w-full max-w-md"
         >
           <div className="bg-white rounded-2xl border border-green-200 p-8 shadow-lg text-center">
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="flex justify-center mb-8"
-            >
+            <div className="flex justify-center mb-8">
               <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center">
                 <CheckCircle2 className="w-10 h-10 text-green-500" />
               </div>
-            </motion.div>
+            </div>
             <h1 className="text-3xl font-bold mb-2 text-green-600">Email Verified!</h1>
             <p className="text-slate-600 mb-8">Your email has been successfully confirmed. You're all set!</p>
             
