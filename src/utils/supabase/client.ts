@@ -147,10 +147,10 @@ export async function signUp(email: string, password: string, name: string, role
     }
     if (!user) throw new Error('Sign up failed');
 
-    // Create user profile
+    // Create or update user profile (upsert handles both cases)
     const { data: profile, error: profileError } = await supabase
       .from('users')
-      .insert({
+      .upsert({
         id: user.id,
         email,
         name,
