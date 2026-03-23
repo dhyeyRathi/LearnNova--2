@@ -51,7 +51,7 @@ export default function AboutPage() {
       <section className="max-w-6xl mx-auto px-4 mb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           className="relative rounded-3xl overflow-hidden h-80 shadow-2xl shadow-red-400/10">
-          <img src="https://images.unsplash.com/photo-1758270705518-b61b40527e76?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkaXZlcnNlJTIwc3R1ZGVudHMlMjBsZWFybmluZyUyMGxhcHRvcHxlbnwxfHx8fDE3NzQxMTIxMTF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" alt="Students learning" className="w-full h-full object-cover" />
+          <img src="https://images.unsplash.com/photo-1758270705518-b61b40527e76?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="Students learning" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-red-900/60 flex items-end p-10">
             <h2 className="text-3xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Our mission is to democratize tech education for everyone.</h2>
           </div>

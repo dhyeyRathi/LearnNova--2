@@ -300,7 +300,7 @@ CREATE TABLE IF NOT EXISTS discussion_replies (
 );
 
 -- ============================================================================
--- KV_STORE TABLE (for Figma integration)
+-- KV_STORE TABLE
 -- Key-value store for miscellaneous data
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS kv_store (

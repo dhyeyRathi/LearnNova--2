@@ -119,7 +119,7 @@ This guide provides instructions for setting up the LearnNova database schema in
 - **announcements**: Course announcements
 - **discussions**: Discussion threads
 - **discussion_replies**: Discussion thread replies
-- **kv_store**: Key-value store for miscellaneous data (Figma integration)
+- **kv_store**: Key-value store for miscellaneous data
 
 ## Key Features
 
