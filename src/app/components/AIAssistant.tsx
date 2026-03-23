@@ -103,7 +103,7 @@ export default function AIAssistant() {
   };
 
   return (
-    <>
+    <div data-ai-assistant>
       {/* Floating trigger button */}
       <div className="fixed bottom-6 right-6 z-[60]">
         <AnimatePresence>
@@ -247,6 +247,6 @@ export default function AIAssistant() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

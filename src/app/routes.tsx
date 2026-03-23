@@ -28,6 +28,7 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import MeetingsPage from './pages/instructor/MeetingsPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
 import ProfilePage from './pages/ProfilePage';
+import AIInterviewerPage from './pages/AIInterviewerPage';
 import NotFound from './pages/NotFound';
 
 export const router = createBrowserRouter([
@@ -67,6 +68,7 @@ export const router = createBrowserRouter([
       { path: 'apply-tutor', Component: TutorApplicationPage },
       { path: 'quizzes', Component: QuizzesPage },
       { path: 'leaderboard', Component: LeaderboardPage },
+      { path: 'ai-interviewer', Component: AIInterviewerPage },
       { path: 'profile', Component: ProfilePage },
       { path: 'admin/applications', Component: TutorApplicationsPage },
       { path: '*', Component: NotFound },
