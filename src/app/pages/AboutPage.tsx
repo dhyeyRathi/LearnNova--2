@@ -10,10 +10,10 @@ const team = [
 ];
 
 const values = [
-  { icon: Heart, title: 'Learner First', desc: 'Every decision we make starts with the learner. Their success is our mission.', color: 'bg-red-500' },
-  { icon: Target, title: 'Quality Content', desc: 'We partner with industry experts to deliver courses that truly matter.', color: 'bg-red-500' },
-  { icon: Lightbulb, title: 'Innovation', desc: 'We constantly push boundaries to make learning more engaging and effective.', color: 'bg-red-500' },
-  { icon: Globe, title: 'Accessibility', desc: 'Education should be available to everyone, everywhere, at any time.', color: 'bg-red-500' },
+  { icon: Heart, title: 'Learner First', desc: 'Every decision we make starts with the learner. Their success is our mission.', color: 'bg-purple-600' },
+  { icon: Target, title: 'Quality Content', desc: 'We partner with industry experts to deliver courses that truly matter.', color: 'bg-purple-600' },
+  { icon: Lightbulb, title: 'Innovation', desc: 'We constantly push boundaries to make learning more engaging and effective.', color: 'bg-purple-600' },
+  { icon: Globe, title: 'Accessibility', desc: 'Education should be available to everyone, everywhere, at any time.', color: 'bg-purple-600' },
 ];
 
 const milestones = [
@@ -28,18 +28,18 @@ export default function AboutPage() {
     <DashboardLayout>
       <div className="min-h-screen px-4">
       <section className="relative py-24 px-4 overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-red-100/20 rounded-full blur-3xl animate-float-gentle" />
-        <div className="absolute bottom-10 right-10 w-80 h-80 bg-amber-100/15 rounded-full blur-3xl animate-float-gentle" style={{ animationDelay: '-3s' }} />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-100/20 rounded-full blur-3xl animate-float-gentle" />
+        <div className="absolute bottom-10 right-10 w-80 h-80 bg-violet-100/15 rounded-full blur-3xl animate-float-gentle" style={{ animationDelay: '-3s' }} />
 
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="max-w-4xl mx-auto text-center relative z-10">
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 border border-red-100 mb-6">
-            <Sparkles className="w-4 h-4 text-red-500" />
-            <span className="text-sm text-red-600 font-medium">Our Story</span>
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 border border-purple-100 mb-6">
+            <Sparkles className="w-4 h-4 text-purple-600" />
+            <span className="text-sm text-purple-700 font-medium">Our Story</span>
           </motion.div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             <span className="text-slate-800">Empowering the world to </span>
-            <span className="text-red-500">learn & grow</span>
+            <span className="text-purple-600">learn & grow</span>
           </h1>
           <p className="text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
             LearnNova is an edtech platform built by educators and engineers who believe that quality tech education should be accessible, engaging, and transformative.
@@ -50,9 +50,9 @@ export default function AboutPage() {
       {/* Mission image */}
       <section className="max-w-6xl mx-auto px-4 mb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          className="relative rounded-3xl overflow-hidden h-80 shadow-2xl shadow-red-400/10">
+          className="relative rounded-3xl overflow-hidden h-80 shadow-2xl shadow-purple-500/10">
           <img src="https://images.unsplash.com/photo-1758270705518-b61b40527e76?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="Students learning" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-red-900/60 flex items-end p-10">
+          <div className="absolute inset-0 bg-purple-900/60 flex items-end p-10">
             <h2 className="text-3xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Our mission is to democratize tech education for everyone.</h2>
           </div>
         </motion.div>
@@ -73,7 +73,7 @@ export default function AboutPage() {
               </div>
               <h3 className="text-lg font-bold text-slate-800 mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{v.title}</h3>
               <p className="text-sm text-slate-500 leading-relaxed">{v.desc}</p>
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
             </motion.div>
           ))}
         </div>
@@ -85,17 +85,17 @@ export default function AboutPage() {
           <h2 className="text-4xl font-bold text-slate-800 mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Our Journey</h2>
         </motion.div>
         <div className="relative">
-          <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-red-400 hidden md:block" />
+          <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-purple-500 hidden md:block" />
           <div className="space-y-8">
             {milestones.map((m, i) => (
               <motion.div key={m.year} initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}
                 className={`flex items-center gap-6 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
                 <div className="flex-1 glass-card rounded-2xl p-6">
-                  <span className="text-xs font-bold text-red-500 uppercase tracking-wider">{m.year}</span>
+                  <span className="text-xs font-bold text-purple-600 uppercase tracking-wider">{m.year}</span>
                   <h4 className="text-lg font-bold text-slate-800 mt-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{m.title}</h4>
                   <p className="text-sm text-slate-500 mt-1">{m.desc}</p>
                 </div>
-                <div className="hidden md:flex w-4 h-4 rounded-full bg-red-500 ring-4 ring-white shadow-lg flex-shrink-0" />
+                <div className="hidden md:flex w-4 h-4 rounded-full bg-purple-600 ring-4 ring-white shadow-lg flex-shrink-0" />
                 <div className="flex-1 hidden md:block" />
               </motion.div>
             ))}
@@ -115,12 +115,12 @@ export default function AboutPage() {
               className="glass-card rounded-3xl p-6 text-center group hover:shadow-xl transition-all">
               <div className="relative w-24 h-24 mx-auto mb-4">
                 <img src={t.img} alt={t.name} className="w-full h-full rounded-2xl object-cover ring-4 ring-white shadow-lg group-hover:scale-105 transition-transform" />
-                <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center shadow-md">
+                <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center shadow-md">
                   <Award className="w-4 h-4 text-white" />
                 </div>
               </div>
               <h4 className="font-bold text-slate-800" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{t.name}</h4>
-              <p className="text-sm text-red-500 font-medium mb-2">{t.role}</p>
+              <p className="text-sm text-purple-600 font-medium mb-2">{t.role}</p>
               <p className="text-xs text-slate-500">{t.bio}</p>
             </motion.div>
           ))}
@@ -129,7 +129,7 @@ export default function AboutPage() {
 
       {/* Stats */}
       <section className="max-w-4xl mx-auto px-4 mb-20">
-        <div className="glass-card rounded-3xl p-10 bg-red-500 text-white text-center shadow-2xl shadow-red-500/20">
+        <div className="glass-card rounded-3xl p-10 bg-purple-600 text-white text-center shadow-2xl shadow-purple-600/20">
           <h2 className="text-3xl font-bold mb-8" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>LearnNova in Numbers</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[

@@ -105,9 +105,9 @@ export default function StudentReportPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Yet to Start': return <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-lg text-xs shadow-sm">Yet to Start</Badge>;
-      case 'In Progress': return <Badge className="bg-red-500 text-white rounded-lg text-xs shadow-sm">In Progress</Badge>;
-      case 'Completed': return <Badge className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-lg text-xs shadow-sm">Completed</Badge>;
+      case 'Yet to Start': return <Badge className="bg-purple-500 text-white rounded-lg text-xs shadow-sm">Yet to Start</Badge>;
+      case 'In Progress': return <Badge className="bg-purple-600 text-white rounded-lg text-xs shadow-sm">In Progress</Badge>;
+      case 'Completed': return <Badge className="bg-purple-700 text-white rounded-lg text-xs shadow-sm">Completed</Badge>;
       default: return <Badge variant="secondary">{status}</Badge>;
     }
   };
@@ -122,10 +122,10 @@ export default function StudentReportPage() {
           </Button>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-red-600 via-amber-600 to-orange-600 bg-clip-text text-transparent" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <h1 className="text-3xl font-bold text-purple-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 Student Report
               </h1>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-lg shadow-amber-500/20">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-600 rounded-full shadow-lg shadow-purple-600/20">
                 <Crown className="w-4 h-4 text-white" />
                 <span className="text-xs font-semibold text-white">Admin View</span>
               </div>
@@ -136,11 +136,11 @@ export default function StudentReportPage() {
         {/* Student Profile Card */}
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <Card className="glass-card rounded-3xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-red-100/30 to-amber-100/20 rounded-full -translate-y-1/3 translate-x-1/3" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-100/30 rounded-full -translate-y-1/3 translate-x-1/3" />
             <div className="relative flex items-start gap-6">
               <Avatar className="w-20 h-20 ring-4 ring-white shadow-xl">
                 <AvatarImage src={student.avatar} />
-                <AvatarFallback className="bg-gradient-to-br from-red-500 to-amber-600 text-white text-2xl">
+                <AvatarFallback className="bg-purple-600 text-white text-2xl">
                   {student.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
@@ -151,11 +151,11 @@ export default function StudentReportPage() {
                   <Badge variant="secondary" className="rounded-lg capitalize">{student.role}</Badge>
                 </div>
                 <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-red-50 to-amber-50 rounded-full border border-red-100">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded-full border border-purple-100">
                     <span className="text-lg">{badge.icon}</span>
                     <div className="text-xs">
-                      <p className="font-semibold text-red-700">{badge.level}</p>
-                      <p className="text-red-400">{student.points} pts</p>
+                      <p className="font-semibold text-purple-700">{badge.level}</p>
+                      <p className="text-purple-500">{student.points} pts</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 text-sm text-slate-500">
@@ -171,16 +171,16 @@ export default function StudentReportPage() {
         {/* Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {[
-            { label: 'Enrolled', value: totalEnrolled, icon: BookOpen, color: 'from-red-500 to-amber-500' },
-            { label: 'Completed', value: totalCompleted, icon: CheckCircle, color: 'from-red-500 to-amber-500' },
-            { label: 'Avg Progress', value: `${avgCompletion}%`, icon: TrendingUp, color: 'from-red-500 to-red-600' },
-            { label: 'Time Spent', value: `${totalTimeSpent}m`, icon: Clock, color: 'from-amber-500 to-orange-500' },
-            { label: 'Quizzes Taken', value: totalQuizzesTaken, icon: HelpCircle, color: 'from-red-500 to-amber-500' },
-            { label: 'Quiz Points', value: totalQuizPoints, icon: Trophy, color: 'from-red-500 to-amber-500' },
+            { label: 'Enrolled', value: totalEnrolled, icon: BookOpen, color: 'bg-purple-600' },
+            { label: 'Completed', value: totalCompleted, icon: CheckCircle, color: 'bg-purple-600' },
+            { label: 'Avg Progress', value: `${avgCompletion}%`, icon: TrendingUp, color: 'bg-purple-700' },
+            { label: 'Time Spent', value: `${totalTimeSpent}m`, icon: Clock, color: 'bg-purple-500' },
+            { label: 'Quizzes Taken', value: totalQuizzesTaken, icon: HelpCircle, color: 'bg-purple-600' },
+            { label: 'Quiz Points', value: totalQuizPoints, icon: Trophy, color: 'bg-purple-600' },
           ].map((stat, i) => (
             <motion.div key={stat.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
               <Card className="glass-card rounded-2xl p-4 text-center hover:shadow-xl transition-all">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center mx-auto mb-2 shadow-md`}>
+                <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mx-auto mb-2 shadow-md`}>
                   <stat.icon className="w-5 h-5 text-white" />
                 </div>
                 <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
@@ -215,7 +215,7 @@ export default function StudentReportPage() {
                 </TableHeader>
                 <TableBody>
                   {courseRows.map((row, i) => (
-                    <motion.tr key={row.course?.id || i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="hover:bg-red-50/30 transition-colors">
+                    <motion.tr key={row.course?.id || i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="hover:bg-purple-50/30 transition-colors">
                       <TableCell className="font-medium text-slate-400">{i + 1}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2.5">
@@ -249,8 +249,8 @@ export default function StudentReportPage() {
                       <TableCell>
                         {row.quizResults.length > 0 ? (
                           <div className="flex items-center gap-1.5">
-                            <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                            <span className="text-sm font-semibold text-amber-700">{row.quizPoints} pts</span>
+                            <Trophy className="w-3.5 h-3.5 text-purple-600" />
+                            <span className="text-sm font-semibold text-purple-700">{row.quizPoints} pts</span>
                             <span className="text-[10px] text-slate-400">({row.quizResults.length} quiz{row.quizResults.length > 1 ? 'zes' : ''})</span>
                           </div>
                         ) : (
@@ -272,7 +272,7 @@ export default function StudentReportPage() {
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mt-8">
             <Card className="glass-card rounded-3xl p-6">
               <h2 className="text-2xl font-bold text-slate-800 mb-6" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                <HelpCircle className="w-6 h-6 inline mr-2 text-amber-500" />
+                <HelpCircle className="w-6 h-6 inline mr-2 text-purple-600" />
                 Quiz Results
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -281,9 +281,9 @@ export default function StudentReportPage() {
                     const quiz = quizzes.find(q => q.id === qr.quizId);
                     const course = courses.find(c => c.id === p.courseId);
                     return (
-                      <Card key={`${p.courseId}-${qr.quizId}`} className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/50 to-orange-50/30 border border-amber-100">
+                      <Card key={`${p.courseId}-${qr.quizId}`} className="p-4 rounded-2xl bg-purple-50/50 border border-purple-100">
                         <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md flex-shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center shadow-md flex-shrink-0">
                             <HelpCircle className="w-5 h-5 text-white" />
                           </div>
                           <div className="flex-1">
@@ -295,7 +295,7 @@ export default function StudentReportPage() {
                                 <p className="text-[10px] text-slate-400">Score</p>
                               </div>
                               <div className="text-center p-2 bg-white/60 rounded-lg">
-                                <p className="text-lg font-bold text-amber-600">{qr.pointsEarned}</p>
+                                <p className="text-lg font-bold text-purple-600">{qr.pointsEarned}</p>
                                 <p className="text-[10px] text-slate-400">Points</p>
                               </div>
                               <div className="text-center p-2 bg-white/60 rounded-lg">

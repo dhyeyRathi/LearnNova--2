@@ -211,11 +211,11 @@ export default function CourseEditorPage() {
 
   const getLessonTypeColor = (type: string) => {
     switch (type) {
-      case 'video': return 'from-red-500 to-amber-500';
-      case 'document': return 'from-red-500 to-amber-500';
-      case 'image': return 'from-red-500 to-amber-500';
-      case 'quiz': return 'from-amber-500 to-orange-500';
-      default: return 'from-slate-400 to-slate-500';
+      case 'video': return 'bg-purple-600';
+      case 'document': return 'bg-purple-600';
+      case 'image': return 'bg-purple-600';
+      case 'quiz': return 'bg-purple-600';
+      default: return 'bg-slate-500';
     }
   };
 
@@ -229,7 +229,7 @@ export default function CourseEditorPage() {
               <ArrowLeft className="w-5 h-5 mr-2" />Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-red-600 via-amber-600 to-orange-600 bg-clip-text text-transparent" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <h1 className="text-3xl font-bold text-purple-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 {course ? 'Edit Course' : 'Create Course'}
               </h1>
               <p className="text-slate-500 text-sm">{course?.title || 'Configure your course settings and content'}</p>
@@ -239,7 +239,7 @@ export default function CourseEditorPage() {
             {/* Publish toggle */}
             <div className="flex items-center gap-2 glass-card rounded-xl px-4 py-2">
               <Label htmlFor="pub-toggle" className="text-sm cursor-pointer">
-                {published ? <Badge className="bg-gradient-to-r from-red-500 to-amber-500 text-white">Published</Badge> : <Badge variant="secondary">Draft</Badge>}
+                {published ? <Badge className="bg-purple-600 text-white">Published</Badge> : <Badge variant="secondary">Draft</Badge>}
               </Label>
               <Switch id="pub-toggle" checked={published} onCheckedChange={setPublished} />
             </div>
@@ -258,7 +258,7 @@ export default function CourseEditorPage() {
               <Mail className="w-4 h-4 mr-2" />Contact
             </Button>
             {/* Save */}
-            <Button onClick={handleSave} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl shadow-lg shadow-red-500/20">
+            <Button onClick={handleSave} className="bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-600/20">
               <Save className="w-4 h-4 mr-2" />Save
             </Button>
           </div>
@@ -277,9 +277,9 @@ export default function CourseEditorPage() {
                 </div>
               </div>
             ) : (
-              <div className="h-40 bg-gradient-to-br from-red-50 to-amber-50 flex items-center justify-center">
+              <div className="h-40 bg-purple-50 flex items-center justify-center">
                 <div className="text-center">
-                  <Upload className="w-10 h-10 mx-auto mb-2 text-red-300" />
+                  <Upload className="w-10 h-10 mx-auto mb-2 text-purple-300" />
                   <p className="text-sm text-slate-500">Course Cover Image</p>
                   <Input value={coverImage} onChange={e => setCoverImage(e.target.value)} placeholder="Paste image URL..." className="mt-2 max-w-xs mx-auto rounded-xl bg-white/80 text-sm" />
                 </div>
@@ -312,7 +312,7 @@ export default function CourseEditorPage() {
                   {tags.map(tag => (
                     <Badge key={tag} variant="secondary" className="pl-3 pr-1.5 py-1 rounded-lg">
                       {tag}
-                      <button onClick={() => setTags(tags.filter(t => t !== tag))} className="ml-1.5 hover:text-red-600"><X className="w-3 h-3" /></button>
+                      <button onClick={() => setTags(tags.filter(t => t !== tag))} className="ml-1.5 hover:text-purple-700"><X className="w-3 h-3" /></button>
                     </Badge>
                   ))}
                 </div>
@@ -336,7 +336,7 @@ export default function CourseEditorPage() {
               <Card className="glass-card rounded-3xl p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-slate-800" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Lessons ({courseLessons.length})</h2>
-                  <Button onClick={() => openLessonEditor()} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl shadow-lg shadow-red-500/20">
+                  <Button onClick={() => openLessonEditor()} className="bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-600/20">
                     <Plus className="w-4 h-4 mr-2" />Add Content
                   </Button>
                 </div>
@@ -346,7 +346,7 @@ export default function CourseEditorPage() {
                       <motion.div key={lesson.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }} className="group">
                         <div className="flex items-center gap-3 p-4 glass-card rounded-2xl hover:shadow-lg transition-all">
                           <GripVertical className="w-4 h-4 text-slate-300 cursor-grab" />
-                          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getLessonTypeColor(lesson.type)} flex items-center justify-center shadow-md`}>
+                          <div className={`w-10 h-10 rounded-xl ${getLessonTypeColor(lesson.type)} flex items-center justify-center shadow-md text-white`}>
                             {getLessonIcon(lesson.type)}
                             <span className="sr-only">{lesson.type}</span>
                           </div>
@@ -362,13 +362,13 @@ export default function CourseEditorPage() {
                               <Edit className="w-3.5 h-3.5" />
                             </Button>
                             <Button variant="ghost" size="sm" onClick={() => handleDeleteLesson(lesson.id)}
-                              className={`rounded-lg h-8 w-8 p-0 ${deleteConfirm === lesson.id ? 'text-red-600 bg-red-50' : 'text-slate-400 hover:text-red-600'}`}>
+                              className={`rounded-lg h-8 w-8 p-0 ${deleteConfirm === lesson.id ? 'text-purple-700 bg-purple-50' : 'text-slate-400 hover:text-purple-700'}`}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
                           </div>
                         </div>
                         {deleteConfirm === lesson.id && (
-                          <p className="text-xs text-red-500 mt-1 ml-14">Click again to confirm deletion</p>
+                          <p className="text-xs text-purple-600 mt-1 ml-14">Click again to confirm deletion</p>
                         )}
                       </motion.div>
                     ))}
@@ -378,7 +378,7 @@ export default function CourseEditorPage() {
                     <FileText className="w-14 h-14 mx-auto mb-3 text-slate-300" />
                     <h3 className="text-lg font-semibold text-slate-700 mb-2">No lessons yet</h3>
                     <p className="text-slate-500 text-sm mb-4">Start building your course by adding content</p>
-                    <Button onClick={() => openLessonEditor()} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl">
+                    <Button onClick={() => openLessonEditor()} className="bg-purple-600 text-white rounded-xl">
                       <Plus className="w-4 h-4 mr-2" />Add First Lesson
                     </Button>
                   </div>
@@ -393,7 +393,7 @@ export default function CourseEditorPage() {
                 <p className="text-sm text-slate-500 mb-4">This description will be visible to learners on the course page.</p>
                 <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Write a compelling description of your course. What will learners gain? What topics are covered? Who is this for?" rows={12} className="rounded-xl bg-white/50" />
                 <div className="mt-4 flex justify-end">
-                  <Button onClick={() => toast.success('Description saved!')} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl">
+                  <Button onClick={() => toast.success('Description saved!')} className="bg-purple-600 text-white rounded-xl">
                     <Save className="w-4 h-4 mr-2" />Save Description
                   </Button>
                 </div>
@@ -461,7 +461,7 @@ export default function CourseEditorPage() {
               <Card className="glass-card rounded-3xl p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-slate-800" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Quizzes ({courseQuizzes.length})</h2>
-                  <Button onClick={() => navigate(`/admin/courses/${id}/quiz-builder`)} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl shadow-lg shadow-red-500/20">
+                  <Button onClick={() => navigate(`/admin/courses/${id}/quiz-builder`)} className="bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-600/20">
                     <Plus className="w-4 h-4 mr-2" />Add Quiz
                   </Button>
                 </div>
@@ -469,7 +469,7 @@ export default function CourseEditorPage() {
                   <div className="space-y-3">
                     {courseQuizzes.map((quiz, i) => (
                       <div key={quiz.id} className="flex items-center gap-4 p-4 glass-card rounded-2xl group hover:shadow-lg transition-all">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md">
+                        <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center shadow-md">
                           <HelpCircle className="w-5 h-5 text-white" />
                         </div>
                         <div className="flex-1">
@@ -480,7 +480,7 @@ export default function CourseEditorPage() {
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/courses/${id}/quiz-builder?quizId=${quiz.id}`)} className="rounded-lg">
                             <Edit className="w-3.5 h-3.5" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="rounded-lg text-red-500 hover:text-red-600">
+                          <Button variant="ghost" size="sm" className="rounded-lg text-purple-600 hover:text-purple-700">
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
@@ -492,7 +492,7 @@ export default function CourseEditorPage() {
                     <HelpCircle className="w-14 h-14 mx-auto mb-3 text-slate-300" />
                     <h3 className="text-lg font-semibold text-slate-700 mb-2">No quizzes yet</h3>
                     <p className="text-slate-500 text-sm mb-4">Add quizzes to test learner knowledge</p>
-                    <Button onClick={() => navigate(`/admin/courses/${id}/quiz-builder`)} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl">
+                    <Button onClick={() => navigate(`/admin/courses/${id}/quiz-builder`)} className="bg-purple-600 text-white rounded-xl">
                       <Plus className="w-4 h-4 mr-2" />Create Quiz
                     </Button>
                   </div>
@@ -551,17 +551,17 @@ export default function CourseEditorPage() {
 
               {/* Type-specific fields */}
               {lessonType === 'video' && (
-                <div className="space-y-4 p-4 bg-red-50/50 rounded-xl border border-red-100">
+                <div className="space-y-4 p-4 bg-purple-50/50 rounded-xl border border-purple-100">
                   {/* Drag & Drop Upload Area */}
-                  <div 
-                    className="border-2 border-dashed border-red-200 rounded-xl p-6 text-center bg-white/50 cursor-pointer hover:bg-red-100/30 transition-colors"
+                  <div
+                    className="border-2 border-dashed border-purple-200 rounded-xl p-6 text-center bg-white/50 cursor-pointer hover:bg-purple-100/30 transition-colors"
                     onClick={() => document.getElementById('video-input')?.click()}
                     onDragOver={(e) => {
                       e.preventDefault();
-                      e.currentTarget.classList.add('bg-red-100/50');
+                      e.currentTarget.classList.add('bg-purple-100/50');
                     }}
                     onDragLeave={(e) => {
-                      e.currentTarget.classList.remove('bg-red-100/50');
+                      e.currentTarget.classList.remove('bg-purple-100/50');
                     }}
                     onDrop={(e) => {
                       e.preventDefault();
@@ -572,7 +572,7 @@ export default function CourseEditorPage() {
                       }
                     }}
                   >
-                    <Video className="w-8 h-8 mx-auto mb-2 text-red-400" />
+                    <Video className="w-8 h-8 mx-auto mb-2 text-purple-500" />
                     <p className="text-sm font-medium text-slate-700">Click to upload or drag & drop video</p>
                     <p className="text-xs text-slate-400">MP4, WebM, OGG (Max 500MB)</p>
                     <input
@@ -594,7 +594,7 @@ export default function CourseEditorPage() {
                   {videoFile && (
                     <div className="p-3 bg-white/60 rounded-lg flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Video className="w-4 h-4 text-red-500" />
+                        <Video className="w-4 h-4 text-purple-600" />
                         <div>
                           <p className="text-sm font-medium">{videoFile.name}</p>
                           <p className="text-xs text-slate-400">{(videoFile.size / 1024 / 1024).toFixed(1)} MB</p>
@@ -607,7 +607,7 @@ export default function CourseEditorPage() {
                           setVideoFile(null);
                           setLessonContent('');
                         }}
-                        className="h-6 w-6 p-0 text-red-400 hover:text-red-600"
+                        className="h-6 w-6 p-0 text-purple-500 hover:text-purple-700"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -633,7 +633,7 @@ export default function CourseEditorPage() {
                 </div>
               )}
               {lessonType === 'image' && (
-                <div className="space-y-4 p-4 bg-amber-50/50 rounded-xl border border-amber-100">
+                <div className="space-y-4 p-4 bg-purple-50/50 rounded-xl border border-purple-100">
                   <div className="space-y-2">
                     <Label>Image URL / Upload *</Label>
                     <Input value={lessonContent} onChange={e => setLessonContent(e.target.value)} placeholder="https://... or upload image" className="rounded-xl bg-white/80" />
@@ -666,13 +666,13 @@ export default function CourseEditorPage() {
                   {resources.map((res, i) => (
                     <div key={i} className="flex items-center justify-between p-3 bg-slate-50/80 rounded-xl">
                       <div className="flex items-center gap-2">
-                        {res.type === 'link' ? <LinkIcon className="w-4 h-4 text-red-500" /> : <Upload className="w-4 h-4 text-emerald-500" />}
+                        {res.type === 'link' ? <LinkIcon className="w-4 h-4 text-purple-600" /> : <Upload className="w-4 h-4 text-emerald-500" />}
                         <div>
                           <p className="text-sm font-medium">{res.title}</p>
                           <p className="text-xs text-slate-400 truncate max-w-[300px]">{res.url}</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => setResources(resources.filter((_, idx) => idx !== i))} className="h-7 w-7 p-0 text-red-400 hover:text-red-600">
+                      <Button variant="ghost" size="sm" onClick={() => setResources(resources.filter((_, idx) => idx !== i))} className="h-7 w-7 p-0 text-purple-500 hover:text-purple-700">
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
@@ -697,7 +697,7 @@ export default function CourseEditorPage() {
           </Tabs>
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/60">
             <Button variant="outline" onClick={() => setLessonDialogOpen(false)} className="rounded-xl">Cancel</Button>
-            <Button onClick={saveLessonEditor} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl">
+            <Button onClick={saveLessonEditor} className="bg-purple-600 text-white rounded-xl">
               {editingLesson ? 'Update' : 'Create'} Lesson
             </Button>
           </div>
@@ -709,7 +709,7 @@ export default function CourseEditorPage() {
         <DialogContent className="glass-card rounded-3xl border-white/40 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              <UserPlus className="w-5 h-5 inline mr-2 text-red-500" />Add Attendees
+              <UserPlus className="w-5 h-5 inline mr-2 text-purple-600" />Add Attendees
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
@@ -723,14 +723,14 @@ export default function CourseEditorPage() {
                 {attendeeEmails.map((email, i) => (
                   <div key={i} className="flex items-center justify-between p-2.5 bg-slate-50/80 rounded-xl text-sm">
                     <span>{email}</span>
-                    <button onClick={() => setAttendeeEmails(attendeeEmails.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><X className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => setAttendeeEmails(attendeeEmails.filter((_, idx) => idx !== i))} className="text-purple-500 hover:text-purple-700"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 ))}
               </div>
             )}
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => setAddAttendeeOpen(false)} className="rounded-xl">Cancel</Button>
-              <Button onClick={handleSendInvites} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl">
+              <Button onClick={handleSendInvites} className="bg-purple-600 text-white rounded-xl">
                 <Send className="w-4 h-4 mr-2" />Send Invites ({attendeeEmails.length})
               </Button>
             </div>
@@ -743,7 +743,7 @@ export default function CourseEditorPage() {
         <DialogContent className="glass-card rounded-3xl border-white/40 max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              <Mail className="w-5 h-5 inline mr-2 text-red-500" />Contact Enrolled Learners
+              <Mail className="w-5 h-5 inline mr-2 text-purple-600" />Contact Enrolled Learners
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
@@ -758,7 +758,7 @@ export default function CourseEditorPage() {
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => setContactAttendeeOpen(false)} className="rounded-xl">Cancel</Button>
-              <Button onClick={handleContactSend} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl">
+              <Button onClick={handleContactSend} className="bg-purple-600 text-white rounded-xl">
                 <Send className="w-4 h-4 mr-2" />Send Message
               </Button>
             </div>

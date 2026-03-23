@@ -27,6 +27,7 @@ export interface Course {
   published: boolean;
   visibility: 'everyone' | 'signed-in';
   accessRule: 'open' | 'invitation' | 'payment';
+  price?: number; // Price in USD for payment courses
   createdAt: string;
   rating: number;
   reviewCount: number;
@@ -182,6 +183,19 @@ export const users: User[] = [
     role: 'learner',
     points: 45,
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150'
+  },
+  {
+    id: 'tutor-2',
+    email: 'james@learnnova.com',
+    name: 'Dr. James Mitchell',
+    role: 'tutor',
+    points: 0,
+    verified: true,
+    verificationStatus: 'approved',
+    adminApplicationStatus: 'none',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    phone: '',
+    bio: 'Experienced instructor specializing in cloud technologies, AI, and blockchain'
   }
 ];
 
@@ -251,6 +265,7 @@ export const courses: Course[] = [
     published: true,
     visibility: 'everyone',
     accessRule: 'payment',
+    price: 49.99,
     createdAt: '2026-01-20',
     rating: 4.6,
     reviewCount: 156
@@ -271,6 +286,186 @@ export const courses: Course[] = [
     createdAt: '2026-03-01',
     rating: 0,
     reviewCount: 0
+  },
+  {
+    id: 'course-6',
+    title: 'Web Development Advanced',
+    description: 'Master advanced web development concepts including performance optimization, security best practices, and scalable architecture.',
+    coverImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800',
+    instructorId: 'tutor-1',
+    instructorName: 'Sarah Williams',
+    duration: '22 hours',
+    views: 2145,
+    tags: ['Web Development', 'Advanced', 'Performance'],
+    published: true,
+    visibility: 'everyone',
+    accessRule: 'payment',
+    price: 39.99,
+    createdAt: '2026-01-10',
+    rating: 4.8,
+    reviewCount: 189
+  },
+  {
+    id: 'course-7',
+    title: 'Machine Learning Basics',
+    description: 'Introduction to machine learning with hands-on projects. Learn algorithms, model evaluation, and real-world applications using scikit-learn and TensorFlow.',
+    coverImage: 'https://images.unsplash.com/photo-1526374965328-7f5ae4e8b841?w=800',
+    instructorId: 'tutor-2',
+    instructorName: 'Dr. James Mitchell',
+    duration: '25 hours',
+    views: 3421,
+    tags: ['Machine Learning', 'Python', 'AI'],
+    published: true,
+    visibility: 'everyone',
+    accessRule: 'payment',
+    price: 59.99,
+    createdAt: '2026-01-18',
+    rating: 4.9,
+    reviewCount: 267
+  },
+  {
+    id: 'course-8',
+    title: 'Cloud Computing with AWS',
+    description: 'Complete AWS certification preparation course. Deploy and manage applications on Amazon Web Services with hands-on labs.',
+    coverImage: 'https://images.unsplash.com/photo-1518432031352-d6fc5c10da5a?w=800',
+    instructorId: 'tutor-2',
+    instructorName: 'Dr. James Mitchell',
+    duration: '28 hours',
+    views: 2876,
+    tags: ['AWS', 'Cloud', 'DevOps'],
+    published: true,
+    visibility: 'everyone',
+    accessRule: 'payment',
+    price: 69.99,
+    createdAt: '2026-02-05',
+    rating: 4.7,
+    reviewCount: 234
+  },
+  {
+    id: 'course-9',
+    title: 'Full Stack JavaScript',
+    description: 'Build complete web applications with JavaScript from frontend to backend. Includes MongoDB, Express, React, and Node.js (MERN stack).',
+    coverImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800',
+    instructorId: 'tutor-1',
+    instructorName: 'Sarah Williams',
+    duration: '30 hours',
+    views: 3654,
+    tags: ['JavaScript', 'MERN', 'Full Stack'],
+    published: true,
+    visibility: 'everyone',
+    accessRule: 'payment',
+    price: 49.99,
+    createdAt: '2026-01-25',
+    rating: 4.9,
+    reviewCount: 312
+  },
+  {
+    id: 'course-10',
+    title: 'iOS Development with Swift',
+    description: 'Create professional iOS applications using Swift, SwiftUI, and Core Data. Build production-ready apps for iPhone and iPad.',
+    coverImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800',
+    instructorId: 'tutor-2',
+    instructorName: 'Dr. James Mitchell',
+    duration: '24 hours',
+    views: 2143,
+    tags: ['iOS', 'Swift', 'Mobile'],
+    published: true,
+    visibility: 'everyone',
+    accessRule: 'payment',
+    price: 79.99,
+    createdAt: '2026-02-12',
+    rating: 4.8,
+    reviewCount: 198
+  },
+  {
+    id: 'course-11',
+    title: 'Blockchain Development',
+    description: 'Learn blockchain technology and smart contract development. Build decentralized applications using Solidity and Ethereum.',
+    coverImage: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800',
+    instructorId: 'tutor-1',
+    instructorName: 'Sarah Williams',
+    duration: '26 hours',
+    views: 1876,
+    tags: ['Blockchain', 'Web3', 'Solidity'],
+    published: true,
+    visibility: 'everyone',
+    accessRule: 'payment',
+    price: 99.99,
+    createdAt: '2026-02-18',
+    rating: 4.6,
+    reviewCount: 143
+  },
+  {
+    id: 'course-12',
+    title: 'DevOps & CI/CD Pipelines',
+    description: 'Master DevOps practices and continuous integration/deployment. Work with Docker, Jenkins, GitLab CI, and Kubernetes.',
+    coverImage: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800',
+    instructorId: 'tutor-2',
+    instructorName: 'Dr. James Mitchell',
+    duration: '20 hours',
+    views: 2534,
+    tags: ['DevOps', 'CI/CD', 'Docker'],
+    published: true,
+    visibility: 'everyone',
+    accessRule: 'payment',
+    price: 44.99,
+    createdAt: '2026-02-08',
+    rating: 4.7,
+    reviewCount: 176
+  },
+  {
+    id: 'course-13',
+    title: 'Cybersecurity Fundamentals',
+    description: 'Essential cybersecurity concepts and practices. Learn about encryption, network security, and ethical hacking fundamentals.',
+    coverImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800',
+    instructorId: 'tutor-1',
+    instructorName: 'Sarah Williams',
+    duration: '23 hours',
+    views: 2456,
+    tags: ['Cybersecurity', 'Security', 'Networking'],
+    published: true,
+    visibility: 'everyone',
+    accessRule: 'payment',
+    price: 54.99,
+    createdAt: '2026-02-22',
+    rating: 4.8,
+    reviewCount: 201
+  },
+  {
+    id: 'course-14',
+    title: 'GraphQL API Development',
+    description: 'Build modern APIs with GraphQL. Learn query language, mutations, subscriptions, and integration with Node.js and Apollo Server.',
+    coverImage: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800',
+    instructorId: 'tutor-2',
+    instructorName: 'Dr. James Mitchell',
+    duration: '18 hours',
+    views: 1654,
+    tags: ['GraphQL', 'API', 'Backend'],
+    published: true,
+    visibility: 'everyone',
+    accessRule: 'payment',
+    price: 39.99,
+    createdAt: '2026-02-28',
+    rating: 4.6,
+    reviewCount: 127
+  },
+  {
+    id: 'course-15',
+    title: 'Docker & Kubernetes Mastery',
+    description: 'Complete containerization and orchestration course. Master Docker, build scalable applications, and deploy with Kubernetes in production.',
+    coverImage: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=800',
+    instructorId: 'tutor-1',
+    instructorName: 'Sarah Williams',
+    duration: '27 hours',
+    views: 2789,
+    tags: ['Docker', 'Kubernetes', 'Containers'],
+    published: true,
+    visibility: 'everyone',
+    accessRule: 'payment',
+    price: 64.99,
+    createdAt: '2026-03-02',
+    rating: 4.9,
+    reviewCount: 221
   }
 ];
 
@@ -594,13 +789,13 @@ export const blogs: Blog[] = [
 ];
 
 export const badges = [
-  { level: 'Newbie', minPoints: 0, maxPoints: 19, color: 'bg-red-300', icon: '🌱' },
-  { level: 'Explorer', minPoints: 20, maxPoints: 39, color: 'bg-red-400', icon: '🧭' },
-  { level: 'Achiever', minPoints: 40, maxPoints: 59, color: 'bg-red-400', icon: '🏅' },
-  { level: 'Specialist', minPoints: 60, maxPoints: 79, color: 'bg-red-500', icon: '⚡' },
-  { level: 'Expert', minPoints: 80, maxPoints: 99, color: 'bg-red-500', icon: '🔥' },
-  { level: 'Master', minPoints: 100, maxPoints: 119, color: 'bg-red-600', icon: '💎' },
-  { level: 'Grandmaster', minPoints: 120, maxPoints: Infinity, color: 'bg-red-600', icon: '👑' }
+  { level: 'Newbie', minPoints: 0, maxPoints: 19, color: 'bg-purple-300', icon: '🌱' },
+  { level: 'Explorer', minPoints: 20, maxPoints: 39, color: 'bg-purple-400', icon: '🧭' },
+  { level: 'Achiever', minPoints: 40, maxPoints: 59, color: 'bg-purple-500', icon: '🏅' },
+  { level: 'Specialist', minPoints: 60, maxPoints: 79, color: 'bg-purple-600', icon: '⚡' },
+  { level: 'Expert', minPoints: 80, maxPoints: 99, color: 'bg-purple-600', icon: '🔥' },
+  { level: 'Master', minPoints: 100, maxPoints: 119, color: 'bg-purple-700', icon: '💎' },
+  { level: 'Grandmaster', minPoints: 120, maxPoints: Infinity, color: 'bg-purple-700', icon: '👑' }
 ];
 
 export const getBadgeLevel = (points: number) => {

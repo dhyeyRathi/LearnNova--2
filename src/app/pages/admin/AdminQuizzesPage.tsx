@@ -37,7 +37,7 @@ export default function AdminQuizzesPage() {
         <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm">
           <h2 className="text-2xl font-bold text-slate-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Admin Access Required</h2>
           <p className="text-slate-500 mt-2 mb-4">This page is only accessible to administrators.</p>
-          <Button onClick={() => navigate('/courses')} className="bg-red-500 hover:bg-red-600 text-white rounded-xl">Go to Courses</Button>
+          <Button onClick={() => navigate('/courses')} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl">Go to Courses</Button>
         </div>
       </div>
     );
@@ -143,17 +143,17 @@ export default function AdminQuizzesPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-4xl font-bold text-red-600" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <h1 className="text-4xl font-bold text-purple-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 Quiz Management
               </h1>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 rounded-full shadow-lg shadow-red-500/20">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 rounded-full shadow-lg shadow-purple-600/20">
                 <Crown className="w-5 h-5 text-white" />
                 <span className="text-sm font-semibold text-white">Admin</span>
               </div>
             </div>
             <p className="text-slate-600">Create, edit, and manage all quizzes across courses</p>
           </div>
-          <Button onClick={openNewQuiz} className="bg-red-500 hover:bg-red-600 text-white shadow-xl shadow-red-500/20 h-12 px-6 rounded-xl">
+          <Button onClick={openNewQuiz} className="bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 h-12 px-6 rounded-xl">
             <Plus className="w-5 h-5 mr-2" />Create Quiz
           </Button>
         </div>
@@ -163,7 +163,7 @@ export default function AdminQuizzesPage() {
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <Card className="p-5 glass-card rounded-3xl">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20">
+                <div className="w-12 h-12 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/20">
                   <HelpCircle className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -176,7 +176,7 @@ export default function AdminQuizzesPage() {
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <Card className="p-5 glass-card rounded-3xl">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20">
+                <div className="w-12 h-12 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/20">
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -189,7 +189,7 @@ export default function AdminQuizzesPage() {
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
             <Card className="p-5 glass-card rounded-3xl">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20">
+                <div className="w-12 h-12 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/20">
                   <Users className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -216,7 +216,7 @@ export default function AdminQuizzesPage() {
               <motion.div key={quiz.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
                 <Card className="glass-card rounded-3xl p-6 hover:shadow-xl transition-all group">
                   <div className="flex items-start gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20 flex-shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/20 flex-shrink-0">
                       <HelpCircle className="w-7 h-7 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -242,7 +242,7 @@ export default function AdminQuizzesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="glass-card rounded-xl">
                             {!quiz.published ? (
-                              <DropdownMenuItem onClick={() => handlePublishQuiz(quiz.id)} className="rounded-lg text-amber-600">
+                              <DropdownMenuItem onClick={() => handlePublishQuiz(quiz.id)} className="rounded-lg text-purple-600">
                                 <Upload className="w-4 h-4 mr-2" />Publish Quiz
                               </DropdownMenuItem>
                             ) : (
@@ -256,7 +256,7 @@ export default function AdminQuizzesPage() {
                             <DropdownMenuItem onClick={() => handleDuplicateQuiz(quiz.id)} className="rounded-lg">
                               <Copy className="w-4 h-4 mr-2" />Duplicate
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeleteQuiz(quiz.id)} className="rounded-lg text-red-600">
+                            <DropdownMenuItem onClick={() => handleDeleteQuiz(quiz.id)} className="rounded-lg text-purple-700">
                               <Trash2 className="w-4 h-4 mr-2" />Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -265,13 +265,13 @@ export default function AdminQuizzesPage() {
 
                       {/* Questions preview */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
-                        <div className="flex items-center gap-2 p-3 bg-orange-50/60 rounded-xl">
-                          <HelpCircle className="w-4 h-4 text-orange-500" />
-                          <span className="text-sm font-semibold text-orange-700">{quiz.questions.length} Questions</span>
+                        <div className="flex items-center gap-2 p-3 bg-purple-50/60 rounded-xl">
+                          <HelpCircle className="w-4 h-4 text-purple-500" />
+                          <span className="text-sm font-semibold text-purple-700">{quiz.questions.length} Questions</span>
                         </div>
-                        <div className="flex items-center gap-2 p-3 bg-amber-50/60 rounded-xl">
-                          <Trophy className="w-4 h-4 text-amber-500" />
-                          <span className="text-sm font-semibold text-amber-700">{quiz.questions.reduce((a, q) => a + q.basePoints, 0)} Max Points</span>
+                        <div className="flex items-center gap-2 p-3 bg-purple-50/60 rounded-xl">
+                          <Trophy className="w-4 h-4 text-purple-500" />
+                          <span className="text-sm font-semibold text-purple-700">{quiz.questions.reduce((a, q) => a + q.basePoints, 0)} Max Points</span>
                         </div>
                         <div className="flex items-center gap-2 p-3 bg-emerald-50/60 rounded-xl">
                           <Check className="w-4 h-4 text-emerald-500" />
@@ -295,10 +295,10 @@ export default function AdminQuizzesPage() {
 
                     {/* Actions */}
                     <div className="flex flex-col gap-2 flex-shrink-0">
-                      <Button onClick={() => openEditQuiz(quiz.id)} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl shadow-lg shadow-red-500/20">
+                      <Button onClick={() => openEditQuiz(quiz.id)} className="bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-600/20">
                         <Edit className="w-4 h-4 mr-2" />Edit
                       </Button>
-                      <Button variant="outline" onClick={() => handleDeleteQuiz(quiz.id)} className={`rounded-xl ${deleteConfirm === quiz.id ? 'border-red-300 bg-red-50 text-red-600' : ''}`}>
+                      <Button variant="outline" onClick={() => handleDeleteQuiz(quiz.id)} className={`rounded-xl ${deleteConfirm === quiz.id ? 'border-purple-300 bg-purple-50 text-purple-700' : ''}`}>
                         <Trash2 className="w-4 h-4 mr-2" />{deleteConfirm === quiz.id ? 'Confirm?' : 'Delete'}
                       </Button>
                     </div>
@@ -308,15 +308,15 @@ export default function AdminQuizzesPage() {
             ))
           ) : (
             <div className="text-center py-20 glass-card rounded-3xl">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mx-auto mb-4">
-                <HelpCircle className="w-10 h-10 text-amber-300" />
+              <div className="w-20 h-20 rounded-3xl bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                <HelpCircle className="w-10 h-10 text-purple-300" />
               </div>
               <h3 className="text-xl font-bold text-slate-700 mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 {searchQuery ? 'No quizzes found' : 'No quizzes yet'}
               </h3>
               <p className="text-slate-500 mb-6">{searchQuery ? 'Try adjusting your search' : 'Create your first quiz to get started'}</p>
               {!searchQuery && (
-                <Button onClick={openNewQuiz} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl">
+                <Button onClick={openNewQuiz} className="bg-purple-600 text-white rounded-xl">
                   <Plus className="w-4 h-4 mr-2" />Create First Quiz
                 </Button>
               )}

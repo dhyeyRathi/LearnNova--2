@@ -9,10 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { courses, lessons, userProgress, reviews as allReviews, enrollments, courseInvitations, users } from '../data/mockData';
-import { Play, FileText, Image as ImageIcon, HelpCircle, CheckCircle, Circle, Star, Clock, Award, Users, ArrowRight, Sparkles, Search, Lock, ShoppingCart, Trophy, Paperclip, BookOpen } from 'lucide-react';
+import { lessons, userProgress, reviews as allReviews, enrollments, courseInvitations, users } from '../data/mockData';
+import { getCourse, isUserEnrolled, type Course } from '../../utils/supabase/client';
+import { Play, FileText, Image as ImageIcon, HelpCircle, CheckCircle, Circle, Star, Clock, Award, Users, ArrowRight, Sparkles, Search, Lock, ShoppingCart, Trophy, Paperclip, BookOpen, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+import PaymentModal from '../components/PaymentModal';
 
 export default function CourseDetailPage() {
   const { id } = useParams();
@@ -20,24 +22,86 @@ export default function CourseDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fromMyCourses = location.state?.from === 'my-courses' || new URLSearchParams(location.search).get('from') === 'my-courses';
+
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [enrollment, setEnrollment] = useState<any>(null);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
   const [lessonSearch, setLessonSearch] = useState('');
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  const course = courses.find(c => c.id === id);
+  // Fetch course data from database
+  useEffect(() => {
+    const fetchCourse = async () => {
+      if (!id) return;
+
+      try {
+        setLoading(true);
+        const courseData = await getCourse(id);
+        setCourse(courseData);
+
+        // Check enrollment status
+        if (user?.id) {
+          const isEnrolled = await isUserEnrolled(user.id, id);
+          if (isEnrolled) {
+            // Mock enrollment object for compatibility
+            setEnrollment({
+              userId: user.id,
+              courseId: id,
+              enrolledAt: new Date().toISOString(),
+              completed: false
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching course:', error);
+        navigate('/courses');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourse();
+  }, [id, user?.id, navigate]);
+
+  useEffect(() => {
+    if (!loading && !course) {
+      navigate('/courses');
+      return;
+    }
+    if (!isAuthenticated && course?.visibility === 'signed-in') {
+      navigate('/login');
+    }
+  }, [course, loading, isAuthenticated, navigate]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center min-h-96">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center"
+            >
+              <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
+              <p className="text-lg text-gray-600">Loading course...</p>
+            </motion.div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!course) return null;
+
   const courseLessons = lessons.filter(l => l.courseId === id).sort((a, b) => a.order - b.order);
   const progress = user ? userProgress.find(p => p.userId === user.id && p.courseId === id) : null;
   const courseReviews = allReviews.filter(r => r.courseId === id);
-  const enrollment = user ? enrollments.find(e => e.userId === user.id && e.courseId === id) : null;
-
-  useEffect(() => {
-    if (!course) { navigate('/courses'); return; }
-    if (!isAuthenticated && course.visibility === 'signed-in') navigate('/login');
-  }, [course, isAuthenticated, navigate]);
-
-  if (!course) return null;
 
   const completionPercentage = progress && courseLessons.length > 0
     ? (progress.completedLessons.length / courseLessons.length) * 100 : 0;
@@ -47,11 +111,11 @@ export default function CourseDetailPage() {
   // Access control
   const canAccess = () => {
     if (!isAuthenticated || !user) return false;
-    if (course.accessRule === 'open') return true;
-    if (course.accessRule === 'invitation') {
+    if (course.access_rule === 'open') return true;
+    if (course.access_rule === 'invitation') {
       return courseInvitations.some(i => i.courseId === course.id && i.userId === user.id) || !!enrollment;
     }
-    if (course.accessRule === 'payment') return !!enrollment; // Payment would mark enrollment
+    if (course.access_rule === 'payment') return !!enrollment; // Payment would mark enrollment
     return false;
   };
 
@@ -94,8 +158,9 @@ export default function CourseDetailPage() {
 
   const handleEnroll = () => {
     if (!isAuthenticated) { navigate('/login'); return; }
-    if (course.accessRule === 'payment') {
-      toast.info('Payment flow would open here');
+    if (course.access_rule === 'payment') {
+      // Show payment modal for paid courses
+      setShowPaymentModal(true);
       return;
     }
     if (!enrollment && user) {
@@ -111,6 +176,15 @@ export default function CourseDetailPage() {
     if (courseLessons.length > 0) {
       navigate(`/lesson/${id}/${courseLessons[0].id}`);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    // Enrollment is handled automatically in PaymentModal
+    // Just refresh the page to show updated enrollment status
+    toast.success('Successfully enrolled! Welcome to the course!');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
   };
 
   const handleCompleteCourse = () => {
@@ -149,7 +223,7 @@ export default function CourseDetailPage() {
 
   const handleLessonClick = (lessonId: string) => {
     if (!isAuthenticated) { navigate('/login'); return; }
-    if (!hasAccess && course.accessRule !== 'open') {
+    if (!hasAccess && course.access_rule !== 'open') {
       toast.error('You need access to this course to view lessons');
       return;
     }
@@ -188,15 +262,15 @@ export default function CourseDetailPage() {
                 Course Completed!
               </h2>
               <p className="text-slate-500 mb-2">Congratulations! You've completed</p>
-              <p className="text-xl font-bold bg-gradient-to-r from-red-600 to-amber-600 bg-clip-text text-transparent mb-4">
+              <p className="text-xl font-bold bg-gradient-to-r from-purple-700 to-violet-600 bg-clip-text text-transparent mb-4">
                 {course.title}
               </p>
               <div className="flex items-center justify-center gap-2 mb-6">
-                <Trophy className="w-5 h-5 text-amber-500" />
-                <span className="text-lg font-bold text-amber-600">+20 bonus points earned!</span>
+                <Trophy className="w-5 h-5 text-violet-400" />
+                <span className="text-lg font-bold text-violet-600">+20 bonus points earned!</span>
               </div>
               <div className="flex gap-3 justify-center">
-                <Button onClick={() => setShowCompletionModal(false)} className="bg-red-500 text-white rounded-xl px-6">
+                <Button onClick={() => setShowCompletionModal(false)} className="bg-purple-600 text-white rounded-xl px-6">
                   Continue
                 </Button>
                 <Link to="/my-courses">
@@ -208,28 +282,39 @@ export default function CourseDetailPage() {
         )}
       </AnimatePresence>
 
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        courseId={course.id}
+        courseTitle={course.title}
+        price={course.price || 0}
+        userEmail={user?.email}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton 
-          label={user?.role === 'admin' ? "Back to Courses" : (fromMyCourses ? "Back to My Courses" : "Back to Courses")} 
-          to={user?.role === 'admin' ? "/dashboard/admin" : (fromMyCourses ? "/my-courses" : "/courses")} 
+        <BackButton
+          label={user?.role === 'admin' ? "Back to Courses" : (enrollment || fromMyCourses ? "Back to My Courses" : "Back to Courses")}
+          to={user?.role === 'admin' ? "/dashboard/admin" : (enrollment || fromMyCourses ? "/my-courses" : "/courses")}
         />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               {/* Hero image */}
-              <div className="relative h-96 rounded-3xl overflow-hidden mb-6 shadow-2xl group bg-red-50">
+              <div className="relative h-96 rounded-3xl overflow-hidden mb-6 shadow-2xl group bg-purple-50">
                 {!imageError ? (
-                  <img 
-                    src={course.coverImage} 
-                    alt={course.title} 
+                  <img
+                    src={course.cover_image}
+                    alt={course.title}
                     onError={() => setImageError(true)}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-100 to-amber-100">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-violet-100">
                     <div className="text-center">
-                      <ImageIcon className="w-16 h-16 text-red-300 mx-auto mb-3" />
-                      <p className="text-red-400 text-sm">Image unavailable</p>
+                      <ImageIcon className="w-16 h-16 text-purple-300 mx-auto mb-3" />
+                      <p className="text-purple-500 text-sm">Image unavailable</p>
                     </div>
                   </div>
                 )}
@@ -241,13 +326,13 @@ export default function CourseDetailPage() {
                         {tag}
                       </Badge>
                     ))}
-                    {course.accessRule === 'payment' && (
-                      <Badge className="bg-amber-500/90 text-white rounded-lg">
+                    {course.access_rule === 'payment' && (
+                      <Badge className="bg-violet-500/90 text-white rounded-lg">
                         <ShoppingCart className="w-3 h-3 mr-1" /> Paid Course
                       </Badge>
                     )}
-                    {course.accessRule === 'invitation' && (
-                      <Badge className="bg-red-500/90 text-white rounded-lg">
+                    {course.access_rule === 'invitation' && (
+                      <Badge className="bg-purple-600/90 text-white rounded-lg">
                         <Lock className="w-3 h-3 mr-1" /> Invitation Only
                       </Badge>
                     )}
@@ -257,9 +342,9 @@ export default function CourseDetailPage() {
                   <div className="flex items-center space-x-6 text-sm text-white/70">
                     <div className="flex items-center space-x-2">
                       <Avatar className="w-7 h-7 ring-2 ring-white/30">
-                        <AvatarFallback className="bg-red-500 text-white text-xs">{course.instructorName.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-purple-600 text-white text-xs">{course.instructor_name.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <span>{course.instructorName}</span>
+                      <span>{course.instructor_name}</span>
                     </div>
                     <div className="flex items-center space-x-1"><Clock className="w-4 h-4" /><span>{course.duration}</span></div>
                     <div className="flex items-center space-x-1"><Users className="w-4 h-4" /><span>{course.views.toLocaleString()} views</span></div>
@@ -271,10 +356,10 @@ export default function CourseDetailPage() {
               {/* Progress Card */}
               {progress && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-                  <div className="glass-card rounded-3xl p-6 mb-6 shadow-lg border-red-100">
+                  <div className="glass-card rounded-3xl p-6 mb-6 shadow-lg border-purple-100">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-bold text-slate-800" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Your Progress</h3>
-                      <span className="text-2xl font-bold text-red-600">
+                      <span className="text-2xl font-bold text-purple-700">
                         {Math.round(completionPercentage)}%
                       </span>
                     </div>
@@ -283,7 +368,7 @@ export default function CourseDetailPage() {
                         initial={{ width: 0 }}
                         animate={{ width: `${completionPercentage}%` }}
                         transition={{ duration: 1.5 }}
-                        className={`h-full rounded-full bg-${enrollment?.completed ? 'emerald-500' : 'red-500'}`}
+                        className={`h-full rounded-full bg-${enrollment?.completed ? 'emerald-500' : 'purple-600'}`}
                       />
                     </div>
                     <div className="grid grid-cols-3 gap-4 text-sm text-center">
@@ -295,8 +380,8 @@ export default function CourseDetailPage() {
                         <p className="text-2xl font-bold text-emerald-600">{completedLessonIds.length}</p>
                         <p className="text-slate-400 text-xs">Completed</p>
                       </div>
-                      <div className="bg-red-50 rounded-xl py-3">
-                        <p className="text-2xl font-bold text-red-600">{courseLessons.length - completedLessonIds.length}</p>
+                      <div className="bg-purple-50 rounded-xl py-3">
+                        <p className="text-2xl font-bold text-purple-700">{courseLessons.length - completedLessonIds.length}</p>
                         <p className="text-slate-400 text-xs">Remaining</p>
                       </div>
                     </div>
@@ -333,10 +418,10 @@ export default function CourseDetailPage() {
               {/* Tabs */}
               <Tabs defaultValue="lessons" className="w-full">
                 <TabsList className="w-full grid grid-cols-2 h-12 rounded-2xl glass-card p-1">
-                  <TabsTrigger value="lessons" className="rounded-xl data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
+                  <TabsTrigger value="lessons" className="rounded-xl data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg">
                     Course Overview ({courseLessons.length})
                   </TabsTrigger>
-                  <TabsTrigger value="reviews" className="rounded-xl data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
+                  <TabsTrigger value="reviews" className="rounded-xl data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg">
                     Ratings & Reviews ({courseReviews.length})
                   </TabsTrigger>
                 </TabsList>
@@ -357,7 +442,7 @@ export default function CourseDetailPage() {
                   {incompleteLessons.length > 0 && (
                     <div>
                       <h3 className="text-lg font-bold mb-4 flex items-center text-slate-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                        <div className="w-7 h-7 rounded-lg bg-red-500 flex items-center justify-center mr-3">
+                        <div className="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center mr-3">
                           <Circle className="w-3.5 h-3.5 text-white" />
                         </div>
                         {progress ? `Continue Learning (${incompleteLessons.length})` : `Course Content (${incompleteLessons.length})`}
@@ -370,15 +455,15 @@ export default function CourseDetailPage() {
                               <div
                                 onClick={() => handleLessonClick(lesson.id)}
                                 className={`p-4 rounded-2xl glass-card hover:shadow-xl transition-all cursor-pointer group/lesson ${
-                                  status.isInProgress ? 'border-l-4 border-l-red-500 ring-1 ring-red-100' : 'border-l-4 border-l-slate-200'
+                                  status.isInProgress ? 'border-l-4 border-l-purple-600 ring-1 ring-purple-100' : 'border-l-4 border-l-slate-200'
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-4 flex-1">
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover/lesson:scale-110 transition-transform ${
                                       status.isInProgress
-                                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
-                                        : 'bg-red-100 text-red-600'
+                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
+                                        : 'bg-purple-100 text-purple-700'
                                     }`}>
                                       {getLessonIcon(lesson.type)}
                                     </div>
@@ -386,7 +471,7 @@ export default function CourseDetailPage() {
                                       <div className="flex items-center gap-2">
                                         <h4 className="font-semibold text-slate-800">{lesson.title}</h4>
                                         {status.isInProgress && (
-                                          <Badge className="bg-red-100 text-red-600 text-[10px] rounded-md">In Progress</Badge>
+                                          <Badge className="bg-purple-100 text-purple-700 text-[10px] rounded-md">In Progress</Badge>
                                         )}
                                       </div>
                                       <p className="text-sm text-slate-500">{lesson.description}</p>
@@ -476,7 +561,7 @@ export default function CourseDetailPage() {
                       </p>
                       <div className="flex justify-center mt-2">
                         {[1, 2, 3, 4, 5].map(star => (
-                          <Star key={star} className={`w-5 h-5 ${star <= Math.round(averageRating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                          <Star key={star} className={`w-5 h-5 ${star <= Math.round(averageRating) ? 'fill-violet-400 text-violet-400' : 'text-slate-200'}`} />
                         ))}
                       </div>
                       <p className="text-sm text-slate-500 mt-1">{courseReviews.length} review{courseReviews.length !== 1 ? 's' : ''}</p>
@@ -488,9 +573,9 @@ export default function CourseDetailPage() {
                         return (
                           <div key={stars} className="flex items-center gap-3">
                             <span className="text-sm text-slate-500 w-6">{stars}</span>
-                            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                            <Star className="w-4 h-4 fill-violet-400 text-violet-400" />
                             <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                              <div className="h-full bg-violet-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
                             </div>
                             <span className="text-sm text-slate-400 w-8">{count}</span>
                           </div>
@@ -501,28 +586,28 @@ export default function CourseDetailPage() {
 
                   {/* Add Review - only for logged-in users who completed the course */}
                   {user && enrollment?.completed && !hasReviewed && (
-                    <div className="glass-card rounded-3xl p-6 mb-6 border-red-100">
+                    <div className="glass-card rounded-3xl p-6 mb-6 border-purple-100">
                       <h3 className="text-lg font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Write a Review</h3>
                       <div className="mb-4">
                         <label className="block text-sm font-medium mb-2 text-slate-600">Rating</label>
                         <div className="flex space-x-2">
                           {[1, 2, 3, 4, 5].map(star => (
                             <motion.button key={star} onClick={() => setRating(star)} whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.9 }}>
-                              <Star className={`w-8 h-8 ${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} transition-colors`} />
+                              <Star className={`w-8 h-8 ${star <= rating ? 'fill-violet-400 text-violet-400' : 'text-slate-300'} transition-colors`} />
                             </motion.button>
                           ))}
                         </div>
                       </div>
                       <Textarea placeholder="Share your experience..." value={review} onChange={(e) => setReview(e.target.value)} className="mb-4 min-h-[100px] rounded-2xl glass-card border-white/40" />
-                      <Button onClick={handleSubmitReview} className="bg-red-500 text-white rounded-xl shadow-lg">
+                      <Button onClick={handleSubmitReview} className="bg-purple-600 text-white rounded-xl shadow-lg">
                         Submit Review <Sparkles className="w-4 h-4 ml-2" />
                       </Button>
                     </div>
                   )}
 
                   {user && !enrollment?.completed && isAuthenticated && (
-                    <div className="glass-card rounded-2xl p-4 mb-6 bg-amber-50/50 border border-amber-200/50 text-center">
-                      <p className="text-amber-700 text-sm">Complete this course to leave a review</p>
+                    <div className="glass-card rounded-2xl p-4 mb-6 bg-violet-50/50 border border-violet-200/50 text-center">
+                      <p className="text-violet-700 text-sm">Complete this course to leave a review</p>
                     </div>
                   )}
 
@@ -534,7 +619,7 @@ export default function CourseDetailPage() {
                           <div className="flex items-start space-x-4">
                             <Avatar className="ring-2 ring-indigo-100">
                               <AvatarImage src={rev.userAvatar} />
-                              <AvatarFallback className="bg-red-500 text-white">{rev.userName.charAt(0)}</AvatarFallback>
+                              <AvatarFallback className="bg-purple-600 text-white">{rev.userName.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-2">
@@ -544,7 +629,7 @@ export default function CourseDetailPage() {
                                 </div>
                                 <div className="flex">
                                   {[...Array(5)].map((_, i) => (
-                                    <Star key={i} className={`w-4 h-4 ${i < rev.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                                    <Star key={i} className={`w-4 h-4 ${i < rev.rating ? 'fill-violet-400 text-violet-400' : 'text-slate-200'}`} />
                                   ))}
                                 </div>
                               </div>
@@ -571,14 +656,14 @@ export default function CourseDetailPage() {
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
               <div className="glass-card rounded-3xl p-6 sticky top-24 shadow-xl">
                 <h3 className="text-xl font-bold mb-5" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Course Info</h3>
-                
+
                 <div className="space-y-4 mb-6">
                   {[
                     { label: 'Duration', value: course.duration },
                     { label: 'Lessons', value: courseLessons.length },
                     { label: 'Rating', value: (
                       <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                        <Star className="w-4 h-4 fill-violet-400 text-violet-400" />
                         <span className="font-semibold">{course.rating > 0 ? course.rating.toFixed(1) : 'N/A'}</span>
                         <span className="text-xs text-slate-400">({courseReviews.length})</span>
                       </div>
@@ -586,7 +671,7 @@ export default function CourseDetailPage() {
                     { label: 'Students', value: course.views.toLocaleString() },
                     { label: 'Access', value: (
                       <Badge variant="outline" className="rounded-lg capitalize text-xs">
-                        {course.accessRule === 'open' ? '🔓 Open' : course.accessRule === 'invitation' ? '🔒 Invitation' : '💰 Paid'}
+                        {course.access_rule === 'open' ? '🔓 Open' : course.access_rule === 'invitation' ? '🔒 Invitation' : '💰 Paid'}
                       </Badge>
                     )},
                     { label: 'Visibility', value: (
@@ -605,7 +690,7 @@ export default function CourseDetailPage() {
                 {/* CTA Buttons */}
                 {!isAuthenticated && (
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button onClick={() => navigate('/login')} className="w-full h-12 bg-red-500 text-white shadow-xl shadow-red-500/20 rounded-xl">
+                    <Button onClick={() => navigate('/login')} className="w-full h-12 bg-purple-600 text-white shadow-xl shadow-purple-600/20 rounded-xl">
                       Sign In to Enroll <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </motion.div>
@@ -623,7 +708,7 @@ export default function CourseDetailPage() {
                   </div>
                 )}
 
-                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.accessRule === 'open' && (
+                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.access_rule === 'open' && (
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button onClick={handleEnroll} className="w-full h-12 bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-xl shadow-emerald-500/20 rounded-xl">
                       <Play className="w-4 h-4 mr-2" /> Start Learning <ArrowRight className="w-4 h-4 ml-2" />
@@ -631,19 +716,19 @@ export default function CourseDetailPage() {
                   </motion.div>
                 )}
 
-                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.accessRule === 'payment' && (
+                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.access_rule === 'payment' && (
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button onClick={handleEnroll} className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xl shadow-amber-500/20 rounded-xl">
-                      <ShoppingCart className="w-4 h-4 mr-2" /> Buy Course
+                    <Button onClick={handleEnroll} className="w-full h-12 bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-xl shadow-violet-500/20 rounded-xl">
+                      <ShoppingCart className="w-4 h-4 mr-2" /> Buy Now ${course.price?.toFixed(2) || '0.00'}
                     </Button>
                   </motion.div>
                 )}
 
-                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.accessRule === 'invitation' && (
+                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.access_rule === 'invitation' && (
                   <>
                     {courseInvitations.some(i => i.courseId === course.id && i.userId === user?.id) ? (
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button onClick={handleEnroll} className="w-full h-12 bg-red-500 text-white shadow-xl shadow-red-500/20 rounded-xl">
+                        <Button onClick={handleEnroll} className="w-full h-12 bg-purple-600 text-white shadow-xl shadow-purple-600/20 rounded-xl">
                           <Play className="w-4 h-4 mr-2" /> Accept Invitation
                         </Button>
                       </motion.div>
@@ -658,7 +743,7 @@ export default function CourseDetailPage() {
                 {enrollment && !enrollment.completed && (
                   <Link to={`/lesson/${id}/${firstIncompleteLesson?.id || courseLessons[0]?.id}`}>
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Button className="w-full h-12 bg-red-500 hover:bg-red-600 text-white shadow-xl shadow-red-500/20 rounded-xl">
+                      <Button className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 rounded-xl">
                         {completedLessonIds.length > 0 ? 'Continue Learning' : 'Start Learning'}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>

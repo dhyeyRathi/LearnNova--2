@@ -156,14 +156,14 @@ export default function TutorApplicationsPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-full mb-4">
-                <Crown className="w-5 h-5 text-yellow-600" />
-                <span className="text-sm font-semibold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 rounded-full mb-4">
+                <Crown className="w-5 h-5 text-purple-600" />
+                <span className="text-sm font-semibold text-purple-600">
                   Admin Portal
                 </span>
               </div>
               <h1 className="text-4xl font-bold mb-2">
-                Tutor <span className="bg-gradient-to-r from-red-600 to-amber-600 bg-clip-text text-transparent">Applications</span>
+                Tutor <span className="text-purple-700">Applications</span>
               </h1>
               <p className="text-slate-600">Review and manage instructor applications to join the admin team</p>
             </div>
@@ -194,7 +194,7 @@ export default function TutorApplicationsPage() {
                 <p className="text-sm text-slate-600 mb-1">Total Applications</p>
                 <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-red-500 to-amber-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center">
                 <User className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -204,9 +204,9 @@ export default function TutorApplicationsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 mb-1">Pending Review</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                <p className="text-2xl font-bold text-purple-600">{stats.pending}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center animate-pulse">
+              <div className="w-12 h-12 rounded-xl bg-purple-500 flex items-center justify-center animate-pulse">
                 <Clock className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -218,7 +218,7 @@ export default function TutorApplicationsPage() {
                 <p className="text-sm text-slate-600 mb-1">Approved</p>
                 <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-red-400 to-amber-500 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center">
                 <Check className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -228,9 +228,9 @@ export default function TutorApplicationsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 mb-1">Rejected</p>
-                <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
+                <p className="text-2xl font-bold text-purple-700">{stats.rejected}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-red-400 to-rose-500 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center">
                 <X className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -249,7 +249,7 @@ export default function TutorApplicationsPage() {
               key={filterOption}
               variant={filter === filterOption ? 'default' : 'outline'}
               onClick={() => setFilter(filterOption as typeof filter)}
-              className={filter === filterOption ? 'bg-gradient-to-r from-red-500 to-amber-600 text-white' : ''}
+              className={filter === filterOption ? 'bg-purple-600 text-white' : ''}
             >
               {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
             </Button>
@@ -264,8 +264,8 @@ export default function TutorApplicationsPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="text-center py-20"
             >
-              <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-r from-red-100 to-amber-100 mb-4">
-                <Star className="w-12 h-12 text-red-400" />
+              <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-purple-100 mb-4">
+                <Star className="w-12 h-12 text-purple-500" />
               </div>
               <h3 className="text-xl font-semibold text-slate-700 mb-2">
                 {filter === 'pending' ? 'No Pending Applications' : filter === 'all' ? 'No Applications Yet' : `No ${filter} Applications`}
@@ -288,7 +288,7 @@ export default function TutorApplicationsPage() {
                     <div className="flex items-start gap-4 flex-1">
                       <Avatar className="w-16 h-16 border-2 border-white shadow-md">
                         <AvatarImage src={application.userAvatar} alt={application.userName} />
-                        <AvatarFallback className="bg-gradient-to-br from-red-400 to-amber-600 text-white">
+                        <AvatarFallback className="bg-purple-600 text-white">
                           {application.userName.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
@@ -305,10 +305,10 @@ export default function TutorApplicationsPage() {
                           <Badge
                             className={
                               application.status === 'pending'
-                                ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white animate-pulse shadow-lg shadow-yellow-500/30'
+                                ? 'bg-purple-500 text-white animate-pulse shadow-lg shadow-purple-500/30'
                                 : application.status === 'approved'
-                                ? 'bg-gradient-to-r from-red-400 to-amber-500 text-white shadow-lg shadow-red-500/30'
-                                : 'bg-gradient-to-r from-red-400 to-rose-500 text-white'
+                                ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                                : 'bg-purple-700 text-white'
                             }
                           >
                             {application.status}
@@ -345,7 +345,7 @@ export default function TutorApplicationsPage() {
                       <div className="flex md:flex-col gap-2">
                         <Button
                           onClick={() => handleApprove(application.id)}
-                          className="flex-1 md:flex-none bg-gradient-to-r from-red-400 to-amber-500 hover:from-red-500 hover:to-amber-600 text-white"
+                          className="flex-1 md:flex-none bg-purple-600 hover:bg-purple-700 text-white"
                         >
                           <Check className="w-4 h-4 mr-2" />
                           Approve
@@ -353,7 +353,7 @@ export default function TutorApplicationsPage() {
                         <Button
                           onClick={() => handleReject(application.id)}
                           variant="outline"
-                          className="flex-1 md:flex-none text-red-600 border-red-300 hover:bg-red-50"
+                          className="flex-1 md:flex-none text-purple-700 border-purple-300 hover:bg-purple-50"
                         >
                           <X className="w-4 h-4 mr-2" />
                           Reject

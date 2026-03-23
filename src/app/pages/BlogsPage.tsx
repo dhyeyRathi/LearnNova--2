@@ -92,17 +92,17 @@ export default function BlogsPage() {
       <div className="min-h-screen px-4">
         {/* Hero */}
       <section className="relative py-20 px-4 overflow-hidden">
-        <div className="absolute top-10 right-20 w-64 h-64 bg-red-100/20 rounded-full blur-3xl animate-float-gentle" />
-        <div className="absolute bottom-10 left-10 w-80 h-80 bg-amber-100/15 rounded-full blur-3xl animate-float-gentle" style={{ animationDelay: '-2s' }} />
+        <div className="absolute top-10 right-20 w-64 h-64 bg-purple-100/20 rounded-full blur-3xl animate-float-gentle" />
+        <div className="absolute bottom-10 left-10 w-80 h-80 bg-violet-100/15 rounded-full blur-3xl animate-float-gentle" style={{ animationDelay: '-2s' }} />
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 border border-red-100 mb-6">
-            <BookOpen className="w-4 h-4 text-red-500" />
-            <span className="text-sm text-red-600 font-medium">Latest Articles</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 border border-purple-100 mb-6">
+            <BookOpen className="w-4 h-4 text-purple-600" />
+            <span className="text-sm text-purple-700 font-medium">Latest Articles</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             <span className="text-slate-800">Insights & </span>
-            <span className="text-red-500">Tutorials</span>
+            <span className="text-purple-600">Tutorials</span>
           </h1>
           <p className="text-lg text-slate-500 mb-8 max-w-xl mx-auto">Stay ahead with the latest in tech, tutorials, and industry insights from our expert community.</p>
 
@@ -118,7 +118,7 @@ export default function BlogsPage() {
         <div className="flex flex-wrap gap-2 justify-center">
           {categories.map(cat => (
             <Button key={cat} variant={activeCategory === cat ? 'default' : 'outline'} onClick={() => setActiveCategory(cat)}
-              className={`rounded-xl ${activeCategory === cat ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : ''}`}>
+              className={`rounded-xl ${activeCategory === cat ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : ''}`}>
               {cat}
             </Button>
           ))}
@@ -135,8 +135,8 @@ export default function BlogsPage() {
                 <img src={filtered[0].cover} alt={filtered[0].title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
               </div>
               <div className="p-8 flex flex-col justify-center">
-                <Badge className="self-start bg-red-50 text-red-600 rounded-lg mb-4">{filtered[0].category}</Badge>
-                <h2 className="text-3xl font-bold text-slate-800 mb-3 group-hover:text-red-600 transition-colors" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{filtered[0].title}</h2>
+                <Badge className="self-start bg-purple-50 text-purple-700 rounded-lg mb-4">{filtered[0].category}</Badge>
+                <h2 className="text-3xl font-bold text-slate-800 mb-3 group-hover:text-purple-700 transition-colors" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{filtered[0].title}</h2>
                 <p className="text-slate-500 mb-6 leading-relaxed">{filtered[0].excerpt}</p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -153,7 +153,7 @@ export default function BlogsPage() {
                 </div>
               </div>
             </div>
-            <div className="h-1 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+            <div className="h-1 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
           </motion.div>
         </section>
       )}
@@ -167,11 +167,11 @@ export default function BlogsPage() {
               <div className="h-48 overflow-hidden">
                 <img src={post.cover} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute top-4 left-4">
-                  <Badge className="bg-white/90 text-red-600 rounded-lg shadow">{post.category}</Badge>
+                  <Badge className="bg-white/90 text-purple-700 rounded-lg shadow">{post.category}</Badge>
                 </div>
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-red-600 transition-colors line-clamp-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{post.title}</h3>
+                <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-purple-700 transition-colors line-clamp-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{post.title}</h3>
                 <p className="text-sm text-slate-500 mb-4 line-clamp-2">{post.excerpt}</p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -181,15 +181,15 @@ export default function BlogsPage() {
                   <span className="text-xs text-slate-400">{post.readTime}</span>
                 </div>
               </div>
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
             </motion.div>
           ))}
         </div>
 
         {filtered.length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-            <div className="w-24 h-24 rounded-3xl bg-red-100 flex items-center justify-center mx-auto mb-6">
-              <Search className="w-12 h-12 text-red-300" />
+            <div className="w-24 h-24 rounded-3xl bg-purple-100 flex items-center justify-center mx-auto mb-6">
+              <Search className="w-12 h-12 text-purple-300" />
             </div>
             <h3 className="text-2xl font-bold text-slate-700 mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>No articles found</h3>
             <p className="text-slate-500">Try a different search or category</p>

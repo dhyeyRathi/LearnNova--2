@@ -44,7 +44,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Mobile sidebar toggle */}
       <div className="md:hidden fixed bottom-20 left-4 z-50">
-        <Button onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} className="w-10 h-10 rounded-xl bg-red-500 text-white shadow-lg p-0">
+        <Button onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} className="w-10 h-10 rounded-xl bg-purple-600 text-white shadow-lg p-0">
           {mobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </Button>
       </div>
@@ -60,7 +60,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   const isActive = location.pathname === item.to || (item.to !== '/profile' && location.pathname.startsWith(item.to + '/'));
                   return (
                     <Link key={item.to} to={item.to} onClick={() => setMobileSidebarOpen(false)}>
-                      <div className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all ${isActive ? 'bg-red-500 text-white font-medium' : 'text-[#7A766F] hover:bg-red-100 hover:text-red-600'}`}>
+                      <div className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all ${isActive ? 'bg-purple-600 text-white font-medium' : 'text-[#7A766F] hover:bg-purple-100 hover:text-purple-700'}`}>
                         <item.icon className="w-4 h-4" />
                         <span className="text-[13px]">{item.label}</span>
                       </div>

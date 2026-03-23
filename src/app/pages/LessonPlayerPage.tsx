@@ -160,7 +160,7 @@ export default function LessonPlayerPage() {
         <div className="fixed inset-0 z-[100] bg-slate-900 flex flex-col">
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center">
                 <HelpCircle className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -184,7 +184,7 @@ export default function LessonPlayerPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="max-w-lg w-full text-center"
             >
-              <div className="w-24 h-24 rounded-3xl bg-red-500 flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-red-500/30">
+              <div className="w-24 h-24 rounded-3xl bg-purple-600 flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-purple-600/30">
                 <HelpCircle className="w-12 h-12 text-white" />
               </div>
               <h2 className="text-4xl font-bold text-white mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
@@ -211,7 +211,7 @@ export default function LessonPlayerPage() {
 
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-10 text-left">
                 <p className="text-white/80 text-sm leading-relaxed">
-                  <span className="text-red-400 font-semibold">Multiple attempts allowed.</span>{' '}
+                  <span className="text-purple-500 font-semibold">Multiple attempts allowed.</span>{' '}
                   Points decrease with each attempt per question. Answer correctly on the first try for maximum points!
                 </p>
               </div>
@@ -219,7 +219,7 @@ export default function LessonPlayerPage() {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   onClick={() => setQuizStarted(true)}
-                  className="h-14 px-12 text-lg bg-red-500 text-white rounded-2xl shadow-2xl shadow-red-500/30"
+                  className="h-14 px-12 text-lg bg-purple-600 text-white rounded-2xl shadow-2xl shadow-purple-600/30"
                 >
                   Start Quiz
                   <ChevronRight className="w-5 h-5 ml-2" />
@@ -240,7 +240,7 @@ export default function LessonPlayerPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center" style={{ fontSize: 'inherit' }}>
+            <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center" style={{ fontSize: 'inherit' }}>
               <HelpCircle className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -249,7 +249,7 @@ export default function LessonPlayerPage() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
+            <Badge className="bg-purple-600/20 text-purple-300 border-purple-600/30">
               {quizCompleted ? 'Complete' : `${currentQuestionIndex + 1} / ${quiz.questions.length}`}
             </Badge>
             <Button
@@ -266,7 +266,7 @@ export default function LessonPlayerPage() {
         {/* Progress bar */}
         <div className="h-1 bg-white/10">
           <motion.div
-            className="h-full bg-red-500"
+            className="h-full bg-purple-600"
             animate={{ width: `${quizCompleted ? 100 : ((currentQuestionIndex + 1) / quiz.questions.length) * 100}%` }}
             transition={{ duration: 0.3 }}
           />
@@ -286,11 +286,11 @@ export default function LessonPlayerPage() {
                 </p>
                 <div className="flex gap-4 justify-center">
                   {nextLesson ? (
-                    <Button onClick={() => { handleComplete(); }} className="bg-red-500 text-white rounded-xl px-8 h-12">
+                    <Button onClick={() => { handleComplete(); }} className="bg-purple-600 text-white rounded-xl px-8 h-12">
                       Next Lesson <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
                   ) : (
-                    <Button onClick={() => navigate(`/course/${courseId}`)} className="bg-red-500 text-white rounded-xl px-8 h-12">
+                    <Button onClick={() => navigate(`/course/${courseId}`)} className="bg-purple-600 text-white rounded-xl px-8 h-12">
                       Back to Course
                     </Button>
                   )}
@@ -328,7 +328,7 @@ export default function LessonPlayerPage() {
                             ? 'border-emerald-500 bg-emerald-500/10'
                             : showFeedback && isSelected && !isCorrect
                             ? 'border-rose-500 bg-rose-500/10'
-                            : 'border-white/10 bg-white/5 hover:border-red-400/50 hover:bg-white/10'
+                            : 'border-white/10 bg-white/5 hover:border-purple-500/50 hover:bg-white/10'
                         } ${showAnswer ? 'cursor-default' : 'cursor-pointer'}`}
                       >
                         <div className="flex items-center justify-between">
@@ -360,7 +360,7 @@ export default function LessonPlayerPage() {
                     )}
 
                     {lastSelectedAnswer === currentQ.correctAnswer && (
-                      <Button onClick={handleNextQuestion} className="w-full h-14 bg-red-500 text-white rounded-xl shadow-lg text-lg">
+                      <Button onClick={handleNextQuestion} className="w-full h-14 bg-purple-600 text-white rounded-xl shadow-lg text-lg">
                         {currentQuestionIndex < quiz.questions.length - 1 ? 'Next Question' : 'See Results'}
                         <ChevronRight className="w-5 h-5 ml-2" />
                       </Button>
@@ -422,7 +422,7 @@ export default function LessonPlayerPage() {
               <Button variant="ghost" className="relative h-10 w-10 rounded-full ml-2">
                 <Avatar className="h-10 w-10 border-2 border-white shadow-md">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="bg-red-500 text-white">
+                  <AvatarFallback className="bg-purple-600 text-white">
                     {user.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
@@ -439,7 +439,7 @@ export default function LessonPlayerPage() {
                 My Courses
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-slate-700">
+              <DropdownMenuItem onClick={handleLogout} className="text-purple-500 hover:text-purple-400 hover:bg-slate-700">
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </DropdownMenuItem>
@@ -463,13 +463,13 @@ export default function LessonPlayerPage() {
                 <h3 className="font-bold text-base mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{course.title}</h3>
                 <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
                   <span>{progress ? `${progress.completedLessons.length}/${courseLessons.length} lessons` : `${courseLessons.length} lessons`}</span>
-                  <span className="font-semibold text-red-400">
+                  <span className="font-semibold text-purple-500">
                     {progress ? `${Math.round((progress.completedLessons.length / courseLessons.length) * 100)}%` : '0%'} complete
                   </span>
                 </div>
                 <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-red-500 rounded-full transition-all duration-500"
+                    className="h-full bg-purple-600 rounded-full transition-all duration-500"
                     style={{ width: `${progress ? (progress.completedLessons.length / courseLessons.length) * 100 : 0}%` }}
                   />
                 </div>
@@ -487,7 +487,7 @@ export default function LessonPlayerPage() {
                             onClick={() => navigate(`/lesson/${courseId}/${l.id}`)}
                             className={`w-full text-left p-3 rounded-xl transition-all ${
                               current
-                                ? 'bg-red-500 shadow-lg shadow-red-500/20'
+                                ? 'bg-purple-600 shadow-lg shadow-purple-600/20'
                                 : 'hover:bg-slate-800'
                             }`}
                           >
@@ -644,7 +644,7 @@ export default function LessonPlayerPage() {
                     </div>
                     <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-red-500 transition-all duration-300"
+                        className="h-full bg-purple-600 transition-all duration-300"
                         style={{ width: `${((currentQuestionIndex + 1) / quiz.questions.length) * 100}%` }}
                       />
                     </div>
@@ -680,8 +680,8 @@ export default function LessonPlayerPage() {
                                   showCorrect
                                     ? 'border-green-500 bg-green-50'
                                     : showIncorrect
-                                    ? 'border-red-500 bg-red-50'
-                                    : 'border-slate-200 hover:border-red-400 hover:bg-red-50'
+                                    ? 'border-purple-600 bg-purple-50'
+                                    : 'border-slate-200 hover:border-purple-500 hover:bg-purple-50'
                                 } ${showAnswer ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                               >
                                 <div className="flex items-center justify-between">
@@ -690,7 +690,7 @@ export default function LessonPlayerPage() {
                                     <CheckCircle className="w-5 h-5 text-green-600" />
                                   )}
                                   {showIncorrect && (
-                                    <X className="w-5 h-5 text-red-600" />
+                                    <X className="w-5 h-5 text-purple-700" />
                                   )}
                                 </div>
                               </button>
@@ -724,7 +724,7 @@ export default function LessonPlayerPage() {
                         {showAnswer && selectedAnswer === question.correctAnswer && (
                           <Button
                             onClick={handleNextQuestion}
-                            className="w-full h-12 bg-red-500 hover:bg-red-600 text-white"
+                            className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white"
                           >
                             {currentQuestionIndex < quiz.questions.length - 1 ? 'Next Question' : 'Complete Quiz'}
                             <ChevronRight className="ml-2 w-5 h-5" />
@@ -753,7 +753,7 @@ export default function LessonPlayerPage() {
                 </Button>
                 <Button
                   onClick={handleComplete}
-                  className="bg-red-500 hover:bg-red-600 text-white"
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   {nextLesson ? 'Next Lesson' : 'Complete Course'}
                   <ChevronRight className="ml-2 w-4 h-4" />

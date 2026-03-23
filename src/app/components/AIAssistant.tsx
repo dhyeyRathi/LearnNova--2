@@ -116,10 +116,10 @@ export default function AIAssistant() {
             >
               <button
                 onClick={() => setIsOpen(true)}
-                className="relative w-14 h-14 rounded-full bg-red-500 text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/25 hover:scale-105 transition-all duration-200 flex items-center justify-center group"
+                className="relative w-14 h-14 rounded-full bg-purple-600 text-white shadow-lg shadow-purple-600/20 hover:shadow-xl hover:shadow-purple-600/25 hover:scale-105 transition-all duration-200 flex items-center justify-center group"
               >
                 <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-                <span className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse-ring" />
+                <span className="absolute inset-0 rounded-full bg-purple-600/20 animate-pulse-ring" />
               </button>
             </motion.div>
           )}
@@ -137,7 +137,7 @@ export default function AIAssistant() {
             className="fixed bottom-6 right-6 z-[60] w-[380px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-4rem)] bg-white rounded-2xl shadow-2xl shadow-slate-900/10 border border-slate-200 flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 bg-red-500 text-white flex-shrink-0">
+            <div className="flex items-center justify-between px-5 py-4 bg-purple-600 text-white flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
                   <Sparkles className="w-5 h-5" />
@@ -169,15 +169,15 @@ export default function AIAssistant() {
                 >
                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
                     msg.role === 'assistant'
-                      ? 'bg-red-500 text-white'
-                      : 'bg-[#F0EEEA] text-red-600'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-[#F0EEEA] text-purple-700'
                   }`}>
                     {msg.role === 'assistant' ? <Bot className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
                   </div>
                   <div className={`max-w-[75%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${
                     msg.role === 'assistant'
                       ? 'bg-white border border-[#E5E2DC] text-[#1A1F2E] shadow-sm'
-                      : 'bg-red-500 text-white'
+                      : 'bg-purple-600 text-white'
                   }`}>
                     {renderContent(msg.content)}
                   </div>
@@ -190,7 +190,7 @@ export default function AIAssistant() {
                   animate={{ opacity: 1 }}
                   className="flex gap-2.5"
                 >
-                  <div className="w-7 h-7 rounded-lg bg-red-500 text-white flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center flex-shrink-0">
                     <Bot className="w-3.5 h-3.5" />
                   </div>
                   <div className="bg-white border border-[#E5E2DC] rounded-xl px-4 py-3 shadow-sm">
@@ -212,7 +212,7 @@ export default function AIAssistant() {
                   <button
                     key={q}
                     onClick={() => handleSend(q)}
-                    className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-500/[0.05] hover:bg-red-500/[0.1] rounded-lg border border-[#E5E2DC] transition-colors whitespace-nowrap"
+                    className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-600/[0.05] hover:bg-purple-600/[0.1] rounded-lg border border-[#E5E2DC] transition-colors whitespace-nowrap"
                   >
                     {q}
                   </button>
@@ -238,7 +238,7 @@ export default function AIAssistant() {
                   type="submit"
                   size="icon"
                   disabled={!input.trim() || isTyping}
-                  className="h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 text-white flex-shrink-0 shadow-sm disabled:opacity-40"
+                  className="h-10 w-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0 shadow-sm disabled:opacity-40"
                 >
                   {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </Button>

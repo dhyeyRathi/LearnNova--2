@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, User as SupabaseUser, signIn, signUp, signOut, getCurrentUser } from '../../utils/supabase/client';
+import { supabase, User as SupabaseUser, signIn, signUp, signOut, getCurrentUser, updateUserProfile } from '../../utils/supabase/client';
 import { User } from '../data/mockData';
 
 interface AuthContextType {
@@ -7,7 +7,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  updateUser: (updates: Partial<User>) => void;
+  updateUser: (updates: Partial<User>) => Promise<{ success: boolean }>;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -120,10 +120,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateUser = (updates: Partial<User>) => {
+  const updateUser = async (updates: Partial<User>) => {
     if (user) {
-      setUser({ ...user, ...updates });
+      try {
+        // Update in database
+        const updatedUser = await updateUserProfile(user.id, updates);
+        // Update local state with the database response
+        setUser(updatedUser);
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to update user:', error);
+        throw error;
+      }
     }
+    throw new Error('No user logged in');
   };
 
   return (
@@ -143,6 +153,7 @@ export const useAuth = () => {
       login: async () => ({ success: false, error: 'Auth not initialized' }),
       signup: async () => ({ success: false, error: 'Auth not initialized' }),
       logout: async () => {},
+      updateUser: async () => ({ success: false }),
       isAuthenticated: false,
       isLoading: false,
     };

@@ -69,15 +69,15 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
       <div className="absolute top-6 left-6 z-20">
-        <Link to="/"><Button variant="ghost" className="text-[#7A766F] hover:bg-red-50 hover:text-red-600 rounded-lg text-[13px] h-8"><ArrowLeft className="w-3.5 h-3.5 mr-1.5" />Back</Button></Link>
+        <Link to="/"><Button variant="ghost" className="text-[#7A766F] hover:bg-purple-50 hover:text-purple-700 rounded-lg text-[13px] h-8"><ArrowLeft className="w-3.5 h-3.5 mr-1.5" />Back</Button></Link>
       </div>
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[380px] relative z-10">
         <Link to="/" className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center">
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
-          <span className="text-lg font-semibold text-red-600" style={{ fontFamily: "'DM Serif Display', serif" }}>LearnNova</span>
+          <span className="text-lg font-semibold text-purple-700" style={{ fontFamily: "'DM Serif Display', serif" }}>LearnNova</span>
         </Link>
 
         <div className="bg-white rounded-xl border border-[#E5E2DC] p-6">
@@ -93,7 +93,7 @@ export default function SignupPage() {
                 <Input id={f.id} type={f.type} placeholder={f.placeholder} value={f.value} onChange={e => f.onChange(e.target.value)} className="h-10 rounded-lg border-[#E5E2DC] bg-[#F7F6F3] focus:bg-white focus:border-amber-400 focus:border-2 text-sm" />
               </div>
             ))}
-            <Button type="submit" className="w-full h-10 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium" disabled={isSubmitting}>
+            <Button type="submit" className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Create Account <ArrowRight className="ml-2 w-3.5 h-3.5" /></>}
             </Button>
             <div className="text-center text-sm text-[#7A766F] pt-1">

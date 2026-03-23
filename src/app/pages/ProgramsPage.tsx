@@ -36,7 +36,7 @@ const programs: Program[] = [
     rating: 4.9,
     students: 3420,
     icon: Code,
-    color: 'from-red-500 to-amber-500',
+    color: 'from-purple-600 to-violet-500',
     courses: [
       { title: 'HTML & CSS Fundamentals', duration: '6h' },
       { title: 'JavaScript Essentials', duration: '8h' },
@@ -83,7 +83,7 @@ const programs: Program[] = [
     rating: 4.9,
     students: 4150,
     icon: Cpu,
-    color: 'from-red-500 to-amber-500',
+    color: 'from-purple-600 to-violet-500',
     courses: [
       { title: 'Web Development Bootcamp', duration: '10h' },
       { title: 'React Frontend', duration: '10h' },
@@ -109,7 +109,7 @@ const programs: Program[] = [
     rating: 4.7,
     students: 1870,
     icon: Smartphone,
-    color: 'from-red-500 to-amber-500',
+    color: 'from-purple-600 to-violet-500',
     courses: [
       { title: 'React Native Essentials', duration: '10h' },
       { title: 'Navigation & State', duration: '7h' },
@@ -131,7 +131,7 @@ const programs: Program[] = [
     rating: 4.8,
     students: 3210,
     icon: Database,
-    color: 'from-amber-500 to-orange-500',
+    color: 'from-violet-500 to-orange-500',
     courses: [
       { title: 'Python for Data Science', duration: '8h' },
       { title: 'Statistics & Probability', duration: '7h' },
@@ -155,7 +155,7 @@ const programs: Program[] = [
     rating: 4.7,
     students: 1560,
     icon: Cloud,
-    color: 'from-red-500 to-amber-500',
+    color: 'from-purple-600 to-violet-500',
     courses: [
       { title: 'Linux & Command Line', duration: '6h' },
       { title: 'Docker & Containerization', duration: '8h' },
@@ -177,7 +177,7 @@ const programs: Program[] = [
     rating: 4.6,
     students: 1340,
     icon: Shield,
-    color: 'from-red-500 to-rose-500',
+    color: 'from-purple-600 to-rose-500',
     courses: [
       { title: 'Network Security Basics', duration: '7h' },
       { title: 'Web Application Security', duration: '8h' },
@@ -198,7 +198,7 @@ const programs: Program[] = [
     rating: 4.9,
     students: 2780,
     icon: Palette,
-    color: 'from-red-500 to-amber-500',
+    color: 'from-purple-600 to-violet-500',
     courses: [
       { title: 'Design Principles & Theory', duration: '5h' },
       { title: 'Figma Mastery', duration: '8h' },
@@ -230,17 +230,17 @@ export default function ProgramsPage() {
 
       {/* Hero */}
       <section className="relative py-20 overflow-hidden">
-        <div className="absolute top-10 left-20 w-72 h-72 bg-red-100/10 rounded-full blur-3xl animate-float-gentle" />
-        <div className="absolute bottom-10 right-10 w-80 h-80 bg-amber-100/15 rounded-full blur-3xl animate-float-gentle" style={{ animationDelay: '-3s' }} />
+        <div className="absolute top-10 left-20 w-72 h-72 bg-purple-100/10 rounded-full blur-3xl animate-float-gentle" />
+        <div className="absolute bottom-10 right-10 w-80 h-80 bg-violet-100/15 rounded-full blur-3xl animate-float-gentle" style={{ animationDelay: '-3s' }} />
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 border border-red-100 mb-6">
-            <Sparkles className="w-4 h-4 text-red-500" />
-            <span className="text-sm text-red-600 font-medium">Professional Programs</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 border border-purple-100 mb-6">
+            <Sparkles className="w-4 h-4 text-purple-600" />
+            <span className="text-sm text-purple-700 font-medium">Professional Programs</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             <span className="text-slate-800">Structured </span>
-            <span className="text-red-500">learning paths</span>
+            <span className="text-purple-600">learning paths</span>
           </h1>
           <p className="text-lg text-slate-500 mb-8 max-w-2xl mx-auto">Comprehensive, career-focused programs designed by industry experts. From beginner to job-ready in months, not years.</p>
 
@@ -256,7 +256,7 @@ export default function ProgramsPage() {
         <div className="flex flex-wrap gap-2 justify-center">
           {categoryFilters.map(cat => (
             <Button key={cat} variant={activeCategory === cat ? 'default' : 'outline'} onClick={() => setActiveCategory(cat)}
-              className={`rounded-xl text-sm ${activeCategory === cat ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : ''}`}>
+              className={`rounded-xl text-sm ${activeCategory === cat ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : ''}`}>
               {cat}
             </Button>
           ))}
@@ -283,23 +283,23 @@ export default function ProgramsPage() {
                   <div className="p-6 md:p-8">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <Badge className="bg-red-50 text-red-600 rounded-lg mb-2">{program.category}</Badge>
-                        <h2 className="text-2xl font-bold text-slate-800 group-hover:text-red-600 transition-colors" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                        <Badge className="bg-purple-50 text-purple-700 rounded-lg mb-2">{program.category}</Badge>
+                        <h2 className="text-2xl font-bold text-slate-800 group-hover:text-purple-700 transition-colors" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                           {program.title}
                         </h2>
                       </div>
-                      <div className="hidden sm:flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-lg">
-                        <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                        <span className="text-sm font-semibold text-amber-700">{program.rating}</span>
+                      <div className="hidden sm:flex items-center gap-1 bg-violet-50 px-2.5 py-1 rounded-lg">
+                        <Star className="w-4 h-4 fill-violet-400 text-violet-400" />
+                        <span className="text-sm font-semibold text-violet-700">{program.rating}</span>
                       </div>
                     </div>
 
                     <p className="text-slate-500 mb-4 leading-relaxed">{program.description}</p>
 
                     <div className="flex flex-wrap gap-4 mb-4 text-sm text-slate-500">
-                      <div className="flex items-center gap-1.5"><BookOpen className="w-4 h-4 text-red-400" /><span>{program.courseCount} courses</span></div>
-                      <div className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-amber-400" /><span>{program.duration}</span></div>
-                      <div className="flex items-center gap-1.5"><Users className="w-4 h-4 text-red-400" /><span>{program.students.toLocaleString()} students</span></div>
+                      <div className="flex items-center gap-1.5"><BookOpen className="w-4 h-4 text-purple-500" /><span>{program.courseCount} courses</span></div>
+                      <div className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-violet-400" /><span>{program.duration}</span></div>
+                      <div className="flex items-center gap-1.5"><Users className="w-4 h-4 text-purple-500" /><span>{program.students.toLocaleString()} students</span></div>
                       <Badge variant="secondary" className="rounded-lg">{program.level}</Badge>
                     </div>
 
@@ -311,7 +311,7 @@ export default function ProgramsPage() {
                           {program.courses.map((course, ci) => (
                             <div key={ci} className="flex items-center justify-between py-1.5 px-3 bg-white rounded-lg">
                               <div className="flex items-center gap-3">
-                                <span className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold text-red-600">{ci + 1}</span>
+                                <span className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-700">{ci + 1}</span>
                                 <span className="text-sm text-slate-700">{course.title}</span>
                               </div>
                               <span className="text-xs text-slate-400">{course.duration}</span>
@@ -331,7 +331,7 @@ export default function ProgramsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="h-1 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                <div className="h-1 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
               </div>
             </motion.div>
           ))}
@@ -339,8 +339,8 @@ export default function ProgramsPage() {
 
         {filtered.length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-            <div className="w-24 h-24 rounded-3xl bg-red-100 flex items-center justify-center mx-auto mb-6">
-              <Search className="w-12 h-12 text-red-300" />
+            <div className="w-24 h-24 rounded-3xl bg-purple-100 flex items-center justify-center mx-auto mb-6">
+              <Search className="w-12 h-12 text-purple-300" />
             </div>
             <h3 className="text-2xl font-bold text-slate-700 mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>No programs found</h3>
             <p className="text-slate-500">Try a different search or category</p>

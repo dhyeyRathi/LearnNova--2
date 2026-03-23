@@ -8,27 +8,80 @@ import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
-import { courses, lessons, userProgress, enrollments, badges, getBadgeLevel } from '../data/mockData';
-import { Search, Clock, Award, Trophy, Target, BookOpen, Flame, Star, Play, RotateCcw, CheckCircle, ChevronRight, Zap, Shield, Image as ImageIcon } from 'lucide-react';
+import { badges, getBadgeLevel } from '../data/mockData';
+import { getUserEnrollments, type CourseEnrollment, type Course } from '../../utils/supabase/client';
+import { Search, Clock, Award, Trophy, Target, BookOpen, Flame, Star, Play, RotateCcw, CheckCircle, ChevronRight, Zap, Shield, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
+
+interface EnrolledCourse extends Course {
+  enrollment: CourseEnrollment;
+  progress: number;
+  timeSpent: number;
+  lastAccessed: string;
+  completedLessons: number;
+  totalLessons: number;
+  isCompleted: boolean;
+  enrolledAt: string;
+  completedAt?: string;
+}
 
 export default function MyCoursesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   // Redirect admins to their dashboard
   if (user?.role === 'admin') {
     navigate('/dashboard/admin', { replace: true });
     return null;
   }
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'in-progress' | 'completed'>('all');
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleImageError = (courseId: string) => {
     setFailedImages(prev => new Set([...prev, courseId]));
   };
+
+  // Fetch user's enrolled courses
+  useEffect(() => {
+    const fetchEnrolledCourses = async () => {
+      if (!user?.id) return;
+
+      try {
+        setLoading(true);
+        const enrollments = await getUserEnrollments(user.id);
+
+        const coursesWithProgress: EnrolledCourse[] = enrollments.map(enrollment => {
+          const course = enrollment.courses;
+          return {
+            ...course,
+            enrollment,
+            progress: enrollment.progress_percentage,
+            timeSpent: 0, // Would need separate table for detailed progress
+            lastAccessed: enrollment.enrolled_at,
+            completedLessons: 0, // Would calculate from lessons progress
+            totalLessons: 10, // Default - would come from actual lesson count
+            isCompleted: enrollment.is_completed,
+            enrolledAt: enrollment.enrolled_at,
+            completedAt: enrollment.completed_at,
+          };
+        });
+
+        setEnrolledCourses(coursesWithProgress);
+      } catch (err) {
+        console.error('Error fetching enrolled courses:', err);
+        setError('Failed to load your courses');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEnrolledCourses();
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) navigate('/login');
@@ -43,32 +96,50 @@ export default function MyCoursesPage() {
     ? ((user.points - badge.minPoints) / (nextBadge.minPoints - badge.minPoints)) * 100
     : 100;
 
-  // Build enrolled courses with progress data
-  const enrolledCourses = enrollments
-    .filter(e => e.userId === user.id)
-    .map(enrollment => {
-      const course = courses.find(c => c.id === enrollment.courseId);
-      if (!course) return null;
-      const progress = userProgress.find(p => p.userId === user.id && p.courseId === course.id);
-      const courseLessons = lessons.filter(l => l.courseId === course.id);
-      const completedCount = progress?.completedLessons.length || 0;
-      const totalCount = courseLessons.length;
-      const completionPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
-      const isCompleted = enrollment.completed;
+  // Loading state
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <BackButton label="Home" to="/" />
+          <div className="flex items-center justify-center min-h-96">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center"
+            >
+              <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
+              <p className="text-lg text-gray-600">Loading your courses...</p>
+            </motion.div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
-      return {
-        ...course,
-        progress: completionPercentage,
-        timeSpent: progress?.timeSpent || 0,
-        lastAccessed: progress?.lastAccessed || enrollment.enrolledAt,
-        completedLessons: completedCount,
-        totalLessons: totalCount,
-        isCompleted,
-        enrolledAt: enrollment.enrolledAt,
-        completedAt: enrollment.completedAt,
-      };
-    })
-    .filter(Boolean) as any[];
+  // Error state
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <BackButton label="Home" to="/" />
+          <div className="text-center py-20">
+            <div className="bg-purple-50 rounded-2xl p-12 inline-block border border-purple-100 mb-6">
+              <Target className="w-16 h-16 text-purple-300 mx-auto" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Error Loading Courses</h3>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">{error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-6 font-semibold"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const filteredCourses = enrolledCourses.filter(course => {
     if (filter === 'in-progress' && (course.isCompleted || course.progress === 0)) return false;
@@ -82,20 +153,20 @@ export default function MyCoursesPage() {
   const totalInProgress = enrolledCourses.filter(c => !c.isCompleted && c.progress > 0).length;
 
   const statCards = [
-    { icon: Trophy, value: user.points, label: 'Total Points', gradient: 'from-red-500 to-amber-500', shadowColor: 'shadow-red-500/20' },
-    { icon: BookOpen, value: enrolledCourses.length, label: 'Enrolled', gradient: 'from-red-500 to-amber-500', shadowColor: 'shadow-red-500/20' },
-    { icon: Target, value: totalCompleted, label: 'Completed', gradient: 'from-red-500 to-amber-500', shadowColor: 'shadow-red-500/20' },
-    { icon: Flame, value: totalInProgress, label: 'In Progress', gradient: 'from-red-500 to-amber-500', shadowColor: 'shadow-red-500/20' },
+    { icon: Trophy, value: user.points, label: 'Total Points', gradient: 'from-purple-600 to-violet-500', shadowColor: 'shadow-purple-600/20' },
+    { icon: BookOpen, value: enrolledCourses.length, label: 'Enrolled', gradient: 'from-purple-600 to-violet-500', shadowColor: 'shadow-purple-600/20' },
+    { icon: Target, value: totalCompleted, label: 'Completed', gradient: 'from-purple-600 to-violet-500', shadowColor: 'shadow-purple-600/20' },
+    { icon: Flame, value: totalInProgress, label: 'In Progress', gradient: 'from-purple-600 to-violet-500', shadowColor: 'shadow-purple-600/20' },
   ];
 
   const getCourseButton = (course: any) => {
     if (course.isCompleted) {
-      return { label: 'View Course', icon: Star, gradient: 'from-red-500 to-amber-500' };
+      return { label: 'View Course', icon: Star, gradient: 'from-purple-600 to-violet-500' };
     }
     if (course.progress > 0) {
-      return { label: 'Continue', icon: RotateCcw, gradient: 'from-red-500 to-amber-500' };
+      return { label: 'Continue', icon: RotateCcw, gradient: 'from-purple-600 to-violet-500' };
     }
-    return { label: 'Start', icon: Play, gradient: 'from-red-500 to-amber-500' };
+    return { label: 'Start', icon: Play, gradient: 'from-purple-600 to-violet-500' };
   };
 
   return (
@@ -109,11 +180,11 @@ export default function MyCoursesPage() {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative rounded-3xl p-8 mb-8 overflow-hidden bg-gradient-to-br from-red-500 to-red-600"
+              className="relative rounded-3xl p-8 mb-8 overflow-hidden bg-gradient-to-br from-purple-600 to-purple-700"
             >
-              <div className="absolute inset-0 bg-red-500/20" />
+              <div className="absolute inset-0 bg-purple-600/20" />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 to-transparent" />
-              
+
               <div className="absolute top-[-50px] right-[-50px] w-[200px] h-[200px] rounded-full border-2 border-white/20" />
               <div className="absolute bottom-[-30px] left-[10%] w-[150px] h-[150px] rounded-full border-2 border-white/20" />
               <motion.div
@@ -126,7 +197,7 @@ export default function MyCoursesPage() {
                 <div className="flex items-center space-x-6 mb-6 md:mb-0">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
-                    className="w-24 h-24 rounded-3xl overflow-hidden ring-4 ring-white/40 shadow-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center"
+                    className="w-24 h-24 rounded-3xl overflow-hidden ring-4 ring-white/40 shadow-2xl bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center"
                   >
                     <span className="text-4xl font-bold text-white drop-shadow-lg">{user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}</span>
                   </motion.div>
@@ -167,7 +238,7 @@ export default function MyCoursesPage() {
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(progressToNext, 100)}%` }}
                       transition={{ duration: 1.5, ease: 'easeOut' }}
-                      className="h-full bg-amber-300 rounded-full shadow-lg"
+                      className="h-full bg-violet-300 rounded-full shadow-lg"
                     />
                   </div>
                 </div>
@@ -197,7 +268,7 @@ export default function MyCoursesPage() {
                     variant={filter === f.key ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setFilter(f.key as any)}
-                    className={`rounded-lg text-xs ${filter === f.key ? 'bg-red-500 text-white shadow-md' : ''}`}
+                    className={`rounded-lg text-xs ${filter === f.key ? 'bg-purple-600 text-white shadow-md' : ''}`}
                   >
                     {f.label}
                   </Button>
@@ -224,24 +295,24 @@ export default function MyCoursesPage() {
                     >
                       <div className="group overflow-hidden rounded-3xl glass-card shadow-lg hover:shadow-2xl transition-all duration-500 h-full relative flex flex-col">
                         <Link to={`/course/${course.id}?from=my-courses`} className="block">
-                          <div className="relative h-40 overflow-hidden bg-red-50">
+                          <div className="relative h-40 overflow-hidden bg-purple-50">
                             {!failedImages.has(course.id) ? (
-                              <img 
-                                src={course.coverImage} 
-                                alt={course.title} 
+                              <img
+                                src={course.cover_image}
+                                alt={course.title}
                                 onError={() => handleImageError(course.id)}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-100 to-amber-100">
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-violet-100">
                                 <div className="text-center">
-                                  <ImageIcon className="w-8 h-8 text-red-300 mx-auto" />
-                                  <p className="text-red-400 text-xs mt-1">No image</p>
+                                  <ImageIcon className="w-8 h-8 text-purple-300 mx-auto" />
+                                  <p className="text-purple-500 text-xs mt-1">No image</p>
                                 </div>
                               </div>
                             )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                            
+
                             {/* Status badge */}
                             <div className="absolute top-3 left-3">
                               {course.isCompleted ? (
@@ -249,7 +320,7 @@ export default function MyCoursesPage() {
                                   <CheckCircle className="w-3 h-3 mr-1" /> Completed
                                 </Badge>
                               ) : course.progress > 0 ? (
-                                <Badge className="bg-red-500 text-white rounded-lg shadow-md">
+                                <Badge className="bg-purple-600 text-white rounded-lg shadow-md">
                                   <Flame className="w-3 h-3 mr-1" /> In Progress
                                 </Badge>
                               ) : (
@@ -275,7 +346,7 @@ export default function MyCoursesPage() {
                                 </Badge>
                               ))}
                             </div>
-                            <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-red-600 transition-colors line-clamp-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                            <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-purple-700 transition-colors line-clamp-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                               {course.title}
                             </h3>
                             <p className="text-sm text-slate-500 line-clamp-2 mb-4">{course.description}</p>
@@ -292,7 +363,7 @@ export default function MyCoursesPage() {
                                 initial={{ width: 0 }}
                                 animate={{ width: `${course.progress}%` }}
                                 transition={{ duration: 1, delay: index * 0.1 }}
-                                className={`h-full rounded-full bg-${course.isCompleted ? 'emerald-500' : 'red-500'}`}
+                                className={`h-full rounded-full bg-${course.isCompleted ? 'emerald-500' : 'purple-600'}`}
                               />
                             </div>
                           </div>
@@ -309,7 +380,7 @@ export default function MyCoursesPage() {
                           </motion.div>
                         </div>
 
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
                       </div>
                     </motion.div>
                   );
@@ -317,8 +388,8 @@ export default function MyCoursesPage() {
               </div>
             ) : (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20 glass-card rounded-3xl">
-                <div className="w-20 h-20 rounded-3xl bg-red-100 flex items-center justify-center mx-auto mb-4 animate-float-gentle">
-                  <BookOpen className="w-10 h-10 text-red-300" />
+                <div className="w-20 h-20 rounded-3xl bg-purple-100 flex items-center justify-center mx-auto mb-4 animate-float-gentle">
+                  <BookOpen className="w-10 h-10 text-purple-300" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-700 mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                   {searchQuery ? 'No courses found' : filter !== 'all' ? 'No courses in this category' : 'No courses yet'}
@@ -328,7 +399,7 @@ export default function MyCoursesPage() {
                 </p>
                 {!searchQuery && filter === 'all' && (
                   <Link to="/courses">
-                    <Button className="bg-red-500 text-white rounded-xl shadow-lg">
+                    <Button className="bg-purple-600 text-white rounded-xl shadow-lg">
                       Browse Courses
                     </Button>
                   </Link>
@@ -343,7 +414,7 @@ export default function MyCoursesPage() {
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <Card className="glass-card rounded-3xl p-6 shadow-xl sticky top-24">
                 <h3 className="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  <Shield className="w-5 h-5 text-red-500" />
+                  <Shield className="w-5 h-5 text-purple-600" />
                   Badge Levels
                 </h3>
 
@@ -372,7 +443,7 @@ export default function MyCoursesPage() {
                         key={b.level}
                         className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
                           isActive
-                            ? 'bg-red-50 border-2 border-red-200 shadow-sm'
+                            ? 'bg-purple-50 border-2 border-purple-200 shadow-sm'
                             : isUnlocked
                             ? 'bg-emerald-50/50 border border-emerald-100'
                             : 'bg-slate-50/50 border border-slate-100'
@@ -380,7 +451,7 @@ export default function MyCoursesPage() {
                       >
                         <span className={`text-2xl ${!isUnlocked ? 'opacity-40 grayscale' : ''}`}>{b.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-semibold ${isActive ? 'text-red-700' : isUnlocked ? 'text-emerald-700' : 'text-slate-400'}`}>
+                          <p className={`text-sm font-semibold ${isActive ? 'text-purple-700' : isUnlocked ? 'text-emerald-700' : 'text-slate-400'}`}>
                             {b.level}
                           </p>
                           <p className="text-[10px] text-slate-400">
@@ -388,7 +459,7 @@ export default function MyCoursesPage() {
                           </p>
                         </div>
                         {isActive && (
-                          <Badge className="bg-red-500 text-white text-[10px] rounded-lg shadow-sm">
+                          <Badge className="bg-purple-600 text-white text-[10px] rounded-lg shadow-sm">
                             Current
                           </Badge>
                         )}
@@ -402,17 +473,17 @@ export default function MyCoursesPage() {
 
                 {/* Next level progress */}
                 {nextBadge && (
-                  <div className="mt-6 p-4 bg-red-50 rounded-2xl border border-red-100">
+                  <div className="mt-6 p-4 bg-purple-50 rounded-2xl border border-purple-100">
                     <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-slate-600">Next: <span className="font-bold text-red-700">{nextBadge.level}</span> {nextBadge.icon}</span>
-                      <span className="font-semibold text-red-600">{nextBadge.minPoints - user.points} pts left</span>
+                      <span className="text-slate-600">Next: <span className="font-bold text-purple-700">{nextBadge.level}</span> {nextBadge.icon}</span>
+                      <span className="font-semibold text-purple-700">{nextBadge.minPoints - user.points} pts left</span>
                     </div>
                     <div className="h-2.5 bg-white rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${progressToNext}%` }}
                         transition={{ duration: 1.5 }}
-                        className="h-full bg-red-500 rounded-full"
+                        className="h-full bg-purple-600 rounded-full"
                       />
                     </div>
                   </div>
@@ -420,8 +491,8 @@ export default function MyCoursesPage() {
 
                 {/* Quick Stats */}
                 <div className="mt-6 grid grid-cols-2 gap-3">
-                  <div className="text-center p-3 bg-amber-50/80 rounded-xl">
-                    <Zap className="w-5 h-5 mx-auto mb-1 text-amber-500" />
+                  <div className="text-center p-3 bg-violet-50/80 rounded-xl">
+                    <Zap className="w-5 h-5 mx-auto mb-1 text-violet-500" />
                     <p className="text-lg font-bold text-slate-800">{user.points}</p>
                     <p className="text-[10px] text-slate-500">Total Points</p>
                   </div>

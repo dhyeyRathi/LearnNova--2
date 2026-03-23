@@ -29,17 +29,17 @@ export default function ContactPage() {
 
       {/* Hero */}
       <section className="relative py-20 overflow-hidden">
-        <div className="absolute top-10 right-20 w-64 h-64 bg-red-200/20 rounded-full blur-3xl animate-float-gentle" />
-        <div className="absolute bottom-10 left-10 w-72 h-72 bg-red-200/15 rounded-full blur-3xl animate-float-gentle" style={{ animationDelay: '-2s' }} />
+        <div className="absolute top-10 right-20 w-64 h-64 bg-purple-200/20 rounded-full blur-3xl animate-float-gentle" />
+        <div className="absolute bottom-10 left-10 w-72 h-72 bg-purple-200/15 rounded-full blur-3xl animate-float-gentle" style={{ animationDelay: '-2s' }} />
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 border border-red-100 mb-6">
-            <MessageCircle className="w-4 h-4 text-red-500" />
-            <span className="text-sm text-red-600 font-medium">Get in Touch</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 border border-purple-100 mb-6">
+            <MessageCircle className="w-4 h-4 text-purple-600" />
+            <span className="text-sm text-purple-700 font-medium">Get in Touch</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             <span className="text-slate-800">We'd love to </span>
-            <span className="text-red-600">hear from you</span>
+            <span className="text-purple-700">hear from you</span>
           </h1>
           <p className="text-lg text-slate-500 max-w-xl mx-auto">Have a question, feedback, or partnership inquiry? Drop us a message and we'll respond within 24 hours.</p>
         </motion.div>
@@ -52,7 +52,7 @@ export default function ContactPage() {
             {sent ? (
               <Card className="glass-card rounded-3xl p-12 text-center">
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring' }}>
-                  <div className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-red-500/20">
+                  <div className="w-20 h-20 rounded-full bg-purple-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-purple-600/20">
                     <CheckCircle2 className="w-10 h-10 text-white" />
                   </div>
                 </motion.div>
@@ -69,22 +69,22 @@ export default function ContactPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Name *</Label>
-                      <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" className="bg-white/50 rounded-xl border border-black focus:border-amber-400 focus:border-2 focus:bg-white transition-all" />
+                      <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" className="bg-white/50 rounded-xl border border-black focus:border-violet-400 focus:border-2 focus:bg-white transition-all" />
                     </div>
                     <div className="space-y-2">
                       <Label>Email *</Label>
-                      <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" className="bg-white/50 rounded-xl border border-black focus:border-amber-400 focus:border-2 focus:bg-white transition-all" />
+                      <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" className="bg-white/50 rounded-xl border border-black focus:border-violet-400 focus:border-2 focus:bg-white transition-all" />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Subject</Label>
-                    <Input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} placeholder="What's this about?" className="bg-white/50 rounded-xl border border-black focus:border-amber-400 focus:border-2 focus:bg-white transition-all" />
+                    <Input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} placeholder="What's this about?" className="bg-white/50 rounded-xl border border-black focus:border-violet-400 focus:border-2 focus:bg-white transition-all" />
                   </div>
                   <div className="space-y-2">
                     <Label>Message *</Label>
-                    <Textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="Your message..." rows={6} className="bg-white/50 rounded-xl border border-black focus:border-amber-400 focus:border-2 focus:bg-white transition-all" />
+                    <Textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="Your message..." rows={6} className="bg-white/50 rounded-xl border border-black focus:border-violet-400 focus:border-2 focus:bg-white transition-all" />
                   </div>
-                  <Button type="submit" className="w-full h-12 bg-red-500 text-white rounded-xl shadow-xl shadow-red-400/20">
+                  <Button type="submit" className="w-full h-12 bg-purple-600 text-white rounded-xl shadow-xl shadow-purple-500/20">
                     <Send className="w-4 h-4 mr-2" /> Send Message
                   </Button>
                 </form>
@@ -95,9 +95,9 @@ export default function ContactPage() {
           {/* Info sidebar */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="space-y-6">
             {[
-              { icon: Mail, title: 'Email', info: 'hello@learnnova.com', desc: 'For general inquiries', color: 'bg-red-500' },
-              { icon: Phone, title: 'Phone', info: '+1 (555) 123-4567', desc: 'Mon - Fri, 9am - 6pm EST', color: 'bg-red-500' },
-              { icon: MapPin, title: 'Office', info: 'San Francisco, CA', desc: '123 Innovation Way, Suite 400', color: 'bg-red-500' },
+              { icon: Mail, title: 'Email', info: 'hello@learnnova.com', desc: 'For general inquiries', color: 'bg-purple-600' },
+              { icon: Phone, title: 'Phone', info: '+1 (555) 123-4567', desc: 'Mon - Fri, 9am - 6pm EST', color: 'bg-purple-600' },
+              { icon: MapPin, title: 'Office', info: 'San Francisco, CA', desc: '123 Innovation Way, Suite 400', color: 'bg-purple-600' },
             ].map((item, i) => (
               <motion.div key={item.title} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.1 }}>
                 <Card className="glass-card rounded-2xl p-5 group hover:shadow-lg transition-all">
@@ -107,7 +107,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-slate-800">{item.title}</h4>
-                      <p className="text-red-600 font-medium text-sm">{item.info}</p>
+                      <p className="text-purple-700 font-medium text-sm">{item.info}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
                     </div>
                   </div>
@@ -115,9 +115,9 @@ export default function ContactPage() {
               </motion.div>
             ))}
 
-            <Card className="glass-card rounded-2xl p-6 bg-red-500/5">
+            <Card className="glass-card rounded-2xl p-6 bg-purple-600/5">
               <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-5 h-5 text-red-500" />
+                <Sparkles className="w-5 h-5 text-purple-600" />
                 <h4 className="font-semibold text-slate-800">FAQ</h4>
               </div>
               <div className="space-y-3 text-sm">

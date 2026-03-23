@@ -177,7 +177,7 @@ export default function TutorApplicationPage() {
 
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-4xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Application Submitted! <br />
-              <span className="text-red-600">Your Teaching Journey Begins ✨</span>
+              <span className="text-purple-700">Your Teaching Journey Begins ✨</span>
             </motion.h1>
 
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-xl text-slate-600 mb-8">
@@ -186,28 +186,28 @@ export default function TutorApplicationPage() {
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card rounded-3xl p-8 shadow-xl mb-8 text-left">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-2">What happens next?</h3>
                   <ul className="space-y-2 text-slate-600">
-                    <li className="flex items-start gap-2"><span className="text-red-600 font-bold">→</span><span>Our admin reviews your application within 2-3 business days</span></li>
+                    <li className="flex items-start gap-2"><span className="text-purple-700 font-bold">→</span><span>Our admin reviews your application within 2-3 business days</span></li>
                     <li className="flex items-start gap-2"><span className="text-amber-600 font-bold">→</span><span>You'll receive an email notification about the decision</span></li>
-                    <li className="flex items-start gap-2"><span className="text-red-600 font-bold">→</span><span>Once approved, you'll get full tutor access to create & manage courses</span></li>
+                    <li className="flex items-start gap-2"><span className="text-purple-700 font-bold">→</span><span>Once approved, you'll get full tutor access to create & manage courses</span></li>
                   </ul>
                 </div>
               </div>
             </motion.div>
 
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button onClick={() => navigate('/')} className="bg-red-500 hover:bg-red-600 text-white rounded-xl">
+              <Button onClick={() => navigate('/')} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl">
                 Back to Home
               </Button>
               <Button variant="outline" onClick={() => navigate('/courses')} className="rounded-xl">Browse Courses</Button>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-12 p-6 bg-red-50 rounded-2xl border border-red-100">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-12 p-6 bg-purple-50 rounded-2xl border border-purple-100">
               <p className="text-slate-700 italic">"Great educators don't just teach—they inspire, empower, and transform lives."</p>
               <p className="text-sm text-slate-500 mt-2">— The LearnNova Team</p>
             </motion.div>
@@ -222,7 +222,7 @@ export default function TutorApplicationPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Back link */}
         <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
-          <Button variant="ghost" onClick={() => navigate(-1)} className="text-slate-500 hover:text-red-600 rounded-xl mb-6">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="text-slate-500 hover:text-purple-700 rounded-xl mb-6">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
@@ -230,12 +230,12 @@ export default function TutorApplicationPage() {
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 rounded-full mb-4">
-            <Crown className="w-5 h-5 text-red-600" />
-            <span className="text-sm font-semibold text-red-600">Tutor Application</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600/10 rounded-full mb-4">
+            <Crown className="w-5 h-5 text-purple-700" />
+            <span className="text-sm font-semibold text-purple-700">Tutor Application</span>
           </div>
           <h1 className="text-4xl font-bold mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            Become a <span className="text-red-600">LearnNova Tutor</span>
+            Become a <span className="text-purple-700">LearnNova Tutor</span>
           </h1>
           <p className="text-slate-600 text-lg">Share your expertise and inspire the next generation of learners</p>
         </motion.div>
@@ -249,11 +249,11 @@ export default function TutorApplicationPage() {
                 strokeDasharray={`${2 * Math.PI * 48}`}
                 strokeDashoffset={`${2 * Math.PI * 48 * (1 - completionPercentage / 100)}`}
                 className="transition-all duration-500" strokeLinecap="round" />
-              <defs><linearGradient id="prog-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ef4444" /><stop offset="100%" stopColor="#ef4444" /></linearGradient></defs>
+              <defs><linearGradient id="prog-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#7c3aed" /><stop offset="100%" stopColor="#7c3aed" /></linearGradient></defs>
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-xl font-bold text-red-600">{Math.round(completionPercentage)}%</div>
+                <div className="text-xl font-bold text-purple-700">{Math.round(completionPercentage)}%</div>
                 <div className="text-xs text-slate-500">Step {currentStep}/{steps.length}</div>
               </div>
             </div>
@@ -268,7 +268,7 @@ export default function TutorApplicationPage() {
                 <div className="flex flex-col items-center">
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
                     currentStep > step.number ? 'bg-gradient-to-r from-green-400 to-emerald-500 shadow-lg shadow-green-500/30'
-                    : currentStep === step.number ? 'bg-red-500 shadow-lg shadow-red-500/30'
+                    : currentStep === step.number ? 'bg-purple-600 shadow-lg shadow-purple-600/30'
                     : 'bg-white/70 backdrop-blur-sm border-2 border-slate-200'
                   }`}>
                     {currentStep > step.number ? <CheckCircle2 className="w-6 h-6 text-white" />
@@ -292,7 +292,7 @@ export default function TutorApplicationPage() {
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center">
                     <User className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -326,7 +326,7 @@ export default function TutorApplicationPage() {
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center">
                     <Briefcase className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -394,7 +394,7 @@ export default function TutorApplicationPage() {
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center">
                     <FileText className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -403,12 +403,12 @@ export default function TutorApplicationPage() {
                   </div>
                 </div>
 
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
                   <div className="flex gap-3">
-                    <Sparkles className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-red-800">
+                    <Sparkles className="w-5 h-5 text-purple-700 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-purple-800">
                       <p className="font-semibold mb-1">Required documents:</p>
-                      <ul className="list-disc list-inside space-y-1 text-red-700">
+                      <ul className="list-disc list-inside space-y-1 text-purple-700">
                         <li>Government-issued ID (passport, driver's license, national ID)</li>
                         <li>Proof of teaching — certificate, diploma, or employer letter</li>
                         <li>A clear selfie holding your ID for verification</li>
@@ -425,7 +425,7 @@ export default function TutorApplicationPage() {
                     {form.idDocument ? (
                       <div className="text-center"><CheckCircle2 className="w-7 h-7 text-green-500 mx-auto mb-1" /><p className="text-sm font-medium text-slate-700">{form.idDocument.name}</p></div>
                     ) : (
-                      <div className="text-center"><Upload className="w-7 h-7 text-slate-400 mx-auto mb-1 group-hover:scale-110 transition-transform" /><p className="text-sm text-slate-600"><span className="font-semibold text-red-600">Click to upload</span> your ID</p><p className="text-xs text-slate-400 mt-0.5">PNG, JPG or PDF (max 10MB)</p></div>
+                      <div className="text-center"><Upload className="w-7 h-7 text-slate-400 mx-auto mb-1 group-hover:scale-110 transition-transform" /><p className="text-sm text-slate-600"><span className="font-semibold text-purple-700">Click to upload</span> your ID</p><p className="text-xs text-slate-400 mt-0.5">PNG, JPG or PDF (max 10MB)</p></div>
                     )}
                   </label>
                 </div>
@@ -438,7 +438,7 @@ export default function TutorApplicationPage() {
                     {form.teachingCert ? (
                       <div className="text-center"><CheckCircle2 className="w-7 h-7 text-green-500 mx-auto mb-1" /><p className="text-sm font-medium text-slate-700">{form.teachingCert.name}</p></div>
                     ) : (
-                      <div className="text-center"><Upload className="w-7 h-7 text-slate-400 mx-auto mb-1 group-hover:scale-110 transition-transform" /><p className="text-sm text-slate-600"><span className="font-semibold text-red-600">Upload</span> your teaching certificate or proof</p><p className="text-xs text-slate-400 mt-0.5">Diploma, employer letter, or credential</p></div>
+                      <div className="text-center"><Upload className="w-7 h-7 text-slate-400 mx-auto mb-1 group-hover:scale-110 transition-transform" /><p className="text-sm text-slate-600"><span className="font-semibold text-purple-700">Upload</span> your teaching certificate or proof</p><p className="text-xs text-slate-400 mt-0.5">Diploma, employer letter, or credential</p></div>
                     )}
                   </label>
                 </div>
@@ -452,8 +452,8 @@ export default function TutorApplicationPage() {
                       <div className="text-center"><CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-1" /><p className="text-sm font-medium text-slate-700">{form.selfie.name}</p><p className="text-xs text-slate-500 mt-1">Looking great! 📸</p></div>
                     ) : (
                       <div className="text-center">
-                        <div className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform"><Camera className="w-8 h-8 text-white" /></div>
-                        <p className="text-sm text-slate-600"><span className="font-semibold text-red-600">Take a selfie</span> or upload from gallery</p>
+                        <div className="w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform"><Camera className="w-8 h-8 text-white" /></div>
+                        <p className="text-sm text-slate-600"><span className="font-semibold text-purple-700">Take a selfie</span> or upload from gallery</p>
                         <p className="text-xs text-slate-400 mt-0.5">Hold your ID next to your face clearly</p>
                       </div>
                     )}
@@ -465,7 +465,7 @@ export default function TutorApplicationPage() {
             {/* Navigation */}
             <div className="flex justify-between mt-8 pt-6 border-t border-slate-200">
               <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="min-w-32 rounded-xl">Back</Button>
-              <Button onClick={handleNext} className="min-w-32 bg-red-500 hover:bg-red-600 text-white rounded-xl">
+              <Button onClick={handleNext} className="min-w-32 bg-purple-600 hover:bg-purple-700 text-white rounded-xl">
                 {currentStep === steps.length ? (
                   <span className="flex items-center gap-2"><Rocket className="w-4 h-4" /> Submit Application</span>
                 ) : 'Continue'}

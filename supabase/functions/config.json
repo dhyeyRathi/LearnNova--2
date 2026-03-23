@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "functions": {
+    "send-receipt": {
+      "entrypoint": "index.ts"
+    }
+  }
+}

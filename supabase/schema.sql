@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS users (
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  last_login TIMESTAMP WITH TIME ZONE
+  last_login TIMESTAMP WITH TIME ZONE,
+  last_name_change TIMESTAMP WITH TIME ZONE
 );
 
 -- ============================================================================

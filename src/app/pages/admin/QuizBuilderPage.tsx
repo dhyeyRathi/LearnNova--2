@@ -189,7 +189,7 @@ export default function QuizBuilderPage() {
               <ArrowLeft className="w-5 h-5 mr-2" />Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-red-600 via-amber-600 to-orange-600 bg-clip-text text-transparent" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <h1 className="text-3xl font-bold text-purple-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 Quiz Builder
               </h1>
               <p className="text-slate-500 text-sm">{existingQuiz ? 'Edit quiz' : 'Create a new quiz'}</p>
@@ -197,9 +197,9 @@ export default function QuizBuilderPage() {
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setRewardsOpen(true)} className="rounded-xl">
-              <Gift className="w-4 h-4 mr-2 text-amber-500" />Rewards
+              <Gift className="w-4 h-4 mr-2 text-purple-600" />Rewards
             </Button>
-            <Button onClick={handleSave} className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-lg shadow-amber-500/20">
+            <Button onClick={handleSave} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-600/20">
               <Save className="w-4 h-4 mr-2" />Save Quiz
             </Button>
           </div>
@@ -228,12 +228,12 @@ export default function QuizBuilderPage() {
                       onClick={() => setActiveQuestion(i)}
                       className={`w-full text-left p-3 rounded-xl transition-all flex items-center gap-3 group ${
                         activeQuestion === i
-                          ? 'bg-gradient-to-r from-red-500 to-amber-500 text-white shadow-lg shadow-red-500/20'
+                          ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
                           : 'hover:bg-slate-50/80'
                       }`}
                     >
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                        activeQuestion === i ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'
+                        activeQuestion === i ? 'bg-white/20 text-white' : 'bg-purple-50 text-purple-700'
                       }`}>
                         {i + 1}
                       </div>
@@ -249,7 +249,7 @@ export default function QuizBuilderPage() {
                         <button
                           onClick={e => { e.stopPropagation(); removeQuestion(i); }}
                           className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded ${
-                            activeQuestion === i ? 'hover:bg-white/20 text-white' : 'hover:bg-red-50 text-red-400'
+                            activeQuestion === i ? 'hover:bg-white/20 text-white' : 'hover:bg-purple-50 text-purple-500'
                           }`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -271,7 +271,7 @@ export default function QuizBuilderPage() {
               <motion.div key={activeQuestion} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
                 <Card className="bg-white rounded-3xl p-6 border border-slate-200">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-amber-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-red-500/20">
+                    <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-purple-600/20">
                       {activeQuestion + 1}
                     </div>
                     <div>
@@ -302,15 +302,15 @@ export default function QuizBuilderPage() {
                         className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
                           opt.isCorrect
                             ? 'border-emerald-300 bg-emerald-50/50 shadow-md shadow-emerald-500/10'
-                            : 'border-slate-200 hover:border-red-200 bg-white/50'
+                            : 'border-slate-200 hover:border-purple-200 bg-white/50'
                         }`}
                       >
                         <button
                           onClick={() => toggleCorrect(i)}
                           className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
                             opt.isCorrect
-                              ? 'bg-gradient-to-br from-red-500 to-amber-500 text-white shadow-md'
-                              : 'border-2 border-slate-300 hover:border-red-400'
+                              ? 'bg-purple-600 text-white shadow-md'
+                              : 'border-2 border-slate-300 hover:border-purple-500'
                           }`}
                         >
                           {opt.isCorrect && <Check className="w-4 h-4" />}
@@ -325,7 +325,7 @@ export default function QuizBuilderPage() {
                           />
                         </div>
                         {currentQ.options.length > 2 && (
-                          <Button variant="ghost" size="sm" onClick={() => removeOption(i)} className="h-7 w-7 p-0 text-slate-300 hover:text-red-500">
+                          <Button variant="ghost" size="sm" onClick={() => removeOption(i)} className="h-7 w-7 p-0 text-slate-300 hover:text-purple-600">
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         )}
@@ -349,7 +349,7 @@ export default function QuizBuilderPage() {
                         Next
                       </Button>
                     ) : (
-                      <Button onClick={addQuestion} className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-xl">
+                      <Button onClick={addQuestion} className="bg-purple-600 text-white rounded-xl">
                         <Plus className="w-4 h-4 mr-2" />Add Next
                       </Button>
                     )}
@@ -366,19 +366,19 @@ export default function QuizBuilderPage() {
         <DialogContent className="bg-white rounded-3xl border-slate-200 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              <Trophy className="w-6 h-6 text-amber-500" />Rewards Configuration
+              <Trophy className="w-6 h-6 text-purple-600" />Rewards Configuration
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-5 pt-2">
             <p className="text-sm text-slate-500">Set points awarded per question based on attempt number.</p>
             {[
               { label: '1st Attempt', key: 'attempt1' as const, color: 'from-emerald-500 to-green-500', emoji: '🥇' },
-              { label: '2nd Attempt', key: 'attempt2' as const, color: 'from-red-500 to-amber-500', emoji: '🥈' },
-              { label: '3rd Attempt', key: 'attempt3' as const, color: 'from-red-400 to-amber-400', emoji: '🥉' },
+              { label: '2nd Attempt', key: 'attempt2' as const, color: 'bg-purple-600', emoji: '2nd' },
+              { label: '3rd Attempt', key: 'attempt3' as const, color: 'bg-purple-500', emoji: '3rd' },
               { label: '4th+ Attempt', key: 'attempt4plus' as const, color: 'from-slate-400 to-slate-500', emoji: '🎯' },
             ].map(item => (
               <div key={item.key} className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-md text-lg`}>
+                <div className={`w-10 h-10 rounded-xl ${item.key === 'attempt2' || item.key === 'attempt3' ? item.color : `bg-gradient-to-br ${item.color}`} flex items-center justify-center shadow-md text-lg text-white`}>
                   {item.emoji}
                 </div>
                 <div className="flex-1">
@@ -397,7 +397,7 @@ export default function QuizBuilderPage() {
             ))}
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/60">
               <Button variant="outline" onClick={() => setRewardsOpen(false)} className="rounded-xl">Cancel</Button>
-              <Button onClick={() => { toast.success('Rewards configured!'); setRewardsOpen(false); }} className="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl">
+              <Button onClick={() => { toast.success('Rewards configured!'); setRewardsOpen(false); }} className="bg-purple-600 text-white rounded-xl">
                 <Gift className="w-4 h-4 mr-2" />Save Rewards
               </Button>
             </div>

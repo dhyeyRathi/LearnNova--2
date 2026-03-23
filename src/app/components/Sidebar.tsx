@@ -53,13 +53,13 @@ export default function Sidebar() {
     >
       {/* Role badge */}
       <div className="px-3 pt-4 pb-2">
-        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-red-100 rounded-lg overflow-hidden">
-          <div className="w-5 h-5 rounded bg-red-400 flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-purple-100 rounded-lg overflow-hidden">
+          <div className="w-5 h-5 rounded bg-purple-500 flex items-center justify-center flex-shrink-0">
             <span className="text-[10px] text-white font-medium">{roleLabel.charAt(0)}</span>
           </div>
           <AnimatePresence>
             {!collapsed && (
-              <motion.span initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} className="text-xs font-medium text-red-600 whitespace-nowrap">
+              <motion.span initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} className="text-xs font-medium text-purple-700 whitespace-nowrap">
                 {roleLabel}
               </motion.span>
             )}
@@ -76,7 +76,7 @@ export default function Sidebar() {
               <motion.div
                 whileTap={{ scale: 0.98 }}
                 className={`flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg transition-all duration-150 relative ${
-                  isActive ? 'bg-red-500 text-white' : 'text-[#7A766F] hover:bg-red-100 hover:text-red-600'
+                  isActive ? 'bg-purple-600 text-white' : 'text-[#7A766F] hover:bg-purple-100 hover:text-purple-700'
                 }`}
               >
                 <item.icon className="w-[16px] h-[16px] flex-shrink-0" />
@@ -96,10 +96,10 @@ export default function Sidebar() {
       {/* Learner badge */}
       {user.role === 'learner' && badge && !collapsed && (
         <div className="px-3 pb-2">
-          <div className="p-2.5 rounded-lg bg-red-100">
+          <div className="p-2.5 rounded-lg bg-purple-100">
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className="text-sm">{badge.icon}</span>
-              <span className="text-xs font-medium text-red-600">{badge.level}</span>
+              <span className="text-xs font-medium text-purple-700">{badge.level}</span>
             </div>
             <p className="text-[11px] text-[#7A766F]">{user.points} points</p>
           </div>
@@ -108,7 +108,7 @@ export default function Sidebar() {
 
       {/* Collapse toggle */}
       <div className="px-2.5 pb-3 pt-1 border-t border-[#E5E2DC]/50">
-        <Button variant="ghost" size="sm" onClick={() => setCollapsed(!collapsed)} className="w-full flex items-center justify-center gap-1.5 text-[#7A766F] hover:bg-red-100 hover:text-red-600 rounded-lg h-7">
+        <Button variant="ghost" size="sm" onClick={() => setCollapsed(!collapsed)} className="w-full flex items-center justify-center gap-1.5 text-[#7A766F] hover:bg-purple-100 hover:text-purple-700 rounded-lg h-7">
           {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
           <AnimatePresence>
             {!collapsed && (<motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-[11px]">Collapse</motion.span>)}

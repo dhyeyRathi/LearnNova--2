@@ -45,16 +45,49 @@ export default function ProfilePage() {
   const nextBadge = currentBadgeIndex < badges.length - 1 ? badges[currentBadgeIndex + 1] : null;
   const progressToNext = nextBadge ? Math.min(100, Math.round((user.points / nextBadge.minPoints) * 100)) : 100;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate name
     if (!editName.trim()) {
       toast.error('Name cannot be empty');
       return;
     }
-    // Update user context with new name
-    updateUser({ name: editName });
-    toast.success('Profile updated successfully');
-    setIsEditing(false);
+
+    // Check if name changed
+    const nameChanged = editName.trim() !== user?.name;
+
+    if (nameChanged) {
+      // Check 15-day cooldown for name changes
+      if (user?.last_name_change) {
+        const lastChange = new Date(user.last_name_change);
+        const now = new Date();
+        const daysSinceChange = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (daysSinceChange < 15) {
+          const daysRemaining = 15 - daysSinceChange;
+          toast.error(`You can change your name again in ${daysRemaining} day${daysRemaining === 1 ? '' : 's'}`);
+          return;
+        }
+      }
+    }
+
+    try {
+      // Prepare updates
+      const updates: any = { name: editName };
+
+      // Add last_name_change timestamp if name changed
+      if (nameChanged) {
+        updates.last_name_change = new Date().toISOString();
+      }
+
+      // Update user context with new data
+      await updateUser(updates);
+      toast.success('Profile updated successfully');
+      setIsEditing(false);
+    } catch (error: any) {
+      console.error('Failed to update profile:', error);
+      const errorMessage = error?.message || 'Failed to update profile. Please try again.';
+      toast.error(errorMessage);
+    }
   };
 
   const formatTime = (mins: number) => {

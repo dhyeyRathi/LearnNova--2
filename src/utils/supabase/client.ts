@@ -24,6 +24,7 @@ export interface User {
   created_at: string;
   updated_at: string;
   last_login?: string;
+  last_name_change?: string;
 }
 
 export interface Course {
@@ -306,4 +307,142 @@ export async function resendConfirmationEmail(email: string) {
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
+}
+
+export async function updateUserProfile(userId: string, updates: Partial<User>) {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase update error:', error);
+
+      // Provide more specific error messages
+      if (error.message.includes('permission denied') || error.message.includes('policy')) {
+        throw new Error('You do not have permission to update this profile');
+      } else if (error.message.includes('violates')) {
+        throw new Error('Invalid data provided');
+      }
+
+      throw new Error(error.message || 'Failed to update profile');
+    }
+
+    if (!data) {
+      throw new Error('No data returned from update');
+    }
+
+    return data as User;
+  } catch (error: any) {
+    console.error('Update user profile error:', error);
+    throw error;
+  }
+}
+
+// Course functions
+export async function getCourses() {
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_published', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as Course[];
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    throw error;
+  }
+}
+
+export async function getCourse(courseId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('id', courseId)
+      .single();
+
+    if (error) throw error;
+    return data as Course;
+  } catch (error) {
+    console.error('Error fetching course:', error);
+    throw error;
+  }
+}
+
+// Admin function to get all courses (published and unpublished)
+export async function getAllCoursesForAdmin() {
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as Course[];
+  } catch (error) {
+    console.error('Error fetching all courses for admin:', error);
+    throw error;
+  }
+}
+
+// Enrollment functions
+export async function enrollInCourse(userId: string, courseId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('course_enrollments')
+      .insert({
+        user_id: userId,
+        course_id: courseId,
+        progress_percentage: 0,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as CourseEnrollment;
+  } catch (error) {
+    console.error('Error enrolling in course:', error);
+    throw error;
+  }
+}
+
+export async function getUserEnrollments(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('course_enrollments')
+      .select(`
+        *,
+        courses (*)
+      `)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    return data as (CourseEnrollment & { courses: Course })[];
+  } catch (error) {
+    console.error('Error fetching user enrollments:', error);
+    throw error;
+  }
+}
+
+export async function isUserEnrolled(userId: string, courseId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('course_enrollments')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('course_id', courseId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return !!data;
+  } catch (error) {
+    console.error('Error checking enrollment:', error);
+    return false;
+  }
 }

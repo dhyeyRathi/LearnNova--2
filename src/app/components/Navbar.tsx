@@ -30,10 +30,10 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-full">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-red-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
               <GraduationCap className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="text-[20px] text-red-600 tracking-tight font-bold" style={{ fontFamily: "'DM Serif Display', serif" }}>
+            <span className="text-[20px] text-purple-700 tracking-tight font-bold" style={{ fontFamily: "'DM Serif Display', serif" }}>
               LearnNova
             </span>
           </Link>
@@ -45,8 +45,8 @@ export default function Navbar() {
                 <Link key={item.label} to={item.to}>
                   <Button variant="ghost" className={`rounded-lg text-[13px] h-8 px-3 ${
                     location.pathname === item.to
-                      ? 'text-red-600 font-medium'
-                      : 'text-[#7A766F] hover:bg-red-100 hover:text-red-600'
+                      ? 'text-purple-700 font-medium'
+                      : 'text-[#7A766F] hover:bg-purple-100 hover:text-purple-700'
                   }`}>
                     {item.label}
                   </Button>
@@ -65,14 +65,14 @@ export default function Navbar() {
 
             {isAuthenticated && user ? (
               <>
-                <Button variant="ghost" onClick={handleLogout} className="hidden sm:flex items-center text-[13px] text-[#7A766F] hover:text-[#B5403A] hover:bg-[#B5403A]/[0.06] rounded-lg h-8 px-3">
+                <Button variant="ghost" onClick={handleLogout} className="hidden sm:flex items-center text-[13px] text-[#7A766F] hover:text-[#7C3AED] hover:bg-[#7C3AED]/[0.06] rounded-lg h-8 px-3">
                   <LogOut className="w-3.5 h-3.5 mr-1.5" /> Sign Out
                 </Button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-9 w-9 rounded-xl p-0 ring-2 ring-red-500/20 hover:ring-red-500/40 transition-all">
-                      <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white font-bold text-sm">
+                    <Button variant="ghost" className="relative h-9 w-9 rounded-xl p-0 ring-2 ring-purple-500/20 hover:ring-purple-500/40 transition-all">
+                      <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-sm">
                         {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                       </div>
                     </Button>
@@ -81,7 +81,7 @@ export default function Navbar() {
                     <div className="px-3 py-2">
                       <p className="text-sm font-medium text-[#1A1F2E]">{user.name}</p>
                       <p className="text-xs text-[#7A766F] mt-0.5">{user.email}</p>
-                      <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-medium text-red-600 capitalize">{user.role}</span>
+                      <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-medium text-purple-700 capitalize">{user.role}</span>
                     </div>
                     <DropdownMenuSeparator className="bg-[#E5E2DC]/60" />
                     <DropdownMenuItem onClick={() => navigate('/profile')} className="rounded-lg text-[13px] cursor-pointer text-[#1A1F2E]">
@@ -89,7 +89,7 @@ export default function Navbar() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-[#E5E2DC]/60" />
                     <DropdownMenuSeparator className="bg-[#E5E2DC]/60" />
-                    <DropdownMenuItem onClick={handleLogout} className="text-[#B5403A] sm:hidden rounded-lg text-[13px] cursor-pointer">
+                    <DropdownMenuItem onClick={handleLogout} className="text-[#7C3AED] sm:hidden rounded-lg text-[13px] cursor-pointer">
                       <LogOut className="w-3.5 h-3.5 mr-2" /> Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -97,7 +97,7 @@ export default function Navbar() {
               </>
             ) : (
               <Link to="/login">
-                <Button className="bg-red-500 hover:bg-red-600 text-white rounded-lg h-8 px-4 text-[13px] font-medium">Sign In</Button>
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg h-8 px-4 text-[13px] font-medium">Sign In</Button>
               </Link>
             )}
           </div>

@@ -87,7 +87,7 @@ export async function sendCredentialsEmail(
         <div style="max-width: 650px; margin: 0 auto; background-color: white;box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
           
           <!-- Hero Section -->
-          <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 50px 40px; text-align: center; position: relative; overflow: hidden;">
+          <div style="background: linear-gradient(135deg, #7C3AED 0%, #6B21A8 100%); padding: 50px 40px; text-align: center; position: relative; overflow: hidden;">
             <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
             <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
             <div style="position: relative; z-index: 1;">
@@ -106,7 +106,7 @@ export async function sendCredentialsEmail(
             </p>
 
             <!-- Welcome Message -->
-            <div style="background: linear-gradient(135deg, #fef2f2 0%, #fde8e8 100%); border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <div style="background: linear-gradient(135deg, #F3F0FF 0%, #EDE9FE 100%); border-left: 4px solid #7C3AED; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
               <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0;">
                 We're excited to welcome you to the <strong>LearnNova instructor community</strong>! Your profile has been verified and approved. You now have full access to create engaging courses and impart knowledge to thousands of learners.
               </p>
@@ -119,7 +119,7 @@ export async function sendCredentialsEmail(
               <!-- Credential Cards -->
               <div style="display: block;">
                 <!-- Teacher ID Card -->
-                <div style="background: linear-gradient(135deg, #ef4444 0%, #f87171 100%); border-radius: 12px; padding: 25px; margin-bottom: 15px; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.15);">
+                <div style="background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%); border-radius: 12px; padding: 25px; margin-bottom: 15px; box-shadow: 0 10px 20px rgba(124, 58, 237, 0.15);">
                   <p style="color: rgba(255,255,255,0.85); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px 0; font-weight: 600;">Teacher ID</p>
                   <p style="color: white; font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace; font-size: 18px; font-weight: 700; margin: 0; word-break: break-all; letter-spacing: 0.5px;">${teacherId}</p>
                 </div>
@@ -141,7 +141,7 @@ export async function sendCredentialsEmail(
 
             <!-- Call to Action Button -->
             <div style="text-align: center; margin: 35px 0;">
-              <a href="https://learnnova.com/instructor/login" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 16px 45px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3); transition: all 0.3s ease;">
+              <a href="https://learnnova.com/instructor/login" style="display: inline-block; background: linear-gradient(135deg, #7C3AED 0%, #6B21A8 100%); color: white; padding: 16px 45px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3); transition: all 0.3s ease;">
                 Sign In to Your Dashboard →
               </a>
             </div>
@@ -151,19 +151,19 @@ export async function sendCredentialsEmail(
               <h3 style="color: #1f2937; font-size: 15px; font-weight: 700; margin: 0 0 18px 0; text-transform: uppercase; letter-spacing: 0.5px;">Getting Started</h3>
               <div style="color: #374151; font-size: 14px; line-height: 2;">
                 <div style="display: flex; margin-bottom: 12px;">
-                  <span style="color: #ef4444; font-weight: 700; margin-right: 12px;">1.</span>
+                  <span style="color: #7C3AED; font-weight: 700; margin-right: 12px;">1.</span>
                   <span>Log in with your credentials above</span>
                 </div>
                 <div style="display: flex; margin-bottom: 12px;">
-                  <span style="color: #ef4444; font-weight: 700; margin-right: 12px;">2.</span>
+                  <span style="color: #7C3AED; font-weight: 700; margin-right: 12px;">2.</span>
                   <span>Complete your instructor profile</span>
                 </div>
                 <div style="display: flex; margin-bottom: 12px;">
-                  <span style="color: #ef4444; font-weight: 700; margin-right: 12px;">3.</span>
+                  <span style="color: #7C3AED; font-weight: 700; margin-right: 12px;">3.</span>
                   <span>Review course creation guidelines</span>
                 </div>
                 <div style="display: flex;">
-                  <span style="color: #ef4444; font-weight: 700; margin-right: 12px;">4.</span>
+                  <span style="color: #7C3AED; font-weight: 700; margin-right: 12px;">4.</span>
                   <span>Create your first course and inspire learners!</span>
                 </div>
               </div>
@@ -187,8 +187,8 @@ export async function sendCredentialsEmail(
                 Questions or need help? Our instructor support team is ready to assist you.
               </p>
               <p style="margin: 0;">
-                <a href="mailto:support@learnnova.com" style="color: #ef4444; text-decoration: none; font-weight: 600;">support@learnnova.com</a> | 
-                <a href="https://learnnova.com/help/instructors" style="color: #ef4444; text-decoration: none; margin-left: 15px; font-weight: 600;">Help Center</a>
+                <a href="mailto:support@learnnova.com" style="color: #7C3AED; text-decoration: none; font-weight: 600;">support@learnnova.com</a> | 
+                <a href="https://learnnova.com/help/instructors" style="color: #7C3AED; text-decoration: none; margin-left: 15px; font-weight: 600;">Help Center</a>
               </p>
             </div>
 

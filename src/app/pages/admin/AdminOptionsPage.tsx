@@ -92,7 +92,7 @@ export default function AdminOptionsPage() {
         <div className="glass-card rounded-3xl p-12 text-center">
           <h2 className="text-2xl font-bold text-slate-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Admin Access Required</h2>
           <p className="text-slate-500 mt-2 mb-4">This page is only accessible to administrators.</p>
-          <Button onClick={() => navigate('/courses')} className="bg-red-500 text-white rounded-xl">Go to Courses</Button>
+          <Button onClick={() => navigate('/courses')} className="bg-purple-600 text-white rounded-xl">Go to Courses</Button>
         </div>
       </div>
     );
@@ -125,29 +125,29 @@ export default function AdminOptionsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-4xl font-bold text-red-600" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <h1 className="text-4xl font-bold text-purple-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 Platform Options
               </h1>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 rounded-full shadow-lg shadow-red-500/20">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 rounded-full shadow-lg shadow-purple-600/20">
                 <Crown className="w-5 h-5 text-white" />
                 <span className="text-sm font-semibold text-white">Admin</span>
               </div>
             </div>
             <p className="text-slate-600">Configure platform-wide settings, course defaults, and policies</p>
           </div>
-          <Button onClick={handleSave} className="bg-red-500 hover:bg-red-600 text-white shadow-xl shadow-red-500/20 h-12 px-6 rounded-xl">
+          <Button onClick={handleSave} className="bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 h-12 px-6 rounded-xl">
             <Save className="w-5 h-5 mr-2" />Save All Settings
           </Button>
         </div>
 
         <Tabs defaultValue="general" className="w-full">
           <TabsList className="bg-white border-2 border-slate-100/80 rounded-2xl p-1.5 mb-8 flex-wrap justify-start gap-1 shadow-sm">
-            <TabsTrigger value="general" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:border-b-2 data-[state=active]:border-red-500 hover:bg-slate-50 transition-all text-sm font-medium"><Globe className="w-4 h-4" />General</TabsTrigger>
-            <TabsTrigger value="courses" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:border-b-2 data-[state=active]:border-red-500 hover:bg-slate-50 transition-all text-sm font-medium"><BookOpen className="w-4 h-4" />Course Defaults</TabsTrigger>
-            <TabsTrigger value="gamification" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:border-b-2 data-[state=active]:border-red-500 hover:bg-slate-50 transition-all text-sm font-medium"><Award className="w-4 h-4" />Gamification</TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:border-b-2 data-[state=active]:border-red-500 hover:bg-slate-50 transition-all text-sm font-medium"><Bell className="w-4 h-4" />Notifications</TabsTrigger>
-            <TabsTrigger value="payment" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:border-b-2 data-[state=active]:border-red-500 hover:bg-slate-50 transition-all text-sm font-medium"><DollarSign className="w-4 h-4" />Payment</TabsTrigger>
-            <TabsTrigger value="security" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:border-b-2 data-[state=active]:border-red-500 hover:bg-slate-50 transition-all text-sm font-medium"><Shield className="w-4 h-4" />Security</TabsTrigger>
+            <TabsTrigger value="general" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 hover:bg-slate-50 transition-all text-sm font-medium"><Globe className="w-4 h-4" />General</TabsTrigger>
+            <TabsTrigger value="courses" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 hover:bg-slate-50 transition-all text-sm font-medium"><BookOpen className="w-4 h-4" />Course Defaults</TabsTrigger>
+            <TabsTrigger value="gamification" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 hover:bg-slate-50 transition-all text-sm font-medium"><Award className="w-4 h-4" />Gamification</TabsTrigger>
+            <TabsTrigger value="notifications" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 hover:bg-slate-50 transition-all text-sm font-medium"><Bell className="w-4 h-4" />Notifications</TabsTrigger>
+            <TabsTrigger value="payment" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 hover:bg-slate-50 transition-all text-sm font-medium"><DollarSign className="w-4 h-4" />Payment</TabsTrigger>
+            <TabsTrigger value="security" className="gap-2 px-4 py-2.5 rounded-xl data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 hover:bg-slate-50 transition-all text-sm font-medium"><Shield className="w-4 h-4" />Security</TabsTrigger>
           </TabsList>
 
           {/* GENERAL */}
@@ -273,7 +273,7 @@ export default function AdminOptionsPage() {
                   </div>
 
                   <div className="flex items-start gap-4 p-5 rounded-2xl bg-white/40 border border-slate-100/80 hover:border-slate-200/80 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
                       <Megaphone className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -330,10 +330,10 @@ export default function AdminOptionsPage() {
                     </div>
 
                     <div className="space-y-3 pt-2">
-                      <SettingRow icon={Users} iconColor="bg-red-500" label="Show Leaderboard" description="Display leaderboard ranking on learner dashboard">
+                      <SettingRow icon={Users} iconColor="bg-purple-600" label="Show Leaderboard" description="Display leaderboard ranking on learner dashboard">
                         <Switch checked={showLeaderboard} onCheckedChange={setShowLeaderboard} />
                       </SettingRow>
-                      <SettingRow icon={Award} iconColor="bg-red-500" label="Badges System" description="Award badges for milestones and achievements">
+                      <SettingRow icon={Award} iconColor="bg-purple-600" label="Badges System" description="Award badges for milestones and achievements">
                         <Switch checked={badgesEnabled} onCheckedChange={setBadgesEnabled} />
                       </SettingRow>
                     </div>
@@ -351,17 +351,17 @@ export default function AdminOptionsPage() {
                 <p className="text-sm text-slate-400 mb-6">Configure email notifications for learners and admins</p>
 
                 <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wider mb-3">Learner Notifications</h3>
-                <SettingRow icon={Mail} iconColor="bg-red-500" label="Email on Enrollment" description="Send confirmation email when a learner enrolls in a course">
+                <SettingRow icon={Mail} iconColor="bg-purple-600" label="Email on Enrollment" description="Send confirmation email when a learner enrolls in a course">
                   <Switch checked={emailOnEnroll} onCheckedChange={setEmailOnEnroll} />
                 </SettingRow>
                 <SettingRow icon={CheckCircle} iconColor="from-emerald-500 to-green-500" label="Email on Completion" description="Notify learners when they complete a course">
                   <Switch checked={emailOnComplete} onCheckedChange={setEmailOnComplete} />
                 </SettingRow>
-                <SettingRow icon={Award} iconColor="from-amber-500 to-orange-500" label="Email on Quiz Pass" description="Send notification when a learner passes a quiz">
+                <SettingRow icon={Award} iconColor="bg-purple-600" label="Email on Quiz Pass" description="Send notification when a learner passes a quiz">
                   <Switch checked={emailOnQuizPass} onCheckedChange={setEmailOnQuizPass} />
                 </SettingRow>
                 <div className="flex items-start gap-4 py-4 border-b border-slate-100/50">
-                  <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center shadow-md flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center shadow-md flex-shrink-0">
                     <Clock className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
@@ -380,10 +380,10 @@ export default function AdminOptionsPage() {
                 </div>
 
                 <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wider mb-3 mt-6">Admin Notifications</h3>
-                <SettingRow icon={UserCheck} iconColor="bg-red-500" label="New User Alert" description="Alert admins when a new user signs up">
+                <SettingRow icon={UserCheck} iconColor="bg-purple-600" label="New User Alert" description="Alert admins when a new user signs up">
                   <Switch checked={adminAlertNewUser} onCheckedChange={setAdminAlertNewUser} />
                 </SettingRow>
-                <SettingRow icon={FileText} iconColor="bg-red-500" label="New Application Alert" description="Alert admins when a new tutor application is submitted">
+                <SettingRow icon={FileText} iconColor="bg-purple-600" label="New Application Alert" description="Alert admins when a new tutor application is submitted">
                   <Switch checked={adminAlertNewApp} onCheckedChange={setAdminAlertNewApp} />
                 </SettingRow>
               </Card>
@@ -398,7 +398,7 @@ export default function AdminOptionsPage() {
                 <h2 className="text-xl font-bold text-slate-800 mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Payment Settings</h2>
                 <p className="text-sm text-slate-400 mb-6">Configure payment gateways, pricing rules, and payout policies</p>
 
-                <SettingRow icon={DollarSign} iconColor="bg-red-500" label="Enable Paid Courses" description="Allow courses to be sold for a price on the platform">
+                <SettingRow icon={DollarSign} iconColor="bg-purple-600" label="Enable Paid Courses" description="Allow courses to be sold for a price on the platform">
                   <Switch checked={paymentEnabled} onCheckedChange={setPaymentEnabled} />
                 </SettingRow>
               </Card>
@@ -414,7 +414,7 @@ export default function AdminOptionsPage() {
                       <div className="p-4 rounded-2xl border-2 border-slate-100/80 bg-white/30">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center shadow-md">
+                            <div className="w-10 h-10 rounded-xl bg-purple-700 flex items-center justify-center shadow-md">
                               <CreditCard className="w-5 h-5 text-white" />
                             </div>
                             <div>
@@ -441,7 +441,7 @@ export default function AdminOptionsPage() {
                       <div className="p-4 rounded-2xl border-2 border-slate-100/80 bg-white/30">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center shadow-md">
+                            <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center shadow-md">
                               <Wallet className="w-5 h-5 text-white" />
                             </div>
                             <div>
@@ -499,9 +499,9 @@ export default function AdminOptionsPage() {
                       {/* Features Grid */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         {/* Coupon Codes Card */}
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border-2 border-slate-100/80 bg-gradient-to-br from-white/50 to-slate-50/30 p-5 hover:border-red-200/50 hover:shadow-md transition-all">
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border-2 border-slate-100/80 bg-gradient-to-br from-white/50 to-slate-50/30 p-5 hover:border-purple-200/50 hover:shadow-md transition-all">
                           <div className="flex items-start justify-between mb-3">
-                            <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center shadow-lg">
+                            <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center shadow-lg">
                               <Tag className="w-6 h-6 text-white" />
                             </div>
                             <Switch checked={allowCoupons} onCheckedChange={setAllowCoupons} />
@@ -511,9 +511,9 @@ export default function AdminOptionsPage() {
                         </motion.div>
 
                         {/* Tax Collection Card */}
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl border-2 border-slate-100/80 bg-gradient-to-br from-white/50 to-slate-50/30 p-5 hover:border-amber-200/50 hover:shadow-md transition-all">
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl border-2 border-slate-100/80 bg-gradient-to-br from-white/50 to-slate-50/30 p-5 hover:border-purple-200/50 hover:shadow-md transition-all">
                           <div className="flex items-start justify-between mb-3">
-                            <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg">
+                            <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center shadow-lg">
                               <Percent className="w-6 h-6 text-white" />
                             </div>
                             <Switch checked={taxEnabled} onCheckedChange={setTaxEnabled} />
@@ -523,9 +523,9 @@ export default function AdminOptionsPage() {
                         </motion.div>
 
                         {/* Free Trial Card */}
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border-2 border-slate-100/80 bg-gradient-to-br from-white/50 to-slate-50/30 p-5 hover:border-red-200/50 hover:shadow-md transition-all">
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border-2 border-slate-100/80 bg-gradient-to-br from-white/50 to-slate-50/30 p-5 hover:border-purple-200/50 hover:shadow-md transition-all">
                           <div className="flex items-start justify-between mb-3">
-                            <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center shadow-lg">
+                            <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center shadow-lg">
                               <Clock className="w-6 h-6 text-white" />
                             </div>
                             <Switch checked={freeTrialEnabled} onCheckedChange={setFreeTrialEnabled} />
@@ -537,19 +537,19 @@ export default function AdminOptionsPage() {
 
                       {/* Conditional Settings */}
                       {taxEnabled && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 p-4 rounded-xl bg-amber-50/40 border border-amber-100/50">
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 p-4 rounded-xl bg-purple-50/40 border border-purple-100/50">
                           <div className="space-y-2">
-                            <Label className="text-xs font-semibold text-amber-900">Default Tax Rate (%)</Label>
-                            <Input value={taxRate} onChange={e => setTaxRate(e.target.value)} type="number" className="rounded-xl bg-white/70 text-sm border-amber-100" />
+                            <Label className="text-xs font-semibold text-purple-900">Default Tax Rate (%)</Label>
+                            <Input value={taxRate} onChange={e => setTaxRate(e.target.value)} type="number" className="rounded-xl bg-white/70 text-sm border-purple-100" />
                           </div>
                         </motion.div>
                       )}
 
                       {freeTrialEnabled && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 p-4 rounded-xl bg-red-50/40 border border-red-100/50">
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 p-4 rounded-xl bg-purple-50/40 border border-purple-100/50">
                           <div className="space-y-2">
-                            <Label className="text-xs font-semibold text-red-900">Trial Duration (days)</Label>
-                            <Input value={trialDays} onChange={e => setTrialDays(e.target.value)} type="number" className="rounded-xl bg-white/70 text-sm border-red-100" />
+                            <Label className="text-xs font-semibold text-purple-900">Trial Duration (days)</Label>
+                            <Input value={trialDays} onChange={e => setTrialDays(e.target.value)} type="number" className="rounded-xl bg-white/70 text-sm border-purple-100" />
                           </div>
                         </motion.div>
                       )}
@@ -606,7 +606,7 @@ export default function AdminOptionsPage() {
                     </div>
 
                     <div className="pt-4 border-t border-slate-100/50">
-                      <SettingRow icon={RefreshCw} iconColor="bg-red-500" label="Automatic Refunds" description="Automatically process refunds within the refund window without admin approval">
+                      <SettingRow icon={RefreshCw} iconColor="bg-purple-600" label="Automatic Refunds" description="Automatically process refunds within the refund window without admin approval">
                         <Switch checked={autoRefunds} onCheckedChange={setAutoRefunds} />
                       </SettingRow>
                     </div>
@@ -651,7 +651,7 @@ export default function AdminOptionsPage() {
                   </div>
 
                   <div className="flex items-start gap-4 p-5 rounded-2xl bg-white/40 border border-slate-100/80 hover:border-slate-200/80 transition-all">
-                    <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
                       <Shield className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -668,7 +668,7 @@ export default function AdminOptionsPage() {
 
         {/* Save footer */}
         <div className="mt-8 flex justify-end">
-          <Button onClick={handleSave} className="bg-red-500 text-white shadow-xl shadow-red-500/20 h-12 px-8 rounded-xl">
+          <Button onClick={handleSave} className="bg-purple-600 text-white shadow-xl shadow-purple-600/20 h-12 px-8 rounded-xl">
             <Save className="w-5 h-5 mr-2" />Save All Settings
           </Button>
         </div>

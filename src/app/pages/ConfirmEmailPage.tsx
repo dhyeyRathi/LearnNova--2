@@ -150,7 +150,7 @@ export default function ConfirmEmailPage() {
           transition={{ repeat: Infinity, duration: 2 }}
           className="w-20 h-20"
         >
-          <Loader2 className="w-20 h-20 text-red-500" />
+          <Loader2 className="w-20 h-20 text-purple-600" />
         </motion.div>
       </div>
     );
@@ -176,7 +176,7 @@ export default function ConfirmEmailPage() {
             
             <Button 
               onClick={handleProceedToLogin}
-              className="w-full bg-red-500 hover:bg-red-600 text-white rounded-xl h-12 font-semibold text-lg mb-4"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl h-12 font-semibold text-lg mb-4"
             >
               Go to Login
             </Button>
@@ -218,14 +218,14 @@ export default function ConfirmEmailPage() {
             <p className="text-slate-600 mb-2">
               We've sent a confirmation email to:
             </p>
-            <p className="text-lg font-semibold text-red-600 mb-4">{email || 'your email'}</p>
+            <p className="text-lg font-semibold text-purple-700 mb-4">{email || 'your email'}</p>
             <p className="text-slate-600 text-sm">
               Click the link in the email to verify your account.
             </p>
             
             {verifyError && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{verifyError}</p>
+              <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <p className="text-sm text-purple-700">{verifyError}</p>
               </div>
             )}
           </div>

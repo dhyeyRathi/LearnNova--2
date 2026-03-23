@@ -92,7 +92,7 @@ export default function VerificationPage() {
             </motion.div>
 
             <h1 className="text-4xl font-bold mb-4">
-              Verification <span className="text-red-600">Submitted!</span>
+              Verification <span className="text-purple-700">Submitted!</span>
             </h1>
 
             <p className="text-xl text-slate-600 mb-8">
@@ -101,14 +101,14 @@ export default function VerificationPage() {
 
             <Card className="p-8 bg-white/70 backdrop-blur-xl border-white/40 shadow-xl mb-8 text-left">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-2">What happens next?</h3>
                   <ul className="space-y-2 text-slate-600">
                     <li className="flex items-start gap-2">
-                      <span className="text-red-600 font-bold">→</span>
+                      <span className="text-purple-700 font-bold">→</span>
                       <span>Our team reviews your verification within 2-3 business days</span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -116,7 +116,7 @@ export default function VerificationPage() {
                       <span>You'll receive an email notification about the status</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-red-600 font-bold">→</span>
+                      <span className="text-purple-700 font-bold">→</span>
                       <span>Once approved, you'll unlock all instructor features</span>
                     </li>
                   </ul>
@@ -127,7 +127,7 @@ export default function VerificationPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 onClick={() => navigate('/dashboard/instructor')}
-                className="bg-red-500 hover:bg-red-600 text-white"
+                className="bg-purple-600 hover:bg-purple-700 text-white"
               >
                 Return to Dashboard
               </Button>
@@ -154,14 +154,14 @@ export default function VerificationPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 rounded-full mb-4">
-            <Shield className="w-5 h-5 text-red-600" />
-            <span className="text-sm font-semibold text-red-600">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600/10 rounded-full mb-4">
+            <Shield className="w-5 h-5 text-purple-700" />
+            <span className="text-sm font-semibold text-purple-700">
               Identity Verification
             </span>
           </div>
           <h1 className="text-4xl font-bold mb-3">
-            Unlock Your <span className="text-red-600">Full Potential</span>
+            Unlock Your <span className="text-purple-700">Full Potential</span>
           </h1>
           <p className="text-slate-600 text-lg">
             Complete verification to access all instructor features and build amazing courses
@@ -199,14 +199,14 @@ export default function VerificationPage() {
               />
               <defs>
                 <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#ef4444" />
-                  <stop offset="100%" stopColor="#ef4444" />
+                  <stop offset="0%" stopColor="#7c3aed" />
+                  <stop offset="100%" stopColor="#7c3aed" />
                 </linearGradient>
               </defs>
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">
+                <div className="text-2xl font-bold text-purple-700">
                   {Math.round(completionPercentage)}%
                 </div>
                 <div className="text-xs text-slate-500">Complete</div>
@@ -230,7 +230,7 @@ export default function VerificationPage() {
                       currentStep > step.number
                         ? 'bg-gradient-to-r from-green-400 to-emerald-500 shadow-lg shadow-green-500/30'
                         : currentStep === step.number
-                        ? 'bg-red-500 shadow-lg shadow-red-500/30'
+                        ? 'bg-purple-600 shadow-lg shadow-purple-600/30'
                         : 'bg-white/70 backdrop-blur-sm border-2 border-slate-200'
                     }`}
                   >
@@ -273,7 +273,7 @@ export default function VerificationPage() {
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center">
                     <User className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -325,7 +325,7 @@ export default function VerificationPage() {
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center">
                     <Upload className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -359,7 +359,7 @@ export default function VerificationPage() {
                           <div className="text-center">
                             <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
                             <p className="text-sm text-slate-600">
-                              <span className="font-semibold text-red-600">Click to upload</span> or drag and drop
+                              <span className="font-semibold text-purple-700">Click to upload</span> or drag and drop
                             </p>
                             <p className="text-xs text-slate-400 mt-1">PNG, JPG or PDF (max. 10MB)</p>
                           </div>
@@ -392,7 +392,7 @@ export default function VerificationPage() {
                           <div className="text-center">
                             <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
                             <p className="text-sm text-slate-600">
-                              <span className="font-semibold text-red-600">Click to upload</span> certificates
+                              <span className="font-semibold text-purple-700">Click to upload</span> certificates
                             </p>
                             <p className="text-xs text-slate-400 mt-1">Boost your credibility</p>
                           </div>
@@ -408,7 +408,7 @@ export default function VerificationPage() {
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center">
                     <Camera className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -418,12 +418,12 @@ export default function VerificationPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                  <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
                     <div className="flex gap-3">
-                      <Sparkles className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                      <div className="text-sm text-red-800">
+                      <Sparkles className="w-5 h-5 text-purple-700 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-purple-800">
                         <p className="font-semibold mb-1">Tips for a great selfie:</p>
-                        <ul className="list-disc list-inside space-y-1 text-red-700">
+                        <ul className="list-disc list-inside space-y-1 text-purple-700">
                           <li>Ensure good lighting and clear visibility</li>
                           <li>Hold your ID next to your face</li>
                           <li>Make sure both your face and ID are clearly visible</li>
@@ -453,11 +453,11 @@ export default function VerificationPage() {
                         </div>
                       ) : (
                         <div className="text-center">
-                          <div className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                          <div className="w-20 h-20 rounded-full bg-purple-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                             <Camera className="w-10 h-10 text-white" />
                           </div>
                           <p className="text-sm text-slate-600">
-                            <span className="font-semibold text-red-600">Tap to take a selfie</span>
+                            <span className="font-semibold text-purple-700">Tap to take a selfie</span>
                           </p>
                           <p className="text-xs text-slate-400 mt-1">or upload from gallery</p>
                         </div>
@@ -480,7 +480,7 @@ export default function VerificationPage() {
               </Button>
               <Button
                 onClick={handleNext}
-                className="min-w-32 bg-red-500 hover:bg-red-600 text-white"
+                className="min-w-32 bg-purple-600 hover:bg-purple-700 text-white"
               >
                 {currentStep === steps.length ? (
                   <span className="flex items-center gap-2">

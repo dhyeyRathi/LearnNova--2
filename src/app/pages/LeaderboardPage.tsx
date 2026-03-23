@@ -59,7 +59,7 @@ export default function LeaderboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-10"
         >
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-red-400 to-amber-500 flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-red-500/30">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-purple-600/30">
             <Trophy className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-slate-800 mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
@@ -76,7 +76,7 @@ export default function LeaderboardPage() {
             transition={{ delay: 0.1 }}
             className="relative rounded-3xl p-6 mb-8 overflow-hidden"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-red-500 via-amber-500 to-orange-500" />
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-violet-500 to-purple-500" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 to-transparent" />
             <div className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full border-2 border-white/10" />
 
@@ -87,7 +87,7 @@ export default function LeaderboardPage() {
                     <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-lg">
-                    <span className="text-sm font-bold bg-gradient-to-br from-red-600 to-amber-600 bg-clip-text text-transparent">
+                    <span className="text-sm font-bold bg-gradient-to-br from-purple-700 to-violet-600 bg-clip-text text-transparent">
                       #{currentUserRank}
                     </span>
                   </div>
@@ -213,7 +213,7 @@ export default function LeaderboardPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.05 * index }}
                   className={`p-4 rounded-2xl border transition-all ${getRankBg(rank)} ${
-                    isCurrentUser ? 'ring-2 ring-red-400 shadow-lg shadow-red-500/10' : ''
+                    isCurrentUser ? 'ring-2 ring-purple-500 shadow-lg shadow-purple-600/10' : ''
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -225,7 +225,7 @@ export default function LeaderboardPage() {
                     {/* Avatar */}
                     <Avatar className={`w-12 h-12 ${rank <= 3 ? 'ring-2 ring-amber-200' : ''}`}>
                       <AvatarImage src={learner.avatar} />
-                      <AvatarFallback className="bg-red-500 text-white">
+                      <AvatarFallback className="bg-purple-600 text-white">
                         {learner.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
@@ -233,11 +233,11 @@ export default function LeaderboardPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className={`font-semibold truncate ${isCurrentUser ? 'text-red-700' : 'text-slate-800'}`}>
+                        <p className={`font-semibold truncate ${isCurrentUser ? 'text-purple-700' : 'text-slate-800'}`}>
                           {learner.name}
                         </p>
                         {isCurrentUser && (
-                          <Badge className="bg-red-100 text-red-600 text-[10px] rounded-md">You</Badge>
+                          <Badge className="bg-purple-100 text-purple-700 text-[10px] rounded-md">You</Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-slate-400">

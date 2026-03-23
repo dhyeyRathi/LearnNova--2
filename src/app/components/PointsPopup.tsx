@@ -47,7 +47,7 @@ export default function PointsPopup({ points, totalPoints, show, onClose }: Poin
           exit={{ opacity: 0, scale: 0.8, y: -50 }}
           className="fixed bottom-8 right-8 z-50"
         >
-          <div className="bg-red-500 rounded-3xl p-6 shadow-2xl text-white min-w-[300px] relative overflow-hidden">
+          <div className="bg-purple-600 rounded-3xl p-6 shadow-2xl text-white min-w-[300px] relative overflow-hidden">
             {/* Animated background */}
             <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-3xl" />
             

@@ -129,20 +129,20 @@ export default function ReportingPage() {
   const isCol = (key: string) => visibleColumns.includes(key);
 
   const statCards = [
-    { label: 'Total Participants', value: totalParticipants, icon: UsersIcon, color: 'from-red-500 to-amber-500', filter: 'all' as StatusFilter },
-    { label: 'Yet to Start', value: yetToStart, icon: PlayCircle, color: 'from-amber-500 to-orange-500', filter: 'yet-to-start' as StatusFilter },
-    { label: 'In Progress', value: inProgress, icon: TrendingUp, color: 'from-red-500 to-red-600', filter: 'in-progress' as StatusFilter },
-    { label: 'Completed', value: completed, icon: CheckCircle, color: 'from-red-500 to-amber-500', filter: 'completed' as StatusFilter },
+    { label: 'Total Participants', value: totalParticipants, icon: UsersIcon, color: 'bg-purple-600', filter: 'all' as StatusFilter },
+    { label: 'Yet to Start', value: yetToStart, icon: PlayCircle, color: 'bg-purple-500', filter: 'yet-to-start' as StatusFilter },
+    { label: 'In Progress', value: inProgress, icon: TrendingUp, color: 'bg-purple-700', filter: 'in-progress' as StatusFilter },
+    { label: 'Completed', value: completed, icon: CheckCircle, color: 'bg-purple-600', filter: 'completed' as StatusFilter },
   ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Yet to Start':
-        return <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-lg text-xs shadow-sm">Yet to Start</Badge>;
+        return <Badge className="bg-purple-500 text-white rounded-lg text-xs shadow-sm">Yet to Start</Badge>;
       case 'In Progress':
-        return <Badge className="bg-red-500 text-white rounded-lg text-xs shadow-sm">In Progress</Badge>;
+        return <Badge className="bg-purple-600 text-white rounded-lg text-xs shadow-sm">In Progress</Badge>;
       case 'Completed':
-        return <Badge className="bg-gradient-to-r from-red-500 to-amber-500 text-white rounded-lg text-xs shadow-sm">Completed</Badge>;
+        return <Badge className="bg-purple-700 text-white rounded-lg text-xs shadow-sm">Completed</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -156,10 +156,10 @@ export default function ReportingPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 via-amber-600 to-orange-600 bg-clip-text text-transparent" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <h1 className="text-4xl font-bold text-purple-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 Reporting Dashboard
               </h1>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-lg shadow-amber-500/20">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 rounded-full shadow-lg shadow-purple-600/20">
                 <Crown className="w-5 h-5 text-white" />
                 <span className="text-sm font-semibold text-white">Admin</span>
               </div>
@@ -176,14 +176,14 @@ export default function ReportingPage() {
                 onClick={() => setStatusFilter(statusFilter === card.filter ? 'all' : card.filter)}
                 className={`p-6 rounded-3xl cursor-pointer transition-all relative overflow-hidden group ${
                   statusFilter === card.filter
-                    ? `bg-red-500 text-white shadow-2xl shadow-red-500/20 scale-[1.02]`
+                    ? `bg-purple-600 text-white shadow-2xl shadow-purple-600/20 scale-[1.02]`
                     : 'glass-card hover:shadow-xl'
                 }`}
               >
                 <div className="absolute top-[-20px] right-[-20px] w-[80px] h-[80px] rounded-full border-2 border-white/10" />
                 <div className="flex items-center justify-between mb-2">
                   <card.icon className={`w-8 h-8 ${statusFilter === card.filter ? 'text-white/80' : 'text-slate-400'}`} />
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${statusFilter === card.filter ? 'bg-white/20' : `bg-gradient-to-br ${card.color}`}`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${statusFilter === card.filter ? 'bg-white/20' : card.color}`}>
                     <card.icon className="w-6 h-6 text-white" />
                   </div>
                 </div>
@@ -270,7 +270,7 @@ export default function ReportingPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: index * 0.02 }}
-                      className="hover:bg-red-50/30 transition-colors"
+                      className="hover:bg-purple-50/30 transition-colors"
                     >
                       {isCol('srNo') && <TableCell className="font-medium text-slate-400">{index + 1}</TableCell>}
                       {isCol('courseName') && (
@@ -286,12 +286,12 @@ export default function ReportingPage() {
                           <Link to={`/admin/student/${row.learner?.id}`} className="flex items-center gap-2.5 group/link">
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={row.learner?.avatar} />
-                              <AvatarFallback className="bg-gradient-to-br from-red-400 to-amber-600 text-white text-xs">
+                              <AvatarFallback className="bg-purple-600 text-white text-xs">
                                 {row.learner?.name.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium text-sm group-hover/link:text-red-600 transition-colors flex items-center gap-1">
+                              <p className="font-medium text-sm group-hover/link:text-purple-700 transition-colors flex items-center gap-1">
                                 {row.learner?.name}
                                 <ExternalLink className="w-3 h-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
                               </p>
@@ -330,8 +330,8 @@ export default function ReportingPage() {
 
             {filteredRows.length === 0 && (
               <div className="text-center py-16">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-100 to-amber-100 flex items-center justify-center mx-auto mb-3">
-                  <Search className="w-8 h-8 text-red-300" />
+                <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mx-auto mb-3">
+                  <Search className="w-8 h-8 text-purple-300" />
                 </div>
                 <p className="text-slate-500">No matching records found</p>
               </div>

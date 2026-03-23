@@ -2,43 +2,43 @@
 
 :root {
   --font-size: 16px;
-  --background: #FAFAF7;
+  --background: #FAFAFA;
   --foreground: #1A1F2E;
   --card: #FFFFFF;
   --card-foreground: #1A1F2E;
   --popover: #FFFFFF;
   --popover-foreground: #1A1F2E;
-  --primary: #2C3E6B;
+  --primary: #7C3AED;
   --primary-foreground: #FFFFFF;
-  --secondary: #F0EEEA;
+  --secondary: #F3F0FF;
   --secondary-foreground: #1A1F2E;
-  --muted: #F0EEEA;
-  --muted-foreground: #7A766F;
-  --accent: #F0EEEA;
+  --muted: #F5F3FF;
+  --muted-foreground: #6B7280;
+  --accent: #F3F0FF;
   --accent-foreground: #1A1F2E;
-  --destructive: #B5403A;
+  --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
-  --border: #E5E2DC;
+  --border: #E5E7EB;
   --input: transparent;
-  --input-background: #F7F6F3;
-  --switch-background: #C8C3BB;
+  --input-background: #F9FAFB;
+  --switch-background: #D1D5DB;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #ef4444;
-  --chart-1: #2C3E6B;
-  --chart-2: #4A6FA5;
-  --chart-3: #6B8FBF;
-  --chart-4: #94AED4;
-  --chart-5: #BFD0E5;
+  --ring: #8B5CF6;
+  --chart-1: #7C3AED;
+  --chart-2: #8B5CF6;
+  --chart-3: #A78BFA;
+  --chart-4: #C4B5FD;
+  --chart-5: #DDD6FE;
   --radius: 0.5rem;
   --sidebar: #FFFFFF;
   --sidebar-foreground: #1A1F2E;
-  --sidebar-primary: #2C3E6B;
+  --sidebar-primary: #7C3AED;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F0EEEA;
+  --sidebar-accent: #F3F0FF;
   --sidebar-accent-foreground: #1A1F2E;
-  --sidebar-border: #E5E2DC;
-  --sidebar-ring: #2C3E6B;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #7C3AED;
 }
 
 @theme inline {
@@ -98,14 +98,14 @@
     font-size: var(--font-size);
   }
 
-  /* Gradient focus effect for form inputs */
+  /* Gradient focus effect for form inputs - Purple theme */
   input:focus,
   textarea:focus,
   select:focus {
     outline: none !important;
-    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15), 
-                0 0 0 2px rgba(236, 72, 153, 0.6), 
-                0 0 0 4px rgba(59, 130, 246, 0.3) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15),
+                0 0 0 2px rgba(139, 92, 246, 0.6),
+                0 0 0 4px rgba(167, 139, 250, 0.3) !important;
   }
 
   h1 { font-size: var(--text-2xl); font-weight: 600; line-height: 1.35; letter-spacing: -0.025em; font-family: 'Space Grotesk', system-ui, sans-serif; }
@@ -126,20 +126,20 @@
 .animate-mesh-float { animation: mesh-float 20s ease-in-out infinite; }
 .animate-pulse-ring { animation: pulse-ring 1.5s ease-out infinite; }
 
-/* Card System */
+/* Card System - Purple Theme */
 .glass-card {
   background: #FFFFFF;
-  border: 1px solid #E5E2DC;
+  border: 1px solid #E5E7EB;
   box-shadow: 0 1px 2px rgba(26, 31, 46, 0.03);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .glass-card:hover {
-  box-shadow: 0 3px 10px rgba(26, 31, 46, 0.05);
-  border-color: #D8D4CD;
+  box-shadow: 0 3px 10px rgba(124, 58, 237, 0.08);
+  border-color: #D1D5DB;
 }
 .glass-card-dark {
-  background: #2C3E6B;
-  border: 1px solid #3D5080;
+  background: #5B21B6;
+  border: 1px solid #6D28D9;
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-  color: #F0EEEA;
+  color: #F5F3FF;
 }

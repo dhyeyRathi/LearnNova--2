@@ -75,14 +75,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
       <div className="absolute top-6 left-6 z-20">
-        <Button variant="ghost" onClick={() => navigate('/')} className="text-[#7A766F] hover:bg-red-50 hover:text-red-600 rounded-lg text-[13px] h-8">
+        <Button variant="ghost" onClick={() => navigate('/')} className="text-[#7A766F] hover:bg-purple-50 hover:text-purple-700 rounded-lg text-[13px] h-8">
           <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Back
         </Button>
       </div>
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="w-full max-w-[380px] relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-red-500 mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-purple-600 mb-4">
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-xl font-semibold text-[#1A1F2E] mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Welcome back</h1>
@@ -99,14 +99,14 @@ export default function LoginPage() {
               <Label htmlFor="password" className="text-[13px] text-[#1A1F2E]">Password</Label>
               <Input id="password" type="password" placeholder="password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 rounded-lg border-[#E5E2DC] bg-[#F7F6F3] focus:bg-white focus:border-amber-400 focus:border-2 text-sm" required />
             </div>
-            <Button type="submit" disabled={isLoading} className="w-full h-10 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+            <Button type="submit" disabled={isLoading} className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
               {isLoading ? 'Signing in...' : 'Sign In'} <ArrowRight className="ml-2 w-3.5 h-3.5" />
             </Button>
           </form>
 
           <div className="mt-5 pt-4 border-t border-[#E5E2DC]/50">
             <p className="text-center text-sm text-[#7A766F]">
-              Don't have an account? <Link to="/signup" className="text-red-600 font-medium hover:underline">Sign up</Link>
+              Don't have an account? <Link to="/signup" className="text-purple-700 font-medium hover:underline">Sign up</Link>
             </p>
           </div>
         </div>

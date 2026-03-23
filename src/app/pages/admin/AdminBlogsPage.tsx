@@ -165,7 +165,7 @@ export default function AdminBlogsPage() {
               <Button size="sm" onClick={() => handleShare(blog.id, blog.title)} className="bg-white/90 backdrop-blur-sm text-slate-700 hover:bg-white rounded-lg h-7 w-7 p-0 shadow-sm">
                 <Share2 className="w-3 h-3" />
               </Button>
-              <Button size="sm" onClick={() => handleDeleteBlog(blog.id, blog.title)} className="rounded-lg h-7 w-7 p-0 shadow-sm bg-white/90 backdrop-blur-sm text-red-500 hover:bg-white">
+              <Button size="sm" onClick={() => handleDeleteBlog(blog.id, blog.title)} className="rounded-lg h-7 w-7 p-0 shadow-sm bg-white/90 backdrop-blur-sm text-purple-600 hover:bg-white">
                 <Trash2 className="w-3 h-3" />
               </Button>
             </div>
@@ -210,7 +210,7 @@ export default function AdminBlogsPage() {
               </div>
               <p className="text-[#7A766F] text-sm">Create, manage, and publish blog posts</p>
             </div>
-            <Button onClick={() => setCreateOpen(true)} className="bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg shadow-red-500/20">
+            <Button onClick={() => setCreateOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow-lg shadow-purple-600/20">
               <Plus className="w-4 h-4 mr-2" />New Blog Post
             </Button>
           </div>
@@ -230,7 +230,7 @@ export default function AdminBlogsPage() {
               <Button
                 size="sm"
                 variant={viewMode === 'kanban' ? 'default' : 'ghost'}
-                className={`rounded ${viewMode === 'kanban' ? 'bg-red-500 text-white' : 'text-slate-600'}`}
+                className={`rounded ${viewMode === 'kanban' ? 'bg-purple-600 text-white' : 'text-slate-600'}`}
                 onClick={() => setViewMode('kanban')}
               >
                 Grid
@@ -238,7 +238,7 @@ export default function AdminBlogsPage() {
               <Button
                 size="sm"
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
-                className={`rounded ${viewMode === 'list' ? 'bg-red-500 text-white' : 'text-slate-600'}`}
+                className={`rounded ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-slate-600'}`}
                 onClick={() => setViewMode('list')}
               >
                 List
@@ -271,10 +271,10 @@ export default function AdminBlogsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button size="sm" onClick={() => handleShare(blog.id, blog.title)} className="bg-red-50 text-red-600 hover:bg-red-100 rounded-lg">
+                      <Button size="sm" onClick={() => handleShare(blog.id, blog.title)} className="bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg">
                         <Share2 className="w-3.5 h-3.5" />
                       </Button>
-                      <Button size="sm" onClick={() => handleDeleteBlog(blog.id, blog.title)} className="bg-red-50 text-red-600 hover:bg-red-100 rounded-lg">
+                      <Button size="sm" onClick={() => handleDeleteBlog(blog.id, blog.title)} className="bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg">
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
@@ -309,10 +309,10 @@ export default function AdminBlogsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button size="sm" onClick={() => handleShare(blog.id, blog.title)} className="bg-red-50 text-red-600 hover:bg-red-100 rounded-lg">
+                      <Button size="sm" onClick={() => handleShare(blog.id, blog.title)} className="bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg">
                         <Share2 className="w-3.5 h-3.5" />
                       </Button>
-                      <Button size="sm" onClick={() => handleDeleteBlog(blog.id, blog.title)} className="bg-red-50 text-red-600 hover:bg-red-100 rounded-lg">
+                      <Button size="sm" onClick={() => handleDeleteBlog(blog.id, blog.title)} className="bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg">
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
@@ -329,7 +329,7 @@ export default function AdminBlogsPage() {
             <FileText className="w-16 h-16 mx-auto mb-4 text-slate-300" />
             <h3 className="text-lg font-semibold text-slate-700 mb-2">No blogs yet</h3>
             <p className="text-slate-500 text-sm mb-6">Start creating blog posts to engage your audience</p>
-            <Button onClick={() => setCreateOpen(true)} className="bg-red-500 text-white rounded-lg">
+            <Button onClick={() => setCreateOpen(true)} className="bg-purple-600 text-white rounded-lg">
               <Plus className="w-4 h-4 mr-2" />Create First Blog
             </Button>
           </motion.div>
@@ -403,7 +403,7 @@ export default function AdminBlogsPage() {
 
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
               <Button variant="outline" onClick={() => setCreateOpen(false)} className="rounded-lg">Cancel</Button>
-              <Button onClick={handleCreate} className="bg-red-500 text-white rounded-lg hover:bg-red-600">
+              <Button onClick={handleCreate} className="bg-purple-600 text-white rounded-lg hover:bg-purple-700">
                 <Plus className="w-4 h-4 mr-2" />Create Blog Post
               </Button>
             </div>
@@ -422,7 +422,7 @@ export default function AdminBlogsPage() {
               <Input value={shareUrl} readOnly className="rounded-lg border-slate-200" />
               <Button
                 onClick={handleCopy}
-                className={`${copied ? 'bg-green-500' : 'bg-red-500'} text-white rounded-lg transition-colors`}
+                className={`${copied ? 'bg-green-500' : 'bg-purple-600'} text-white rounded-lg transition-colors`}
               >
                 {copied ? '✓' : 'Copy'}
               </Button>
@@ -435,18 +435,18 @@ export default function AdminBlogsPage() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="max-w-md rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-red-600 text-xl font-bold">Delete Blog Post</DialogTitle>
+            <DialogTitle className="text-purple-700 text-xl font-bold">Delete Blog Post</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
               <p className="text-sm text-slate-700">
                 Are you sure you want to delete <span className="font-semibold">"{blogToDelete?.title}"</span>?
               </p>
-              <p className="text-xs text-red-600 mt-2 font-medium">⚠️ This action cannot be undone.</p>
+              <p className="text-xs text-purple-700 mt-2 font-medium">Warning: This action cannot be undone.</p>
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} className="rounded-lg">Cancel</Button>
-              <Button onClick={confirmDeleteBlog} className="bg-red-500 text-white rounded-lg hover:bg-red-600">Delete Blog Post</Button>
+              <Button onClick={confirmDeleteBlog} className="bg-purple-600 text-white rounded-lg hover:bg-purple-700">Delete Blog Post</Button>
             </div>
           </div>
         </DialogContent>
