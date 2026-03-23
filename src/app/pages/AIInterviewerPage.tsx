@@ -226,10 +226,6 @@ export default function AIInterviewerPage() {
   const [isThinkTimerActive, setIsThinkTimerActive] = useState(false);
   const [isAnswerTimerActive, setIsAnswerTimerActive] = useState(false);
 
-  // Double-tap tracking for field/subfield selection
-  const [lastTapTime, setLastTapTime] = useState<number>(0);
-  const [lastTappedId, setLastTappedId] = useState<string>('');
-
   // Hide AI Assistant when on this page
   useEffect(() => {
     const aiAssistant = document.querySelector('[data-ai-assistant]') as HTMLElement;
@@ -365,21 +361,7 @@ export default function AIInterviewerPage() {
   };
 
   const handleFieldSelect = (fieldId: string) => {
-    const currentTime = Date.now();
-    const tapDelay = 300; // milliseconds for double tap detection
-
-    if (lastTappedId === fieldId && currentTime - lastTapTime < tapDelay) {
-      // Double tap detected - go to subfield selection
-      setSelectedField(fieldId);
-      setStage('subfield-select');
-      setLastTapTime(0);
-      setLastTappedId('');
-    } else {
-      // First tap - just highlight the field
-      setSelectedField(fieldId);
-      setLastTapTime(currentTime);
-      setLastTappedId(fieldId);
-    }
+    setSelectedField(fieldId);
   };
 
   const handleContinueToSubfield = () => {
@@ -388,21 +370,12 @@ export default function AIInterviewerPage() {
   };
 
   const handleSubFieldSelect = (subFieldId: string) => {
-    const currentTime = Date.now();
-    const tapDelay = 300; // milliseconds for double tap detection
+    setSelectedSubField(subFieldId);
+  };
 
-    if (lastTappedId === subFieldId && currentTime - lastTapTime < tapDelay) {
-      // Double tap detected - start interview
-      setSelectedSubField(subFieldId);
-      setLastTapTime(0);
-      setLastTappedId('');
-      startGreeting(false);
-    } else {
-      // First tap - just highlight the subfield
-      setSelectedSubField(subFieldId);
-      setLastTapTime(currentTime);
-      setLastTappedId(subFieldId);
-    }
+  const handleStartInterviewFromSubfield = () => {
+    if (!selectedSubField) return;
+    startGreeting(false);
   };
 
   // Get questions from pre-generated set or fallback to hardcoded
@@ -951,12 +924,12 @@ export default function AIInterviewerPage() {
           </div>
         </div>
 
-        {/* Chalkboard */}
+        {/* Chalkboard - Hidden on mobile */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="absolute top-[20%] left-[55%] w-[40vw] max-w-2xl z-10"
+          className="hidden md:block absolute top-[20%] left-[55%] w-[40vw] max-w-2xl z-10"
         >
           <div className="relative bg-gradient-to-br from-amber-800 via-amber-900 to-amber-950 p-3 rounded-lg shadow-2xl">
             <div className="relative bg-gradient-to-br from-[#2a4a3a] via-[#1e3a2a] to-[#162a1e] rounded h-32 md:h-40 shadow-inner overflow-hidden">
@@ -1020,9 +993,9 @@ export default function AIInterviewerPage() {
           </div>
         </motion.div>
 
-        {/* Side decorations */}
-        <div className="absolute top-28 left-8 w-20 h-28 bg-gradient-to-br from-amber-100 to-amber-200 rounded border-4 border-amber-800 shadow-lg opacity-80" />
-        <div className="absolute top-32 right-8 w-24 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded shadow-lg opacity-80 flex items-center justify-center">
+        {/* Side decorations - Hidden on mobile */}
+        <div className="hidden md:block absolute top-28 left-8 w-20 h-28 bg-gradient-to-br from-amber-100 to-amber-200 rounded border-4 border-amber-800 shadow-lg opacity-80" />
+        <div className="hidden md:block absolute top-32 right-8 w-24 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded shadow-lg opacity-80 flex items-center justify-center">
           <span className="text-purple-700 font-bold text-xs">LearnNova</span>
         </div>
 
@@ -1039,7 +1012,7 @@ export default function AIInterviewerPage() {
           </div>
         </div>
 
-        {/* Desk */}
+        {/* Desk - Smaller on mobile */}
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -1047,36 +1020,36 @@ export default function AIInterviewerPage() {
           className="absolute bottom-[18%] left-1/2 -translate-x-1/2 z-10"
         >
           <div className="relative">
-            <div className="w-[400px] md:w-[500px] h-6 bg-gradient-to-b from-amber-700 via-amber-800 to-amber-900 rounded-t-lg shadow-2xl" />
-            <div className="absolute -top-8 left-6 w-10 h-14 bg-gradient-to-br from-slate-700 to-slate-800 rounded-t shadow-lg" />
-            <div className="absolute -top-3 left-20 w-16 h-2 bg-white rounded shadow-md" />
-            <div className="absolute -top-6 right-12 w-6 h-7 bg-gradient-to-br from-purple-600 to-purple-700 rounded-b">
-              <div className="absolute -right-2 top-1 w-2 h-4 border-2 border-purple-600 rounded-r" />
+            <div className="w-[280px] md:w-[400px] lg:w-[500px] h-5 md:h-6 bg-gradient-to-b from-amber-700 via-amber-800 to-amber-900 rounded-t-lg shadow-2xl" />
+            <div className="absolute -top-6 md:-top-8 left-4 md:left-6 w-8 md:w-10 h-10 md:h-14 bg-gradient-to-br from-slate-700 to-slate-800 rounded-t shadow-lg" />
+            <div className="absolute -top-2 md:-top-3 left-14 md:left-20 w-12 md:w-16 h-1.5 md:h-2 bg-white rounded shadow-md" />
+            <div className="absolute -top-4 md:-top-6 right-8 md:right-12 w-5 md:w-6 h-5 md:h-7 bg-gradient-to-br from-purple-600 to-purple-700 rounded-b">
+              <div className="absolute -right-1.5 md:-right-2 top-0.5 md:top-1 w-1.5 md:w-2 h-3 md:h-4 border-2 border-purple-600 rounded-r" />
             </div>
-            <div className="w-[400px] md:w-[500px] h-20 bg-gradient-to-b from-amber-800 to-amber-950 rounded-b shadow-2xl" />
-            <div className="absolute -bottom-16 left-8 w-6 h-16 bg-gradient-to-r from-amber-900 to-amber-950 rounded" />
-            <div className="absolute -bottom-16 right-8 w-6 h-16 bg-gradient-to-r from-amber-900 to-amber-950 rounded" />
+            <div className="w-[280px] md:w-[400px] lg:w-[500px] h-16 md:h-20 bg-gradient-to-b from-amber-800 to-amber-950 rounded-b shadow-2xl" />
+            <div className="absolute -bottom-12 md:-bottom-16 left-6 md:left-8 w-5 md:w-6 h-12 md:h-16 bg-gradient-to-r from-amber-900 to-amber-950 rounded" />
+            <div className="absolute -bottom-12 md:-bottom-16 right-6 md:right-8 w-5 md:w-6 h-12 md:h-16 bg-gradient-to-r from-amber-900 to-amber-950 rounded" />
           </div>
         </motion.div>
 
-        {/* Chair */}
+        {/* Chair - Smaller on mobile */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.5 }}
           className="absolute bottom-[28%] left-1/2 -translate-x-1/2 z-5"
         >
-          <div className="w-28 h-32 bg-gradient-to-br from-slate-600 to-slate-800 rounded-t-2xl relative shadow-2xl">
+          <div className="w-20 h-24 md:w-28 md:h-32 bg-gradient-to-br from-slate-600 to-slate-800 rounded-t-2xl relative shadow-2xl">
             <div className="absolute inset-2 bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-inner" />
           </div>
         </motion.div>
 
-        {/* BOT CHARACTER */}
+        {/* BOT CHARACTER - Smaller on mobile */}
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.7, type: 'spring', stiffness: 150 }}
-          className="absolute bottom-[38%] left-1/2 -translate-x-1/2 z-20"
+          className="absolute bottom-[38%] left-1/2 -translate-x-1/2 z-20 scale-75 md:scale-100"
         >
           <motion.div
             animate={
@@ -1111,7 +1084,7 @@ export default function AIInterviewerPage() {
                   </div>
                   <motion.div
                     animate={isSpeaking ? { scaleY: [1, 1.3, 0.85, 1.15, 1], scaleX: [1, 0.93, 1.04, 0.96, 1] } : isThinking ? { width: ['2.5rem', '1.5rem', '2.5rem'] } : {}}
-                    transition={{ duration: isSpeaking ? 1 : 2, repeat: isSpeaking || isThinking ? Infinity : 0, ease: 'easeInOut' }}
+                    transition={{ duration: isSpeaking ? 2 : 2, repeat: isSpeaking || isThinking ? Infinity : 0, ease: 'easeInOut' }}
                     className="absolute bottom-5 left-1/2 -translate-x-1/2 w-10 h-3 bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 rounded-full shadow-lg shadow-cyan-400/30"
                   />
                 </div>
@@ -1195,15 +1168,15 @@ export default function AIInterviewerPage() {
         </motion.div>
       )}
 
-      {/* Camera Preview */}
+      {/* Camera Preview - Repositioned for mobile */}
       {(stage === 'interviewing' || stage === 'greeting') && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute top-4 right-4 z-30"
+          className="absolute top-2 md:top-4 right-2 md:right-4 z-30"
         >
           <div className="relative">
-            <div className={`w-40 h-28 rounded-xl overflow-hidden shadow-2xl border-2 ${isCameraOn ? 'border-green-500' : 'border-slate-500'} bg-slate-900`}>
+            <div className={`w-24 h-16 md:w-40 md:h-28 rounded-lg md:rounded-xl overflow-hidden shadow-2xl border-2 ${isCameraOn ? 'border-green-500' : 'border-slate-500'} bg-slate-900`}>
               {isCameraOn ? (
                 <video
                   ref={videoRef}
@@ -1215,37 +1188,37 @@ export default function AIInterviewerPage() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <VideoOff className="w-8 h-8 text-slate-500" />
+                  <VideoOff className="w-6 h-6 md:w-8 md:h-8 text-slate-500" />
                 </div>
               )}
             </div>
             <button
               onClick={toggleCamera}
-              className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${
+              className={`absolute -bottom-1 md:-bottom-2 -right-1 md:-right-2 w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-lg ${
                 isCameraOn ? 'bg-green-500 hover:bg-green-600' : 'bg-slate-600 hover:bg-slate-700'
               }`}
             >
-              {isCameraOn ? <Video className="w-4 h-4 text-white" /> : <VideoOff className="w-4 h-4 text-white" />}
+              {isCameraOn ? <Video className="w-3 h-3 md:w-4 md:h-4 text-white" /> : <VideoOff className="w-3 h-3 md:w-4 md:h-4 text-white" />}
             </button>
-            <span className="absolute -bottom-2 left-2 text-xs text-white bg-black/60 px-2 py-0.5 rounded">You</span>
+            <span className="absolute -bottom-1 md:-bottom-2 left-1 md:left-2 text-[10px] md:text-xs text-white bg-black/60 px-1 md:px-2 py-0.5 rounded">You</span>
           </div>
         </motion.div>
       )}
 
-      {/* Stop Interview Button - Show during greeting and interviewing */}
+      {/* Stop Interview Button - Show during greeting and interviewing - Repositioned for mobile */}
       {(stage === 'greeting' || stage === 'interviewing') && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="absolute top-4 right-52 z-30"
+          className="absolute top-2 md:top-4 left-2 md:left-auto md:right-52 z-30"
         >
           <Button
             onClick={() => setShowStopModal(true)}
             variant="ghost"
-            className="bg-red-500/90 hover:bg-red-600 text-white shadow-lg rounded-full h-10 px-4"
+            className="bg-red-500/90 hover:bg-red-600 text-white shadow-lg rounded-full h-8 md:h-10 px-3 md:px-4 text-xs md:text-sm"
           >
-            <StopCircle className="w-4 h-4 mr-2" />
-            Stop Interview
+            <StopCircle className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+            <span className="hidden md:inline">Stop Interview</span>
           </Button>
         </motion.div>
       )}
@@ -1549,25 +1522,35 @@ export default function AIInterviewerPage() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto relative"
             >
-              <button
-                onClick={() => setStage('start')}
-                className="flex items-center text-slate-500 hover:text-slate-700 mb-4"
-              >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                <span className="text-sm">Back</span>
-              </button>
+              {/* Top bar with back and next buttons */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => setStage('start')}
+                  className="flex items-center text-slate-500 hover:text-slate-700"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  <span className="text-sm">Back</span>
+                </button>
+
+                {selectedField && (
+                  <Button
+                    onClick={handleContinueToSubfield}
+                    className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6 h-9 text-sm font-medium shadow-lg"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                )}
+              </div>
 
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                   Select Your Field
                 </h2>
-                <p className="text-slate-500 text-sm mb-2">
+                <p className="text-slate-500 text-sm">
                   Choose your area of expertise for relevant questions
-                </p>
-                <p className="text-purple-600 text-xs font-medium bg-purple-50 px-3 py-1 rounded-full inline-block">
-                  👆 Double tap to select
                 </p>
               </div>
 
@@ -1609,25 +1592,35 @@ export default function AIInterviewerPage() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto relative"
             >
-              <button
-                onClick={() => setStage('field-select')}
-                className="flex items-center text-slate-500 hover:text-slate-700 mb-4"
-              >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                <span className="text-sm">Back</span>
-              </button>
+              {/* Top bar with back and start interview buttons */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => setStage('field-select')}
+                  className="flex items-center text-slate-500 hover:text-slate-700"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  <span className="text-sm">Back</span>
+                </button>
+
+                {selectedSubField && (
+                  <Button
+                    onClick={handleStartInterviewFromSubfield}
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-full px-6 h-9 text-sm font-medium shadow-lg"
+                  >
+                    Start Interview
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                )}
+              </div>
 
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                   Choose Your Specialization
                 </h2>
-                <p className="text-slate-500 text-sm mb-2">
+                <p className="text-slate-500 text-sm">
                   {FIELD_OPTIONS.find(f => f.id === selectedField)?.label} - Select a sub-field
-                </p>
-                <p className="text-purple-600 text-xs font-medium bg-purple-50 px-3 py-1 rounded-full inline-block">
-                  👆 Double tap to select
                 </p>
               </div>
 
@@ -1868,7 +1861,7 @@ export default function AIInterviewerPage() {
         )}
       </AnimatePresence>
 
-      {/* SPEECH BUBBLE - For greeting and interviewing */}
+      {/* SPEECH BUBBLE - For greeting and interviewing - Repositioned for mobile */}
       <AnimatePresence>
         {(stage === 'interviewing' || stage === 'greeting') && currentMessage.content && (
           <motion.div
@@ -1877,9 +1870,9 @@ export default function AIInterviewerPage() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="absolute top-[30%] right-[55%] w-[40vw] max-w-xl z-25 px-4"
+            className="absolute top-[15%] md:top-[25%] left-2 right-2 md:left-4 md:right-auto md:w-[38vw] md:max-w-md z-25"
           >
-            <div className={`relative px-6 py-4 rounded-2xl shadow-2xl ${
+            <div className={`relative px-4 md:px-6 py-3 md:py-4 rounded-2xl shadow-2xl ${
               currentMessage.role === 'user'
                 ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white'
                 : 'bg-white text-slate-700 border border-slate-100'
@@ -1889,28 +1882,29 @@ export default function AIInterviewerPage() {
               }`}>
                 {currentMessage.role === 'bot' ? (
                   <>
-                    <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full" />
+                    <div className="w-5 h-5 md:w-6 md:h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 md:w-3 md:h-3 bg-purple-500 rounded-full" />
                     </div>
                     <span className="text-xs font-semibold text-purple-600">Nova</span>
                     {isSpeaking && (
                       <div className="flex items-center gap-1 ml-auto">
                         <Volume2 className="w-3 h-3 text-purple-500 animate-pulse" />
-                        <span className="text-xs text-purple-400">Speaking</span>
+                        <span className="text-xs text-purple-400 hidden md:inline">Speaking</span>
                       </div>
                     )}
                   </>
                 ) : (
                   <>
-                    <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <div className="w-5 h-5 md:w-6 md:h-6 bg-white/20 rounded-full flex items-center justify-center">
                       <span className="text-xs font-bold">You</span>
                     </div>
                     <span className="text-xs font-semibold text-white/80">Your Response</span>
                   </>
                 )}
               </div>
-              <p className="text-sm md:text-base leading-relaxed whitespace-pre-line">{currentMessage.content}</p>
-              <div className={`absolute top-1/2 -translate-y-1/2 -right-3 w-0 h-0
+              <p className="text-xs md:text-sm lg:text-base leading-relaxed whitespace-pre-line">{currentMessage.content}</p>
+              {/* Pointer - Only show on desktop, pointing RIGHT towards robot */}
+              <div className={`hidden md:block absolute top-1/2 -translate-y-1/2 -right-3 w-0 h-0
                 border-t-[12px] border-b-[12px] border-l-[12px]
                 border-t-transparent border-b-transparent ${
                   currentMessage.role === 'user' ? 'border-l-purple-700' : 'border-l-white'
@@ -1921,43 +1915,44 @@ export default function AIInterviewerPage() {
         )}
       </AnimatePresence>
 
-      {/* Thinking bubble */}
+      {/* Thinking bubble - Repositioned for mobile */}
       <AnimatePresence>
         {stage === 'interviewing' && isThinking && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute top-[40%] right-[55%] z-25"
+            className="absolute top-[35%] md:top-[40%] left-2 md:left-4 z-25"
           >
-            <div className="bg-white px-6 py-4 rounded-2xl shadow-2xl border border-slate-100">
-              <div className="flex items-center gap-3">
+            <div className="bg-white px-4 md:px-6 py-3 md:py-4 rounded-2xl shadow-2xl border border-slate-100">
+              <div className="flex items-center gap-2 md:gap-3">
                 <div className="flex gap-1">
                   {[0, 1, 2].map((i) => (
                     <motion.div
                       key={i}
                       animate={{ y: [0, -8, 0] }}
                       transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
-                      className="w-2.5 h-2.5 bg-purple-400 rounded-full"
+                      className="w-2 h-2 md:w-2.5 md:h-2.5 bg-purple-400 rounded-full"
                     />
                   ))}
                 </div>
-                <span className="text-sm text-slate-500">Nova is thinking...</span>
+                <span className="text-xs md:text-sm text-slate-500">Nova is thinking...</span>
               </div>
-              <div className="absolute top-1/2 -translate-y-1/2 -right-3 w-0 h-0 border-t-[12px] border-b-[12px] border-l-[12px] border-t-transparent border-b-transparent border-l-white" />
+              {/* Pointer pointing RIGHT - Only show on desktop */}
+              <div className="hidden md:block absolute top-1/2 -translate-y-1/2 -right-3 w-0 h-0 border-t-[12px] border-b-[12px] border-l-[12px] border-t-transparent border-b-transparent border-l-white" />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Input Area - Only during interviewing and when Nova is NOT speaking */}
+      {/* Input Area - Mobile responsive */}
       <AnimatePresence>
         {stage === 'interviewing' && !isNovaResponding && !isThinking && (
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/60 to-transparent z-30"
+            className="absolute bottom-0 left-0 right-0 p-2 md:p-4 bg-gradient-to-t from-black/80 via-black/60 to-transparent z-30"
           >
             <div className="max-w-2xl mx-auto">
               <AnimatePresence>
@@ -1966,20 +1961,20 @@ export default function AIInterviewerPage() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="mb-4 flex items-center justify-center"
+                    className="mb-2 md:mb-4 flex items-center justify-center"
                   >
-                    <div className="bg-white/95 backdrop-blur-sm px-8 py-4 rounded-full flex items-center gap-4 shadow-2xl">
-                      <div className="flex gap-1">
+                    <div className="bg-white/95 backdrop-blur-sm px-4 md:px-8 py-2 md:py-4 rounded-full flex items-center gap-2 md:gap-4 shadow-2xl">
+                      <div className="flex gap-0.5 md:gap-1">
                         {[0, 1, 2, 3, 4, 5, 6].map((i) => (
                           <motion.div
                             key={i}
                             animate={{ height: [8, 28, 8] }}
                             transition={{ duration: 0.4, repeat: Infinity, delay: i * 0.08 }}
-                            className="w-1.5 bg-gradient-to-t from-purple-600 to-purple-400 rounded-full"
+                            className="w-1 md:w-1.5 bg-gradient-to-t from-purple-600 to-purple-400 rounded-full"
                           />
                         ))}
                       </div>
-                      <span className="text-purple-700 font-semibold">Listening...</span>
+                      <span className="text-sm md:text-base text-purple-700 font-semibold">Listening...</span>
                     </div>
                   </motion.div>
                 )}
@@ -1990,32 +1985,32 @@ export default function AIInterviewerPage() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 flex items-center justify-center"
+                  className="mb-2 md:mb-4 flex items-center justify-center"
                 >
-                  <div className={`backdrop-blur-sm px-6 py-3 rounded-full flex items-center gap-3 shadow-2xl ${
+                  <div className={`backdrop-blur-sm px-3 md:px-6 py-2 md:py-3 rounded-full flex items-center gap-2 md:gap-3 shadow-2xl ${
                     isAnswerTimerActive && answerTimer <= 10 ? 'bg-red-50/95 border border-red-200' : 'bg-white/95'
                   }`}>
                     {isThinkTimerActive ? (
                       <>
-                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
-                        <span className="text-blue-700 font-semibold">Think Time: {thinkTimer}s</span>
+                        <div className="w-2 h-2 md:w-3 md:h-3 bg-blue-500 rounded-full animate-pulse" />
+                        <span className="text-xs md:text-sm text-blue-700 font-semibold">Think: {thinkTimer}s</span>
                       </>
                     ) : (
                       <>
-                        <div className={`w-3 h-3 rounded-full animate-pulse ${answerTimer <= 10 ? 'bg-red-500' : 'bg-green-500'}`} />
-                        <span className={`font-semibold ${answerTimer <= 10 ? 'text-red-700' : 'text-green-700'}`}>Answer Time: {answerTimer}s</span>
+                        <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full animate-pulse ${answerTimer <= 10 ? 'bg-red-500' : 'bg-green-500'}`} />
+                        <span className={`text-xs md:text-sm font-semibold ${answerTimer <= 10 ? 'text-red-700' : 'text-green-700'}`}>Answer: {answerTimer}s</span>
                       </>
                     )}
                   </div>
                 </motion.div>
               )}
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
                     onClick={handleMicClick}
                     disabled={isThinkTimerActive}
-                    className={`h-16 w-16 rounded-full shadow-2xl transition-all ${
+                    className={`h-12 w-12 md:h-16 md:w-16 rounded-full shadow-2xl transition-all ${
                       isListening
                         ? 'bg-red-500 hover:bg-red-600 shadow-red-500/50 animate-pulse'
                         : isThinkTimerActive
@@ -2023,7 +2018,7 @@ export default function AIInterviewerPage() {
                         : 'bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 shadow-purple-600/50'
                     }`}
                   >
-                    {isListening ? <MicOff className="w-7 h-7 text-white" /> : <Mic className="w-7 h-7 text-white" />}
+                    {isListening ? <MicOff className="w-5 h-5 md:w-7 md:h-7 text-white" /> : <Mic className="w-5 h-5 md:w-7 md:h-7 text-white" />}
                   </Button>
                 </motion.div>
 
@@ -2035,16 +2030,16 @@ export default function AIInterviewerPage() {
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Type your response here..."
-                      className="w-full h-16 px-6 pr-16 rounded-full border-2 border-white/30 focus:border-purple-400 focus:outline-none transition-all bg-white/95 backdrop-blur-sm shadow-xl text-slate-700 placeholder-slate-400"
+                      placeholder="Type your response..."
+                      className="w-full h-12 md:h-16 px-4 md:px-6 pr-12 md:pr-16 rounded-full border-2 border-white/30 focus:border-purple-400 focus:outline-none transition-all bg-white/95 backdrop-blur-sm shadow-xl text-sm md:text-base text-slate-700 placeholder-slate-400"
                       disabled={isListening || isThinking}
                     />
                     <Button
                       onClick={() => handleSendMessage(inputText)}
                       disabled={!inputText.trim() || isListening || isThinking}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 disabled:from-slate-300 disabled:to-slate-400 shadow-lg"
+                      className="absolute right-1 md:right-2 top-1/2 -translate-y-1/2 h-10 w-10 md:h-12 md:w-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 disabled:from-slate-300 disabled:to-slate-400 shadow-lg"
                     >
-                      <Send className="w-5 h-5 text-white" />
+                      <Send className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </Button>
                   </div>
                 )}
@@ -2052,28 +2047,29 @@ export default function AIInterviewerPage() {
                 {/* Voice-only message for managerial and HR rounds */}
                 {(currentRound === 'managerial' || currentRound === 'hr') && (
                   <div className="flex-1">
-                    <div className="h-16 px-6 rounded-full border-2 border-white/30 bg-white/95 backdrop-blur-sm shadow-xl flex items-center justify-center">
-                      <p className="text-purple-700 font-medium text-sm">
-                        🎤 Voice input only for this round
+                    <div className="h-12 md:h-16 px-3 md:px-6 rounded-full border-2 border-white/30 bg-white/95 backdrop-blur-sm shadow-xl flex items-center justify-center">
+                      <p className="text-purple-700 font-medium text-xs md:text-sm">
+                        🎤 Voice only
                       </p>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="mt-3 text-center">
-                <p className="text-white/70 text-sm">
+              <div className="mt-2 md:mt-3 text-center">
+                <p className="text-white/70 text-xs md:text-sm">
                   {currentRound === 'aptitude' || currentRound === 'technical' ? (
                     <>
                       <span className="inline-flex items-center gap-1">
-                        <Mic className="w-3 h-3" /> Click to speak
+                        <Mic className="w-3 h-3" /> Speak
                       </span>
-                      <span className="mx-3 text-white/40">|</span>
-                      <span>Type and press Enter to send</span>
+                      <span className="mx-2 md:mx-3 text-white/40">|</span>
+                      <span className="hidden md:inline">Type and press Enter</span>
+                      <span className="md:hidden">Type</span>
                     </>
                   ) : (
                     <span className="inline-flex items-center gap-1">
-                      <Mic className="w-3 h-3" /> Click microphone to speak your answer
+                      <Mic className="w-3 h-3" /> Click mic to speak
                     </span>
                   )}
                 </p>
