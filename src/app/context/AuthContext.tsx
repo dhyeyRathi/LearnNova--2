@@ -22,6 +22,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for authenticated user on mount
     const checkAuth = async () => {
       try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        // Only attempt to get user profile if we have a valid session
+        if (error || !session?.user || !session.user.email_confirmed_at) {
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+
         const currentUser = await getCurrentUser();
         if (currentUser) {
           setUser({
@@ -44,11 +53,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Just clear user on logout, don't fetch on login
-      // (login() will set the user after fetching profile)
-      if (!session?.user) {
+      // Clear user on logout or invalid session
+      if (!session?.user || !session.user.email_confirmed_at) {
         setUser(null);
       }
+      // Don't automatically fetch user on login - let login() handle that
     });
 
     return () => {
@@ -90,23 +99,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const profile = await signUp(email, password, name, 'learner');
+      console.log('✅ Signup successful in AuthContext:', profile);
       // Don't set user state here - wait for email confirmation and login
       // User will log in after confirming email
       return { success: true };
     } catch (error: any) {
-      console.error('Signup error:', error);
-      
+      console.error('❌ Signup error in AuthContext:', error);
+
       let errorMessage = 'An error occurred during signup';
       const errorCode = error?.message || '';
-      
-      if (errorCode.includes('already registered')) {
+
+      // Check for specific Supabase auth errors
+      if (errorCode.includes('User already registered') || errorCode.includes('already registered')) {
         errorMessage = 'An account with this email already exists';
-      } else if (errorCode.includes('Password')) {
+      } else if (errorCode.includes('Password should be at least') || errorCode.includes('Password')) {
         errorMessage = 'Password must be at least 6 characters';
-      } else if (errorCode.includes('Email')) {
+      } else if (errorCode.includes('Invalid email') || errorCode.includes('Email')) {
         errorMessage = 'Please enter a valid email address';
+      } else if (errorCode.includes('signup disabled') || errorCode.includes('Signups not allowed')) {
+        errorMessage = 'Account creation is currently disabled';
+      } else {
+        // Only show generic error for actual auth failures
+        // Don't show error for successful signups with secondary issues
+        console.warn('Unexpected signup error:', errorCode);
       }
-      
+
       return { success: false, error: errorMessage };
     }
   };

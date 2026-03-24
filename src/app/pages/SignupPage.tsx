@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../../utils/supabase/client';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -19,26 +20,43 @@ export default function SignupPage() {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
+  // Clear any stale auth session on component mount
+  useEffect(() => {
+    const clearStaleSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && !session.user?.email_confirmed_at) {
+          // Clear unconfirmed sessions to prevent refresh token errors
+          await supabase.auth.signOut();
+        }
+      } catch (error) {
+        // Ignore errors - just ensure clean state
+        console.log('Cleared stale session state');
+      }
+    };
+    clearStaleSession();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
-    if (!name || !email || !password || !confirmPassword) { 
-      setError('Please fill in all fields'); 
-      setIsSubmitting(false); 
-      return; 
+    if (!name || !email || !password || !confirmPassword) {
+      setError('Please fill in all fields');
+      setIsSubmitting(false);
+      return;
     }
-    if (password !== confirmPassword) { 
-      setError('Passwords do not match'); 
-      setIsSubmitting(false); 
-      return; 
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setIsSubmitting(false);
+      return;
     }
-    if (password.length < 6) { 
-      setError('Password must be at least 6 characters'); 
-      setIsSubmitting(false); 
-      return; 
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      setIsSubmitting(false);
+      return;
     }
-    
+
     try {
       const result = await signup(email, password, name);
       if (result.success) {
