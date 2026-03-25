@@ -33,6 +33,10 @@ export async function getChatResponse(userMessage: string): Promise<string> {
     const model = genAI.getGenerativeModel({
       model: 'gemini-3.1-flash-lite-preview',
       systemInstruction: SYSTEM_PROMPT,
+      generationConfig: {
+        maxOutputTokens: 512,
+        temperature: 0.7,
+      },
     });
 
     // Add user message to history

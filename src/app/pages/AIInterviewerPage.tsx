@@ -9,13 +9,14 @@ import {
   stopSpeaking,
   startListening,
   stopListening,
-  getInterviewResponse,
-  evaluateResume,
-  generateInterviewQuestions,
+  analyzeResumeFromPDF,
+  scoreAnswerLocally,
+  generateAllInterviewQuestions,
   generateFinalFeedback,
-  extractTextFromPDF,
   clearSessionQuestions,
+  saveInterviewHistory,
 } from '../../utils/geminiVoiceService';
+import { InterviewHistoryEntry } from '../../utils/interviewHistoryService';
 
 // ====================================================================
 // 🔊 VOICE INTEGRATION
@@ -23,7 +24,7 @@ import {
 // Uses Web Speech API for voice (works in all browsers):
 // - speakText(): Nova speaks using browser TTS
 // - startListening(): Captures user speech and returns text
-// - getInterviewResponse(): Gemini evaluates answers
+// - scoreAnswerLocally(): local scoring for each answer
 // ====================================================================
 
 interface Message {
@@ -166,11 +167,48 @@ const ROUND_INFO: Record<InterviewRound, { name: string; icon: string; descripti
 
 const ROUND_ORDER: InterviewRound[] = ['aptitude', 'technical', 'managerial', 'hr'];
 
+const isLikelyResumeText = (text: string): boolean => {
+  const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (normalized.length < 500) return false;
+
+  const resumeKeywords = [
+    'experience',
+    'work experience',
+    'education',
+    'skills',
+    'projects',
+    'summary',
+    'objective',
+    'certification',
+    'internship',
+    'employment',
+  ];
+
+  const matchedKeywordCount = resumeKeywords.filter((keyword) => normalized.includes(keyword)).length;
+
+  const contactSignals = [
+    /\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b/i.test(text),
+    /\b(?:\+?\d{1,3}[\s-]?)?(?:\(?\d{3}\)?[\s-]?)\d{3}[\s-]?\d{4}\b/.test(text),
+    /(linkedin|github|portfolio)/i.test(text),
+  ].filter(Boolean).length;
+
+  const sectionHeadings = [
+    /(^|\n)\s*(work experience|professional experience)\s*[:\n]/i.test(text),
+    /(^|\n)\s*education\s*[:\n]/i.test(text),
+    /(^|\n)\s*(technical skills|skills)\s*[:\n]/i.test(text),
+    /(^|\n)\s*projects\s*[:\n]/i.test(text),
+  ].filter(Boolean).length;
+
+  return matchedKeywordCount >= 4 && (contactSignals >= 1 || sectionHeadings >= 2);
+};
+
 export default function AIInterviewerPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const stopRequestedRef = useRef(false);
+  const resultsTimeoutRef = useRef<number | null>(null);
 
   const [stage, setStage] = useState<InterviewStage>('rules');
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -201,6 +239,7 @@ export default function AIInterviewerPage() {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [stoppedEarly, setStoppedEarly] = useState(false);
 
   // Results state
   const [resumeScore, setResumeScore] = useState(0);
@@ -222,7 +261,7 @@ export default function AIInterviewerPage() {
 
   // Timer states for managerial and HR rounds
   const [thinkTimer, setThinkTimer] = useState(20); // 20 seconds to think
-  const [answerTimer, setAnswerTimer] = useState(30); // 30 seconds to answer (default for aptitude/technical)
+  const [answerTimer, setAnswerTimer] = useState(60); // 60 seconds to answer (default for aptitude/technical)
   const [isThinkTimerActive, setIsThinkTimerActive] = useState(false);
   const [isAnswerTimerActive, setIsAnswerTimerActive] = useState(false);
 
@@ -275,8 +314,8 @@ export default function AIInterviewerPage() {
       // Think time is up, start answer timer
       setIsThinkTimerActive(false);
       setIsAnswerTimerActive(true);
-      // Managerial/HR rounds get 60s to answer, aptitude/technical get 30s
-      setAnswerTimer((currentRound === 'managerial' || currentRound === 'hr') ? 60 : 30);
+      // All rounds get 60s to answer
+      setAnswerTimer(60);
     }
   }, [isThinkTimerActive, thinkTimer]);
 
@@ -324,38 +363,44 @@ export default function AIInterviewerPage() {
 
     if (file.type !== 'application/pdf') {
       alert('Please upload a PDF file only.');
-      return;
-    }
-
-    setResumeFile(file);
-    setIsProcessingResume(true);
-    setHasResume(true);
-
+        return (
+          <>
+            <AnimatePresence>
+              {/* ...existing content... */}
+            </AnimatePresence>
+          </>
+        );
+      }
     try {
-      // Extract text from PDF using Gemini AI (file stays in memory, never saved)
-      const extractedText = await extractTextFromPDF(file);
-      setResumeText(extractedText);
+      // Single Gemini call: extract + evaluate resume
+      const analysis = await analyzeResumeFromPDF(file);
+      const extractedText = analysis.resumeText;
 
-      // Just extract skills quickly for question generation - full evaluation happens after interview
-      try {
-        const evaluation = await evaluateResume(extractedText);
-        setResumeSkills(evaluation.skills);
-        // Store score and feedback for later (shown in results)
-        setResumeScore(evaluation.score);
-        setResumeExperience(evaluation.experience);
-        setResumeFeedback(evaluation.feedback);
-      } catch (error) {
-        console.error('Resume evaluation error:', error);
-        setResumeSkills(['General Skills']);
+      if (!isLikelyResumeText(extractedText)) {
+        throw new Error('INVALID_RESUME_DOCUMENT');
       }
 
+      setResumeText(extractedText);
+
+      setResumeSkills(analysis.skills);
+      setResumeScore(analysis.score);
+      setResumeExperience(analysis.experience);
+      setResumeFeedback(analysis.feedback);
+
+      setHasResume(true);
       setIsProcessingResume(false);
       startGreeting(true);
     } catch (error) {
-      console.error('PDF extraction error:', error);
-      alert('Failed to process PDF. Please try again or use a different file.');
+      console.error('Resume processing error:', error);
+      const message = error instanceof Error ? error.message : '';
+      if (message === 'INVALID_RESUME_DOCUMENT') {
+        alert('Please upload a valid resume.');
+      } else {
+        alert('Failed to process PDF. Please try again or use a different file.');
+      }
       setIsProcessingResume(false);
       setResumeFile(null);
+      setResumeText('');
       setHasResume(false);
     }
   };
@@ -435,20 +480,11 @@ export default function AIInterviewerPage() {
 
     const questions: Record<string, string[]> = {};
 
-    // Generate questions for each round in parallel
-    const rounds: InterviewRound[] = ['aptitude', 'technical', 'managerial', 'hr'];
-
-    await Promise.all(
-      rounds.map(async (round) => {
-        try {
-          const roundQuestions = await generateInterviewQuestions(round, fieldLabel, skills, 3);
-          questions[round] = roundQuestions;
-        } catch (error) {
-          console.error(`Error generating ${round} questions:`, error);
-          // Will use fallback questions
-        }
-      })
-    );
+    const allQuestions = await generateAllInterviewQuestions(fieldLabel, skills, user?.id);
+    questions.aptitude = allQuestions.aptitude;
+    questions.technical = allQuestions.technical;
+    questions.managerial = allQuestions.managerial;
+    questions.hr = allQuestions.hr;
 
     // Update both ref (for immediate access) and state
     generatedQuestionsRef.current = questions;
@@ -457,6 +493,7 @@ export default function AIInterviewerPage() {
   };
 
   const startGreeting = async (withResume: boolean) => {
+    stopRequestedRef.current = false;
     setStage('greeting');
     setGreetingStep(0);
 
@@ -481,6 +518,8 @@ export default function AIInterviewerPage() {
 
     // Play through greeting messages with Web Speech API
     for (let i = 0; i < greetings.length; i++) {
+      if (stopRequestedRef.current) return;
+
       setCurrentMessage({
         id: `greeting-${i}`,
         role: 'bot',
@@ -491,28 +530,35 @@ export default function AIInterviewerPage() {
       if (greetings[i].includes('generating unique interview questions')) {
         // Await question generation so questions are always unique/Gemini-generated
         await generateAllQuestions();
+        if (stopRequestedRef.current) return;
       }
 
       try {
+        if (stopRequestedRef.current) return;
         await speakText(greetings[i], () => setIsSpeaking(true), () => setIsSpeaking(false));
+        if (stopRequestedRef.current) return;
         // Update greeting step AFTER voice finishes speaking
         setGreetingStep(i);
         // Small pause between messages
         await new Promise(resolve => setTimeout(resolve, 1000));
+        if (stopRequestedRef.current) return;
       } catch (error) {
         console.error('Speech synthesis error, using fallback timing:', error);
         // Fallback: Just wait 8 seconds per message if TTS fails
         await new Promise(resolve => setTimeout(resolve, 8000));
+        if (stopRequestedRef.current) return;
         setGreetingStep(i);
       }
     }
 
     // Wait a bit more for questions to finish generating then start interview
     await new Promise(resolve => setTimeout(resolve, 2000));
+    if (stopRequestedRef.current) return;
     startInterview();
   };
 
   const startInterview = async () => {
+    if (stopRequestedRef.current) return;
     setStage('interviewing');
     setCurrentRound('aptitude');
     setQuestionIndex(0);
@@ -536,8 +582,8 @@ export default function AIInterviewerPage() {
     }
     setIsNovaResponding(false);
 
-    // Start 30s answer timer for aptitude round
-    setAnswerTimer(30);
+    // Start 60s answer timer for aptitude round
+    setAnswerTimer(60);
     setIsAnswerTimerActive(true);
   };
 
@@ -552,15 +598,19 @@ export default function AIInterviewerPage() {
     startGreeting(false);
   };
 
-  const calculateResults = async () => {
+  const calculateResults = async (stoppedEarly: boolean = false) => {
+    setStoppedEarly(stoppedEarly);
     const totalQuestions = interviewAnswers.length;
     const avgScore = totalQuestions > 0
       ? interviewAnswers.reduce((sum, a) => sum + a.score, 0) / totalQuestions
       : 0;
     setInterviewScore(Math.round(avgScore));
 
-    // Show loading feedback first
-    setFeedback(["🔄 Nova is analyzing your interview performance..."]);
+    if (stoppedEarly) {
+      setFeedback(["🤖😔 oops inteview stopped in betwen"]);
+    } else {
+      setFeedback(["🔄 Nova is analyzing your interview performance..."]);
+    }
     setStage('results');
 
     // Stop camera
@@ -568,6 +618,35 @@ export default function AIInterviewerPage() {
       cameraStream.getTracks().forEach(track => track.stop());
       setCameraStream(null);
       setIsCameraOn(false);
+    }
+
+    // 💾 SAVE INTERVIEW HISTORY TO DATABASE
+    // This ensures questions are NEVER repeated in future interviews
+    if (user?.id && interviewAnswers.length > 0) {
+      try {
+        const field = FIELD_OPTIONS.find(f => f.id === selectedField);
+        const subField = field?.subFields?.find(sf => sf.id === selectedSubField);
+        const fieldLabel = subField?.label || field?.label || selectedField || 'General';
+
+        const historyEntries: InterviewHistoryEntry[] = interviewAnswers.map(answer => ({
+          question: answer.question,
+          answer: answer.answer,
+          round: answer.round,
+          score: answer.score,
+          field: fieldLabel,
+          subField: subField?.label,
+          timestamp: new Date().toISOString(),
+        }));
+
+        await saveInterviewHistory(user.id, historyEntries);
+        console.log('✅ Interview history saved to database - questions will never repeat!');
+      } catch (err) {
+        console.error('❌ Failed to save interview history:', err);
+      }
+    }
+
+    if (stoppedEarly) {
+      return;
     }
 
     // Use Gemini to generate comprehensive feedback
@@ -609,12 +688,25 @@ export default function AIInterviewerPage() {
 
   const confirmStopInterview = () => {
     // Stop any ongoing voice output
+    stopRequestedRef.current = true;
+    if (resultsTimeoutRef.current !== null) {
+      clearTimeout(resultsTimeoutRef.current);
+      resultsTimeoutRef.current = null;
+    }
     stopSpeaking();
+    stopListening();
+    setIsSpeaking(false);
+    setIsNovaResponding(false);
+    setIsListening(false);
+    setIsThinking(false);
+    setIsThinkTimerActive(false);
+    setIsAnswerTimerActive(false);
     setShowStopModal(false);
-    calculateResults();
+    calculateResults(true);
   };
 
   const handleSendMessage = async (content: string) => {
+    if (stopRequestedRef.current) return;
     if (!content.trim()) return;
 
     // CRITICAL: Save the current question BEFORE we change currentMessage
@@ -631,16 +723,9 @@ export default function AIInterviewerPage() {
     // Show thinking state after a brief delay
     setIsThinking(true);
 
-    // Get AI evaluation
-    try {
-      const aiResponse = await getInterviewResponse(
-        content.trim(),
-        currentQuestion, // Use saved question
-        currentRound,
-        questionIndex,
-        ROUND_INFO[currentRound].questionCount,
-        resumeText || undefined
-      );
+      // Local answer scoring (no Gemini per-question request)
+      try {
+        const aiResponse = scoreAnswerLocally(content.trim());
 
       setInterviewAnswers(prev => [...prev, {
         question: currentQuestion, // Use saved question
@@ -659,16 +744,16 @@ export default function AIInterviewerPage() {
 
       if (nextQuestionIndex < ROUND_INFO[currentRound].questionCount && nextQuestionIndex < questionsInRound.length) {
         setQuestionIndex(nextQuestionIndex);
-        nextMessage = `${aiResponse.feedback}\n\nQuestion ${nextQuestionIndex + 1} of 3: ${questionsInRound[nextQuestionIndex]}`;
+        nextMessage = `Okay lets move on\n\nQuestion ${nextQuestionIndex + 1} of 3: ${questionsInRound[nextQuestionIndex]}`;
       } else if (currentRoundIndex < ROUND_ORDER.length - 1) {
         nextRound = ROUND_ORDER[currentRoundIndex + 1];
         setCurrentRound(nextRound);
         setQuestionIndex(0);
         const nextQuestions = getQuestionsForRound(nextRound);
-        nextMessage = `${aiResponse.feedback}\n\nGreat job completing the ${ROUND_INFO[currentRound].name}! 🎉\n\nNow let's move to the ${ROUND_INFO[nextRound].name}.\n${ROUND_INFO[nextRound].icon} ${ROUND_INFO[nextRound].description}\n\nQuestion 1 of 3: ${nextQuestions[0]}`;
+        nextMessage = `Okay lets move on\n\nGreat job completing the ${ROUND_INFO[currentRound].name}! 🎉\n\nNow let's move to the ${ROUND_INFO[nextRound].name}.\n${ROUND_INFO[nextRound].icon} ${ROUND_INFO[nextRound].description}\n\nQuestion 1 of 3: ${nextQuestions[0]}`;
       } else {
         isComplete = true;
-        nextMessage = `${aiResponse.feedback}\n\nCongratulations! 🎉 You've completed all 4 rounds of the interview!\n\nI'm now analyzing your responses and preparing your detailed feedback...`;
+        nextMessage = `Okay lets move on\n\nCongratulations! 🎉 You've completed all 4 rounds of the interview!\n\nI'm now analyzing your responses and preparing your detailed feedback...`;
       }
 
       setIsThinking(false);
@@ -694,14 +779,16 @@ export default function AIInterviewerPage() {
           setThinkTimer(20);
           setIsThinkTimerActive(true);
         } else {
-          // Aptitude/Technical: 30s answer timer directly
-          setAnswerTimer(30);
+          // Aptitude/Technical: 60s answer timer directly
+          setAnswerTimer(60);
           setIsAnswerTimerActive(true);
         }
       }
 
       if (isComplete) {
-        setTimeout(calculateResults, 3000);
+        resultsTimeoutRef.current = window.setTimeout(() => {
+          calculateResults();
+        }, 3000);
       }
     } catch (error) {
       console.error('AI response error:', error);
@@ -717,6 +804,7 @@ export default function AIInterviewerPage() {
 
   // 🎤 Web Speech API - Voice Input/Output
   const handleMicClick = async () => {
+    if (stopRequestedRef.current) return;
     if (isListening) {
       // User clicked to STOP listening
       setIsListening(false);
@@ -760,15 +848,8 @@ export default function AIInterviewerPage() {
       // Show thinking state
       setIsThinking(true);
 
-      // Get AI evaluation of the answer
-      const aiResponse = await getInterviewResponse(
-        userTranscript,
-        currentQuestion, // Use saved question
-        currentRound,
-        questionIndex,
-        ROUND_INFO[currentRound].questionCount,
-        resumeText || undefined
-      );
+      // Local answer scoring (no Gemini per-question request)
+      const aiResponse = scoreAnswerLocally(userTranscript);
 
       // Save answer with AI score
       setInterviewAnswers(prev => [...prev, {
@@ -789,16 +870,16 @@ export default function AIInterviewerPage() {
 
       if (nextQuestionIndex < ROUND_INFO[currentRound].questionCount && nextQuestionIndex < questionsInRound.length) {
         setQuestionIndex(nextQuestionIndex);
-        nextMessage = `${aiResponse.feedback}\n\nQuestion ${nextQuestionIndex + 1} of 3: ${questionsInRound[nextQuestionIndex]}`;
+        nextMessage = `Okay lets move on\n\nQuestion ${nextQuestionIndex + 1} of 3: ${questionsInRound[nextQuestionIndex]}`;
       } else if (currentRoundIndex < ROUND_ORDER.length - 1) {
         nextRound = ROUND_ORDER[currentRoundIndex + 1];
         setCurrentRound(nextRound);
         setQuestionIndex(0);
         const nextQuestions = getQuestionsForRound(nextRound);
-        nextMessage = `${aiResponse.feedback}\n\nGreat job completing the ${ROUND_INFO[currentRound].name}! 🎉\n\nNow let's move to the ${ROUND_INFO[nextRound].name}.\n${ROUND_INFO[nextRound].icon} ${ROUND_INFO[nextRound].description}\n\nQuestion 1 of 3: ${nextQuestions[0]}`;
+        nextMessage = `Okay lets move on\n\nGreat job completing the ${ROUND_INFO[currentRound].name}! 🎉\n\nNow let's move to the ${ROUND_INFO[nextRound].name}.\n${ROUND_INFO[nextRound].icon} ${ROUND_INFO[nextRound].description}\n\nQuestion 1 of 3: ${nextQuestions[0]}`;
       } else {
         isComplete = true;
-        nextMessage = `${aiResponse.feedback}\n\nCongratulations! 🎉 You've completed all 4 rounds of the interview!\n\nI'm now analyzing your responses and preparing your detailed feedback...`;
+        nextMessage = `Okay lets move on\n\nCongratulations! 🎉 You've completed all 4 rounds of the interview!\n\nI'm now analyzing your responses and preparing your detailed feedback...`;
       }
 
       setIsThinking(false);
@@ -824,14 +905,16 @@ export default function AIInterviewerPage() {
           setThinkTimer(20);
           setIsThinkTimerActive(true);
         } else {
-          // Aptitude/Technical: 30s answer timer directly
-          setAnswerTimer(30);
+          // Aptitude/Technical: 60s answer timer directly
+          setAnswerTimer(60);
           setIsAnswerTimerActive(true);
         }
       }
 
       if (isComplete) {
-        setTimeout(calculateResults, 3000);
+        resultsTimeoutRef.current = window.setTimeout(() => {
+          calculateResults();
+        }, 3000);
       }
 
     } catch (error) {
@@ -857,6 +940,15 @@ export default function AIInterviewerPage() {
   };
 
   const restartInterview = () => {
+    stopRequestedRef.current = false;
+    setStoppedEarly(false);
+    if (resultsTimeoutRef.current !== null) {
+      clearTimeout(resultsTimeoutRef.current);
+      resultsTimeoutRef.current = null;
+    }
+    stopSpeaking();
+    stopListening();
+
     // Clear session questions to ensure fresh questions next time
     clearSessionQuestions();
     generatedQuestionsRef.current = {};
@@ -1044,97 +1136,30 @@ export default function AIInterviewerPage() {
           </div>
         </motion.div>
 
-        {/* BOT CHARACTER - Smaller on mobile */}
+        {/* HUMAN INTERVIEWER CHARACTER (REALISTIC) */}
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
+          initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.7, type: 'spring', stiffness: 150 }}
-          className="absolute bottom-[38%] left-1/2 -translate-x-1/2 z-20 scale-75 md:scale-100"
+          className="absolute bottom-[18%] md:bottom-[20%] left-1/2 -translate-x-1/2 z-5 w-[288px] md:w-[348px]"
         >
           <motion.div
             animate={
-              isSpeaking ? { y: [0, -2, 0] } : isThinking ? { rotate: [-1, 1, -1] } : {}
+              isSpeaking ? { y: [0, -2, 0] } : isThinking ? { rotate: [-0.5, 0.5, -0.5] } : { y: [0, -1, 0] }
             }
-            transition={{ duration: isSpeaking ? 1.5 : 1.5, repeat: isSpeaking || isThinking ? Infinity : 0 }}
-            className="relative"
+            transition={{ duration: isSpeaking ? 1.5 : isThinking ? 1.5 : 4, repeat: Infinity }}
+            className="relative flex flex-col items-center"
           >
-            {/* Head */}
-            <div className="w-36 h-36 bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300 rounded-[2rem] shadow-2xl border-4 border-slate-300 relative mx-auto">
-              <div className="absolute top-2 left-4 w-16 h-8 bg-white/40 rounded-full blur-sm" />
-              <div className="absolute inset-3 bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl p-1">
-                <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950 rounded-xl overflow-hidden relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-transparent" />
-                  <div className="absolute top-5 left-0 right-0 flex justify-center gap-6">
-                    <motion.div
-                      animate={isSpeaking ? { scaleY: [1, 0.4, 1] } : isThinking ? { x: [-3, 3, -3] } : { scaleY: [1, 0.1, 1] }}
-                      transition={{ duration: isSpeaking ? 2 : isThinking ? 0.8 : 6, repeat: Infinity, repeatDelay: isSpeaking || isThinking ? 0 : 8 }}
-                      className="relative"
-                    >
-                      <div className="w-7 h-7 bg-gradient-to-br from-cyan-300 to-purple-400 rounded-full shadow-lg shadow-cyan-400/50" />
-                      <div className="absolute top-1 left-1 w-2 h-2 bg-white rounded-full" />
-                    </motion.div>
-                    <motion.div
-                      animate={isSpeaking ? { scaleY: [1, 0.4, 1] } : isThinking ? { x: [-3, 3, -3] } : { scaleY: [1, 0.1, 1] }}
-                      transition={{ duration: isSpeaking ? 2 : isThinking ? 0.8 : 6, repeat: Infinity, repeatDelay: isSpeaking || isThinking ? 0 : 8 }}
-                      className="relative"
-                    >
-                      <div className="w-7 h-7 bg-gradient-to-br from-cyan-300 to-purple-400 rounded-full shadow-lg shadow-cyan-400/50" />
-                      <div className="absolute top-1 left-1 w-2 h-2 bg-white rounded-full" />
-                    </motion.div>
-                  </div>
-                  <motion.div
-                    animate={isSpeaking ? { scaleY: [1, 1.3, 0.85, 1.15, 1], scaleX: [1, 0.93, 1.04, 0.96, 1] } : isThinking ? { width: ['2.5rem', '1.5rem', '2.5rem'] } : {}}
-                    transition={{ duration: isSpeaking ? 2 : 2, repeat: isSpeaking || isThinking ? Infinity : 0, ease: 'easeInOut' }}
-                    className="absolute bottom-5 left-1/2 -translate-x-1/2 w-10 h-3 bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 rounded-full shadow-lg shadow-cyan-400/30"
-                  />
-                </div>
-              </div>
-              <motion.div
-                animate={{ rotate: isSpeaking ? [-3, 3, -3] : [0, 3, 0] }}
-                transition={{ duration: isSpeaking ? 1.5 : 2, repeat: Infinity }}
-                className="absolute -top-8 left-1/2 -translate-x-1/2"
-              >
-                <div className="w-2 h-8 bg-gradient-to-t from-slate-400 to-slate-300 rounded" />
-                <motion.div
-                  animate={{ boxShadow: isSpeaking ? ['0 0 10px #a855f7', '0 0 25px #a855f7', '0 0 10px #a855f7'] : ['0 0 5px #a855f7', '0 0 15px #a855f7', '0 0 5px #a855f7'] }}
-                  transition={{ duration: 0.8, repeat: Infinity }}
-                  className="w-5 h-5 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full -mt-1 -ml-1.5"
-                />
-              </motion.div>
-              <div className="absolute top-1/2 -left-4 -translate-y-1/2 w-4 h-12 bg-gradient-to-r from-slate-400 to-slate-300 rounded-l-lg shadow-lg" />
-              <div className="absolute top-1/2 -right-4 -translate-y-1/2 w-4 h-12 bg-gradient-to-l from-slate-400 to-slate-300 rounded-r-lg shadow-lg" />
+            <div className="relative rounded-t-3xl overflow-hidden border-t border-slate-800/30">
+              <img 
+                src={isSpeaking ? "/interviewer-speaking.gif" : "/interviewer-idle.png"} 
+                alt="Realistic Interviewer" 
+                className="w-full h-[348px] md:h-[428px] object-cover object-top transition-all duration-75"
+              />
+              {/* Subtle lighting overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1a1412] via-transparent to-transparent opacity-80 pointer-events-none" />
+              <div className="absolute inset-0 bg-amber-900/10 mix-blend-overlay pointer-events-none" />
             </div>
-
-            {/* Neck */}
-            <div className="w-12 h-6 bg-gradient-to-b from-slate-300 to-slate-400 mx-auto rounded-b shadow-lg relative" />
-
-            {/* Body */}
-            <div className="w-32 h-24 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 rounded-2xl mx-auto shadow-2xl border-2 border-slate-400 relative -mt-1">
-              <motion.div
-                animate={{ boxShadow: isSpeaking ? ['0 0 15px #a855f7', '0 0 35px #a855f7', '0 0 15px #a855f7'] : ['0 0 8px #a855f7', '0 0 20px #a855f7', '0 0 8px #a855f7'] }}
-                transition={{ duration: 0.6, repeat: Infinity }}
-                className="absolute top-4 left-1/2 -translate-x-1/2 w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full"
-              >
-                <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1, repeat: Infinity }} className="absolute inset-3 bg-white/40 rounded-full" />
-              </motion.div>
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-                <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1, repeat: Infinity }} className="w-2 h-2 bg-green-400 rounded-full" />
-                <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1, repeat: Infinity, delay: 0.3 }} className="w-2 h-2 bg-cyan-400 rounded-full" />
-                <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1, repeat: Infinity, delay: 0.6 }} className="w-2 h-2 bg-purple-400 rounded-full" />
-              </div>
-            </div>
-
-            {/* Arms */}
-            <motion.div
-              animate={isSpeaking ? { rotate: [-3, 3, -3] } : { rotate: [-2, 2, -2] }}
-              transition={{ duration: isSpeaking ? 2 : 2, repeat: Infinity }}
-              className="absolute top-44 -left-6 w-5 h-16 bg-gradient-to-b from-slate-300 to-slate-400 rounded-full origin-top shadow-lg"
-            />
-            <motion.div
-              animate={isSpeaking ? { rotate: [3, -3, 3] } : { rotate: [2, -2, 2] }}
-              transition={{ duration: isSpeaking ? 2 : 2, repeat: Infinity }}
-              className="absolute top-44 -right-6 w-5 h-16 bg-gradient-to-b from-slate-300 to-slate-400 rounded-full origin-top shadow-lg"
-            />
           </motion.div>
 
           {/* Name badge */}
@@ -1142,15 +1167,14 @@ export default function AIInterviewerPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2 }}
-            className="mt-3 bg-gradient-to-r from-white to-slate-100 px-5 py-2 rounded-full shadow-xl border border-slate-200 mx-auto w-fit"
+            className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 px-6 py-1.5 rounded-full shadow-2xl z-20 whitespace-nowrap"
           >
-            <span className="text-purple-700 font-bold text-sm tracking-wide">NOVA</span>
-            <span className="text-slate-400 text-xs ml-2">AI Coach</span>
+            <span className="text-white font-bold text-sm tracking-widest uppercase">Nova</span>
+            <span className="text-purple-400 text-xs ml-2 uppercase tracking-wide">AI Recruiter</span>
           </motion.div>
         </motion.div>
-      </div>
 
-      {/* Back Button - Only on start/field-select */}
+            {/* Back Button - Only on start/field-select */}
       {showBackButton && (
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -1350,11 +1374,11 @@ export default function AIInterviewerPage() {
                 <div className="space-y-2">
                   <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl">
                     <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-blue-700">30s</span>
+                      <span className="text-xs font-bold text-blue-700">60s</span>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-blue-800">Aptitude & Technical Rounds</p>
-                      <p className="text-xs text-blue-600">30 seconds to answer each question. You can type or speak.</p>
+                      <p className="text-xs text-blue-600">60 seconds to answer each question. You can type or speak.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl">
@@ -1694,13 +1718,15 @@ export default function AIInterviewerPage() {
                   <Award className="w-12 h-12 text-white" />
                 </motion.div>
                 <h2 className="text-3xl font-bold text-slate-800 mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  Interview Complete!
+                  {stoppedEarly ? '🤖😔 oops inteview stopped in betwen' : 'Interview Complete!'}
                 </h2>
-                <p className="text-slate-500">Here's your detailed performance analysis</p>
+                <p className="text-slate-500">
+                  {stoppedEarly ? 'Your interview was stopped before completion.' : "Here's your detailed performance analysis"}
+                </p>
               </div>
 
               {/* Scores */}
-              <div className={`grid ${hasResume ? 'grid-cols-2' : 'grid-cols-1'} gap-4 mb-8`}>
+              <div className={`grid ${hasResume && !stoppedEarly ? 'grid-cols-2' : 'grid-cols-1'} gap-4 mb-8`}>
                 {hasResume && (
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
@@ -1717,63 +1743,67 @@ export default function AIInterviewerPage() {
                   </motion.div>
                 )}
 
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl p-6"
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <TrendingUp className="w-5 h-5 text-cyan-600" />
-                    <span className="font-semibold text-cyan-900">Interview Score</span>
-                  </div>
-                  <div className="text-4xl font-bold text-cyan-700 mb-2">{interviewScore}%</div>
-                  <div className="flex gap-0.5">{getRatingStars(interviewScore)}</div>
-                </motion.div>
+                {!stoppedEarly && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl p-6"
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <TrendingUp className="w-5 h-5 text-cyan-600" />
+                      <span className="font-semibold text-cyan-900">Interview Score</span>
+                    </div>
+                    <div className="text-4xl font-bold text-cyan-700 mb-2">{interviewScore}%</div>
+                    <div className="flex gap-0.5">{getRatingStars(interviewScore)}</div>
+                  </motion.div>
+                )}
               </div>
 
               {/* Round Breakdown */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="mb-8"
-              >
-                <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                  <span>Round-wise Performance</span>
-                </h3>
-                <div className="space-y-3">
-                  {ROUND_ORDER.map((round, index) => {
-                    const roundAnswers = interviewAnswers.filter(a => a.round === round);
-                    const avgScore = roundAnswers.length > 0
-                      ? Math.round(roundAnswers.reduce((sum, a) => sum + a.score, 0) / roundAnswers.length)
-                      : 0;
-                    return (
-                      <motion.div
-                        key={round}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.5 + index * 0.1 }}
-                        className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl"
-                      >
-                        <span className="text-2xl">{ROUND_INFO[round].icon}</span>
-                        <div className="flex-1">
-                          <p className="font-medium text-slate-700">{ROUND_INFO[round].name}</p>
-                          <p className="text-xs text-slate-500">{roundAnswers.length} questions answered</p>
-                        </div>
-                        <div className="text-right">
-                          <span className={`text-lg font-bold ${avgScore >= 75 ? 'text-green-600' : avgScore >= 60 ? 'text-yellow-600' : avgScore === 0 ? 'text-slate-400' : 'text-red-600'}`}>
-                            {avgScore > 0 ? `${avgScore}%` : 'N/A'}
-                          </span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </motion.div>
+              {!stoppedEarly && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="mb-8"
+                >
+                  <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <span>Round-wise Performance</span>
+                  </h3>
+                  <div className="space-y-3">
+                    {ROUND_ORDER.map((round, index) => {
+                      const roundAnswers = interviewAnswers.filter(a => a.round === round);
+                      const avgScore = roundAnswers.length > 0
+                        ? Math.round(roundAnswers.reduce((sum, a) => sum + a.score, 0) / roundAnswers.length)
+                        : 0;
+                      return (
+                        <motion.div
+                          key={round}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.5 + index * 0.1 }}
+                          className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl"
+                        >
+                          <span className="text-2xl">{ROUND_INFO[round].icon}</span>
+                          <div className="flex-1">
+                            <p className="font-medium text-slate-700">{ROUND_INFO[round].name}</p>
+                            <p className="text-xs text-slate-500">{roundAnswers.length} questions answered</p>
+                          </div>
+                          <div className="text-right">
+                            <span className={`text-lg font-bold ${avgScore >= 75 ? 'text-green-600' : avgScore >= 60 ? 'text-yellow-600' : avgScore === 0 ? 'text-slate-400' : 'text-red-600'}`}>
+                              {avgScore > 0 ? `${avgScore}%` : 'N/A'}
+                            </span>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Resume Feedback - Show after interview if resume was uploaded */}
-              {hasResume && resumeFeedback && (
+              {hasResume && resumeFeedback && !stoppedEarly && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1807,38 +1837,40 @@ export default function AIInterviewerPage() {
               )}
 
               {/* Feedback */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
-                className="mb-8"
-              >
-                <h3 className="font-semibold text-slate-800 mb-4">Feedback & Recommendations</h3>
-                <div className="space-y-3">
-                  {feedback.map((item, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.8 + index * 0.1 }}
-                      className={`flex items-start gap-3 p-4 rounded-xl ${
-                        item.includes('🎉') || item.includes('✨') || item.includes('💼') || item.includes('👍')
-                          ? 'bg-green-50 border border-green-200'
-                          : item.includes('📚') || item.includes('💡') || item.includes('🎯') || item.includes('⏰') || item.includes('📄')
-                          ? 'bg-amber-50 border border-amber-200'
-                          : 'bg-slate-50 border border-slate-200'
-                      }`}
-                    >
-                      {item.includes('🎉') || item.includes('✨') || item.includes('💼') || item.includes('👍') ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                      )}
-                      <p className="text-sm text-slate-700">{item}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
+              {(!stoppedEarly || !hasResume) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  className="mb-8"
+                >
+                  <h3 className="font-semibold text-slate-800 mb-4">Feedback & Recommendations</h3>
+                  <div className="space-y-3">
+                    {feedback.map((item, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.8 + index * 0.1 }}
+                        className={`flex items-start gap-3 p-4 rounded-xl ${
+                          item.includes('🎉') || item.includes('✨') || item.includes('💼') || item.includes('👍')
+                            ? 'bg-green-50 border border-green-200'
+                            : item.includes('📚') || item.includes('💡') || item.includes('🎯') || item.includes('⏰') || item.includes('📄')
+                            ? 'bg-amber-50 border border-amber-200'
+                            : 'bg-slate-50 border border-slate-200'
+                        }`}
+                      >
+                        {item.includes('🎉') || item.includes('✨') || item.includes('💼') || item.includes('👍') ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        )}
+                        <p className="text-sm text-slate-700">{item}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Actions */}
               <div className="flex gap-4">
@@ -1870,7 +1902,7 @@ export default function AIInterviewerPage() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="absolute top-[15%] md:top-[25%] left-2 right-2 md:left-4 md:right-auto md:w-[38vw] md:max-w-md z-25"
+            className="absolute top-[10%] md:top-[18%] left-2 right-2 md:left-auto md:right-[calc(50%+104px)] md:w-[38vw] md:max-w-md z-25"
           >
             <div className={`relative px-4 md:px-6 py-3 md:py-4 rounded-2xl shadow-2xl ${
               currentMessage.role === 'user'
@@ -1922,9 +1954,9 @@ export default function AIInterviewerPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute top-[35%] md:top-[40%] left-2 md:left-4 z-25"
+            className="absolute top-[30%] md:top-[35%] left-2 right-2 md:left-auto md:right-[calc(50%+104px)] z-25 flex md:block justify-center md:justify-end"
           >
-            <div className="bg-white px-4 md:px-6 py-3 md:py-4 rounded-2xl shadow-2xl border border-slate-100">
+            <div className="bg-white px-4 md:px-6 py-3 md:py-4 rounded-2xl shadow-2xl border border-slate-100 inline-block">
               <div className="flex items-center gap-2 md:gap-3">
                 <div className="flex gap-1">
                   {[0, 1, 2].map((i) => (
@@ -2078,6 +2110,9 @@ export default function AIInterviewerPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Close background div */}
     </div>
+    {/* Close main container div */}
+  </div>
   );
 }
