@@ -9,9 +9,26 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  INTERVIEWER_RESUME_EXTRACTION_PROMPT,
+  INTERVIEWER_RESUME_EVALUATION_PROMPT,
+  INTERVIEWER_RESUME_ANALYSIS_PROMPT,
+  INTERVIEWER_ALL_QUESTIONS_PROMPT,
+  INTERVIEWER_QUESTION_GENERATION_PROMPT,
+  INTERVIEWER_ANSWER_EVALUATION_PROMPT,
+  INTERVIEWER_FINAL_FEEDBACK_PROMPT,
+  INTERVIEWER_ROUND_DESCRIPTIONS,
+  getInterviewerTechnicalRoundDescription,
+} from './prompts';
+import {
+  getPreviousQuestionsPromptText,
+  saveInterviewHistory,
+  InterviewHistoryEntry,
+} from './interviewHistoryService';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
+const INTERVIEW_MODEL = 'gemini-3.1-flash-lite-preview';
 
 // ============================================
 // TEXT-TO-SPEECH (Nova Speaking)
@@ -197,18 +214,16 @@ export const stopListening = () => {
 
 // ============================================
 // GEMINI AI RESPONSES
-// Model: gemini-1.5-flash (Line 184, 231, 280, 340)
+// Model: gemini-3.1-flash-lite-preview
 // For generating intelligent interview feedback
 // ============================================
 
 /**
  * Extract text from PDF file using Gemini AI
- * Converts PDF to base64 and uses Gemini's multimodal capabilities
  */
 export const extractTextFromPDF = async (file: File): Promise<string> => {
   try {
     // Convert PDF to base64 and use Gemini's multimodal API directly
-    // This is the most reliable method for text extraction
     const base64Data = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -220,7 +235,7 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
       reader.readAsDataURL(file);
     });
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: INTERVIEW_MODEL });
 
     const result = await model.generateContent([
       {
@@ -229,23 +244,7 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
           data: base64Data
         }
       },
-      `Extract ALL text content from this resume PDF document.
-
-Output the resume content in this clean, structured format:
-
-NAME: [Full name]
-CONTACT: [Email, phone, location]
-SUMMARY: [Professional summary if present]
-SKILLS: [All technical and soft skills, comma separated]
-EXPERIENCE:
-- [Job title] at [Company] ([Dates])
-  [Key responsibilities and achievements]
-EDUCATION:
-- [Degree] from [Institution] ([Year])
-PROJECTS: [List any projects mentioned]
-CERTIFICATIONS: [List any certifications]
-
-Important: Only include sections that have content. Make sure all text is clean and readable.`
+      INTERVIEWER_RESUME_EXTRACTION_PROMPT
     ]);
 
     const extractedText = result.response.text();
@@ -260,6 +259,108 @@ Important: Only include sections that have content. Make sure all text is clean 
     console.error('PDF text extraction error:', error);
     throw new Error('Failed to extract text from PDF. Please try a different file or ensure your PDF contains readable text.');
   }
+};
+
+export const analyzeResumeFromPDF = async (
+  file: File
+): Promise<{ resumeText: string; score: number; skills: string[]; experience: string; feedback: string }> => {
+  try {
+    const base64Data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const model = genAI.getGenerativeModel({
+      model: INTERVIEW_MODEL,
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: 'application/pdf',
+          data: base64Data
+        }
+      },
+      INTERVIEWER_RESUME_ANALYSIS_PROMPT
+    ]);
+
+    const response = result.response.text().trim();
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(response);
+
+    const resumeText = toDisplayText(parsed.resumeText, '').trim();
+    if (resumeText.length < 50) {
+      throw new Error('Failed to extract meaningful text from PDF');
+    }
+
+    return {
+      resumeText,
+      score: Math.min(100, Math.max(0, parseInt(parsed.score) || 70)),
+      skills: toSkillsList(parsed.skills),
+      experience: toDisplayText(parsed.experience, 'Experience details extracted'),
+      feedback: toDisplayText(parsed.feedback, 'Resume analyzed successfully.')
+    };
+  } catch (error) {
+    console.error('Resume analysis error:', error);
+    throw new Error('Failed to analyze resume. Please upload a clear and valid resume PDF.');
+  }
+};
+
+const toDisplayText = (value: unknown, fallback: string): string => {
+  if (typeof value === 'string') {
+    const cleaned = value.trim();
+    return cleaned.length > 0 ? cleaned : fallback;
+  }
+
+  if (Array.isArray(value)) {
+    const parts = value
+      .map((item) => (typeof item === 'string' ? item.trim() : String(item)))
+      .filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : fallback;
+  }
+
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .map(([key, val]) => {
+        const label = key.replace(/_/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase());
+        const content = typeof val === 'string' ? val.trim() : String(val);
+        return content ? `${label}: ${content}` : '';
+      })
+      .filter(Boolean);
+    return entries.length > 0 ? entries.join('\n') : fallback;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  return fallback;
+};
+
+const toSkillsList = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    const skills = value
+      .map((item) => (typeof item === 'string' ? item.trim() : String(item)))
+      .filter((item) => item.length > 0);
+    return skills.length > 0 ? skills : ['General Skills'];
+  }
+
+  if (typeof value === 'string') {
+    const skills = value
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+    return skills.length > 0 ? skills : ['General Skills'];
+  }
+
+  return ['General Skills'];
 };
 
 /**
@@ -287,25 +388,9 @@ export const evaluateResume = async (
       };
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: INTERVIEW_MODEL });
 
-    const prompt = `You are Nova, an expert resume evaluator. Analyze this resume and provide evaluation.
-
-Resume Content:
-${cleanedText}
-
-Evaluate based on:
-1. Overall presentation and formatting (10 points)
-2. Skills relevance and depth (25 points)
-3. Experience quality and achievements (25 points)
-4. Education and certifications (15 points)
-5. Projects and portfolio (15 points)
-6. Communication clarity (10 points)
-
-IMPORTANT: Return ONLY valid JSON, no other text.
-
-JSON format:
-{"score":75,"skills":["JavaScript","React","Node.js"],"experience":"3 years in software development","feedback":"Strong technical skills. Consider adding metrics."}`;
+    const prompt = INTERVIEWER_RESUME_EVALUATION_PROMPT(cleanedText);
 
     const result = await model.generateContent(prompt);
     const response = result.response.text().trim();
@@ -330,9 +415,9 @@ JSON format:
       console.log('✅ Resume evaluated:', parsed.score);
       return {
         score: Math.min(100, Math.max(0, parseInt(parsed.score) || 70)),
-        skills: Array.isArray(parsed.skills) ? parsed.skills : ['General Skills'],
-        experience: parsed.experience || 'Experience details extracted',
-        feedback: parsed.feedback || 'Resume analyzed successfully.'
+        skills: toSkillsList(parsed.skills),
+        experience: toDisplayText(parsed.experience, 'Experience details extracted'),
+        feedback: toDisplayText(parsed.feedback, 'Resume analyzed successfully.')
       };
     }
 
@@ -361,56 +446,65 @@ JSON format:
  * Generate unique interview questions using Gemini AI
  * Questions are tailored to the user's field and resume
  * Tracks session questions to prevent repetition
+ * Loads ALL previously asked questions from database to NEVER repeat
  */
 export const generateInterviewQuestions = async (
   round: 'aptitude' | 'technical' | 'managerial' | 'hr',
   field: string,
   skills: string[],
-  questionCount: number = 3
+  questionCount: number = 3,
+  userId?: string
 ): Promise<string[]> => {
   try {
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+    const model = genAI.getGenerativeModel({
+      model: INTERVIEW_MODEL,
       generationConfig: { responseMimeType: "application/json" }
     }); // LINE 231 - GEMINI MODEL
 
-    const roundDescriptions: Record<string, string> = {
-      aptitude: 'logical reasoning, mathematical aptitude, analytical thinking, and problem-solving abilities',
-      technical: `technical expertise in ${skills.join(', ')} and ${field}-related concepts, system design, and coding knowledge`,
-      managerial: 'leadership abilities, pressure handling, conflict resolution, project management, and team collaboration',
-      hr: 'behavioral questions, cultural fit, career goals, motivation, and soft skills',
-    };
+    // Build round description (technical round needs dynamic skills/field)
+    const roundDescription = round === 'technical'
+      ? getInterviewerTechnicalRoundDescription(skills, field)
+      : INTERVIEWER_ROUND_DESCRIPTIONS[round] || INTERVIEWER_ROUND_DESCRIPTIONS.aptitude;
 
     // Add randomization seed for unique questions each session
     const uniqueSeed = Date.now() + Math.random().toString(36).substring(7);
 
-    // Build exclusion list from previously asked questions
-    const previousQuestionsText = sessionAskedQuestions.length > 0
-      ? `\n\nPREVIOUSLY ASKED QUESTIONS (DO NOT REPEAT OR ASK SIMILAR):\n${sessionAskedQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
+    // Build exclusion list from:
+    // 1. Session questions (current interview)
+    // 2. DATABASE questions (all previous interviews for this user)
+    let allPreviousQuestions: string[] = [...sessionAskedQuestions];
+
+    // Load ALL previously asked questions from database if userId is provided
+    if (userId) {
+      try {
+        const dbQuestionsText = await getPreviousQuestionsPromptText(userId);
+        if (dbQuestionsText) {
+          // Parse the numbered list back to array
+          const dbQuestions = dbQuestionsText.split('\n').map(line => {
+            // Remove numbering like "1. " from start
+            return line.replace(/^\d+\.\s*/, '').trim();
+          }).filter(q => q.length > 0);
+          allPreviousQuestions = [...new Set([...allPreviousQuestions, ...dbQuestions])];
+        }
+        console.log(`📚 Loaded ${allPreviousQuestions.length} previous questions for user to avoid repetition`);
+      } catch (err) {
+        console.warn('Could not load previous questions from DB:', err);
+      }
+    }
+
+    const previousQuestionsText = allPreviousQuestions.length > 0
+      ? `\n\n⚠️ CRITICAL - PREVIOUSLY ASKED QUESTIONS (NEVER REPEAT, NEVER REPHRASE, NEVER ASK SIMILAR):\n${allPreviousQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\n⛔ The above ${allPreviousQuestions.length} questions have ALREADY been asked to this candidate. Generate COMPLETELY NEW and DIFFERENT questions.`
       : '';
 
-    const prompt = `You are Nova, an expert interviewer. Generate ${questionCount} unique MODERATE-LEVEL interview questions for the ${round.toUpperCase()} round.
-
-Session ID: ${uniqueSeed} (Use this to ensure unique questions each time)
-
-Candidate's Field: ${field}
-Candidate's Skills: ${skills.join(', ')}
-Round Focus: ${roundDescriptions[round]}
-${previousQuestionsText}
-
-CRITICAL REQUIREMENTS:
-- Questions must be MODERATE level - challenging but answerable in 1-2 minutes
-- Keep questions CONCISE (2-3 sentences max)
-- For aptitude: Intermediate logic puzzles, analytics, or math
-- For technical: Practical scenarios or deeper concept questions ("How would you implement X?", "What are the trade-offs of Y?")
-- For managerial: Situational judgment or team conflict resolution
-- For HR: Behavioral questions requiring specific examples ("Tell me about...", "What do you...")
-- Generate COMPLETELY NEW and UNIQUE questions each time
-- NEVER repeat or rephrase any previously asked questions
-- Each question should be clear and professional
-
-Respond with ONLY a JSON array of ${questionCount} questions:
-["Question 1?", "Question 2?", "Question 3?"]`;
+    const prompt = INTERVIEWER_QUESTION_GENERATION_PROMPT(
+      round,
+      questionCount,
+      uniqueSeed,
+      field,
+      skills,
+      roundDescription,
+      previousQuestionsText
+    );
 
     const result = await model.generateContent(prompt);
     const response = result.response.text();
@@ -432,6 +526,106 @@ Respond with ONLY a JSON array of ${questionCount} questions:
     console.error('Question generation error:', error);
     return getFallbackQuestions(round, skills);
   }
+};
+
+export const generateAllInterviewQuestions = async (
+  field: string,
+  skills: string[],
+  userId?: string
+): Promise<Record<'aptitude' | 'technical' | 'managerial' | 'hr', string[]>> => {
+  const fallback = {
+    aptitude: getFallbackQuestions('aptitude', skills),
+    technical: getFallbackQuestions('technical', skills),
+    managerial: getFallbackQuestions('managerial', skills),
+    hr: getFallbackQuestions('hr', skills),
+  } as const;
+
+  try {
+    const model = genAI.getGenerativeModel({
+      model: INTERVIEW_MODEL,
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const uniqueSeed = Date.now() + Math.random().toString(36).substring(7);
+
+    let allPreviousQuestions: string[] = [...sessionAskedQuestions];
+    if (userId) {
+      try {
+        const dbQuestionsText = await getPreviousQuestionsPromptText(userId);
+        if (dbQuestionsText) {
+          const dbQuestions = dbQuestionsText
+            .split('\n')
+            .map((line) => line.replace(/^\d+\.\s*/, '').trim())
+            .filter((q) => q.length > 0);
+          allPreviousQuestions = [...new Set([...allPreviousQuestions, ...dbQuestions])];
+        }
+      } catch (err) {
+        console.warn('Could not load previous questions from DB:', err);
+      }
+    }
+
+    const previousQuestionsText = allPreviousQuestions.length > 0
+      ? `\n\n⚠️ PREVIOUSLY ASKED QUESTIONS (DO NOT REPEAT):\n${allPreviousQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
+      : '';
+
+    const prompt = INTERVIEWER_ALL_QUESTIONS_PROMPT(uniqueSeed, field, skills, previousQuestionsText);
+    const result = await model.generateContent(prompt);
+    const response = result.response.text().trim();
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(response);
+
+    const normalizeRound = (round: unknown, fb: string[]) => {
+      if (!Array.isArray(round)) return fb;
+      const items = round.map((q) => String(q).trim()).filter(Boolean);
+      return items.length >= 3 ? items.slice(0, 3) : fb;
+    };
+
+    const questions = {
+      aptitude: normalizeRound(parsed.aptitude, fallback.aptitude),
+      technical: normalizeRound(parsed.technical, fallback.technical),
+      managerial: normalizeRound(parsed.managerial, fallback.managerial),
+      hr: normalizeRound(parsed.hr, fallback.hr),
+    };
+
+    addSessionQuestions([
+      ...questions.aptitude,
+      ...questions.technical,
+      ...questions.managerial,
+      ...questions.hr,
+    ]);
+
+    return questions;
+  } catch (error) {
+    console.error('All-question generation error:', error);
+    return fallback;
+  }
+};
+
+export const scoreAnswerLocally = (answer: string): { feedback: string; score: number } => {
+  const trimmed = answer.trim();
+  const wordCount = trimmed ? trimmed.split(/\s+/).length : 0;
+  const hasExamples = /example|instance|when|time|situation|project|worked|built|created|developed/i.test(trimmed);
+  const hasNumbers = /\d+/.test(trimmed);
+  const hasStructure = /[.,;:]/.test(trimmed);
+
+  let score = 50;
+  if (wordCount > 60) score += 15;
+  else if (wordCount > 35) score += 10;
+  else if (wordCount > 18) score += 6;
+  else if (wordCount > 8) score += 3;
+  if (hasExamples) score += 12;
+  if (hasNumbers) score += 6;
+  if (hasStructure) score += 6;
+
+  score = Math.min(95, Math.max(40, score));
+
+  let feedback = "Thanks for your answer. Let's continue.";
+  if (score >= 80) feedback = "Strong answer with good depth and clarity. Great work.";
+  else if (score >= 65) feedback = "Good answer. Add a concrete example for even better impact.";
+  else if (score >= 50) feedback = "Decent start. Try to be more specific and structured.";
+  else feedback = "Try to answer with more detail and one clear real-world example.";
+
+  return { feedback, score };
 };
 
 // Fallback questions if Gemini API fails
@@ -473,26 +667,9 @@ export const getInterviewResponse = async (
   resumeContext?: string
 ): Promise<{ feedback: string; score: number }> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: INTERVIEW_MODEL });
 
-    const prompt = `You are Nova, an AI interview coach. Evaluate this interview answer.
-
-Round: ${round.toUpperCase()}
-Question: ${currentQuestion}
-User's Answer: ${userAnswer}
-${resumeContext ? `Resume Context: ${resumeContext}` : ''}
-
-Score the answer from 40-98 based on:
-- Relevance (0-25), Depth (0-25), Clarity (0-20), Examples (0-20), Impression (0-10)
-
-Guidelines:
-- 85-98: Excellent - comprehensive with specific examples
-- 70-84: Good - solid with some details
-- 55-69: Average - basic, lacks depth
-- 40-54: Below average - vague or off-topic
-
-IMPORTANT: Return ONLY this exact JSON format, nothing else:
-{"feedback":"your 2-3 sentence feedback here","score":NUMBER}`;
+    const prompt = INTERVIEWER_ANSWER_EVALUATION_PROMPT(round, currentQuestion, userAnswer, resumeContext);
 
     const result = await model.generateContent(prompt);
     const response = result.response.text().trim();
@@ -586,7 +763,7 @@ export const generateFinalFeedback = async (
 ): Promise<string[]> => {
   try {
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: INTERVIEW_MODEL,
       generationConfig: { responseMimeType: "application/json" }
     }); // LINE 340 - GEMINI MODEL
 
@@ -606,27 +783,7 @@ export const generateFinalFeedback = async (
       return `${round.toUpperCase()}: ${Math.round(roundAvg)}%`;
     }).join(', ');
 
-    const prompt = `You are Nova, an AI interview coach. Generate comprehensive, actionable final feedback for this interview.
-
-Resume Score: ${resumeScore}%
-${resumeFeedback ? `Resume Feedback: ${resumeFeedback}` : ''}
-Average Interview Score: ${Math.round(avgScore)}%
-Round Breakdown: ${roundBreakdown}
-
-Interview Performance:
-${answersText}
-
-Analyze the performance and provide:
-1. Overall assessment of interview performance
-2. Specific strengths demonstrated
-3. Areas that need improvement with actionable advice
-4. Round-specific feedback for weaker areas
-5. Next steps for improvement
-
-Provide 5-7 specific, actionable feedback points. Be encouraging but honest.
-Each point should be a complete sentence starting with an emoji.
-Return as a JSON array of strings:
-["🎯 Feedback point 1", "💡 Feedback point 2", ...]`;
+    const prompt = INTERVIEWER_FINAL_FEEDBACK_PROMPT(resumeScore, avgScore, roundBreakdown, answersText, resumeFeedback);
 
     const result = await model.generateContent(prompt);
     const response = result.response.text();
@@ -643,12 +800,18 @@ Return as a JSON array of strings:
   }
 };
 
+// Re-export interview history functions for use in components
+export { saveInterviewHistory } from './interviewHistoryService';
+
 export default {
   speakText,
   stopSpeaking,
   isSpeaking,
   startListening,
   stopListening,
+  analyzeResumeFromPDF,
+  scoreAnswerLocally,
+  generateAllInterviewQuestions,
   evaluateResume,
   generateInterviewQuestions,
   getInterviewResponse,

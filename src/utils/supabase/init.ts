@@ -266,6 +266,15 @@ CREATE TABLE IF NOT EXISTS kv_store (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS interview_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  interview_data TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
@@ -280,6 +289,7 @@ CREATE INDEX IF NOT EXISTS idx_quizzes_course_id ON quizzes(course_id);
 CREATE INDEX IF NOT EXISTS idx_quiz_questions_quiz_id ON quiz_questions(quiz_id);
 CREATE INDEX IF NOT EXISTS idx_quiz_attempts_user_id ON quiz_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_invitations_user_id ON course_invitations(user_id);
+CREATE INDEX IF NOT EXISTS idx_interview_history_user_id ON interview_history(user_id);
     `;
 
     // For now, log that manual setup is needed
