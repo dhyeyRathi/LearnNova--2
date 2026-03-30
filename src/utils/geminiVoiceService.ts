@@ -211,9 +211,9 @@ export const stopListening = () => {
     }
   }
 };
-
+      
 // ============================================
-// GEMINI AI RESPONSES
+  // GEMINI AI RESPONSES
 // Model: gemini-3.1-flash-lite-preview
 // For generating intelligent interview feedback
 // ============================================
