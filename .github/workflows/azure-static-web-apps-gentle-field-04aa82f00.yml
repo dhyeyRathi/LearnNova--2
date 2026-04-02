@@ -11,6 +11,13 @@ on:
 
 jobs:
   build_and_deploy_job:
+    env:
+      VITE_SUPABASE_URL: https://vmboecjnswsygdzlugxq.supabase.co
+      VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtYm9lY2puc3dzeWdkemx1Z3hxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMTI5MTUsImV4cCI6MjA4OTY4ODkxNX0.NsasykYU1ThnxgtMxxBORWHgRHlwPW3iOUy_GY3mLLo
+      VITE_APP_URL: https://gentle-field-04aa82f00.4.azurestaticapps.net
+      SUPABASE_SERVICE_ROLE_KEY: sb_secret_qALgujODlo56EGzCBVW2EA_fR06Ghiw
+      VITE_RESEND_API_KEY: re_4hgj7UBx_AMvCEdNzB6K5ysvJC4PtEbst
+      VITE_GEMINI_API_KEY: AIzaSyC0PUi_CuSThkMGynLVouCB23ZVcx4MKZU
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
