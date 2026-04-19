@@ -50,8 +50,25 @@ export async function getChatResponse(userMessage: string): Promise<string> {
       history: conversationHistory,
     });
 
-    const result = await chat.sendMessage(userMessage);
-    const assistantResponse = result.response.text();
+    let result;
+    const maxRetries = 3;
+    let attempt = 0;
+    while (attempt < maxRetries) {
+      try {
+        result = await chat.sendMessage(userMessage);
+        break;
+      } catch (error: any) {
+        if ((error?.message?.includes('503') || error?.status === 503) && attempt < maxRetries - 1) {
+          attempt++;
+          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+          console.warn(`[503 Error] Retrying Gemini chat message (attempt ${attempt}/${maxRetries - 1}) in ${Math.round(delay)}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    const assistantResponse = result!.response.text();
 
     // Add assistant response to history (Gemini uses 'model' not 'assistant')
     conversationHistory.push({

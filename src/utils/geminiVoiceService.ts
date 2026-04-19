@@ -30,6 +30,28 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 const INTERVIEW_MODEL = 'gemini-3.1-flash-lite-preview';
 
+/**
+ * Helper to retry Gemini API calls when 503 Service Unavailable errors occur due to high demand.
+ */
+const generateContentWithRetry = async (model: any, request: any, maxRetries = 3) => {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      return await model.generateContent(request);
+    } catch (error: any) {
+      if ((error?.message?.includes('503') || error?.status === 503) && attempt < maxRetries - 1) {
+        attempt++;
+        const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+        console.warn(`[503 Error] Retrying Gemini API call (attempt ${attempt}/${maxRetries - 1}) in ${Math.round(delay)}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error("Max retries exceeded");
+};
+
 // ============================================
 // TEXT-TO-SPEECH (Nova Speaking)
 // Using Web Speech API - works in all browsers
@@ -237,7 +259,7 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
 
     const model = genAI.getGenerativeModel({ model: INTERVIEW_MODEL });
 
-    const result = await model.generateContent([
+    const result = await generateContentWithRetry(model, [
       {
         inlineData: {
           mimeType: 'application/pdf',
@@ -255,8 +277,11 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
 
     console.log('✅ PDF extracted successfully, length:', extractedText.length);
     return extractedText;
-  } catch (error) {
+  } catch (error: any) {
     console.error('PDF text extraction error:', error);
+    if (error?.message?.includes('503') || error?.status === 503) {
+      throw new Error('AI Service is currently experiencing high demand. Please try again in a moment.');
+    }
     throw new Error('Failed to extract text from PDF. Please try a different file or ensure your PDF contains readable text.');
   }
 };
@@ -281,7 +306,7 @@ export const analyzeResumeFromPDF = async (
       generationConfig: { responseMimeType: "application/json" }
     });
 
-    const result = await model.generateContent([
+    const result = await generateContentWithRetry(model, [
       {
         inlineData: {
           mimeType: 'application/pdf',
@@ -307,8 +332,11 @@ export const analyzeResumeFromPDF = async (
       experience: toDisplayText(parsed.experience, 'Experience details extracted'),
       feedback: toDisplayText(parsed.feedback, 'Resume analyzed successfully.')
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Resume analysis error:', error);
+    if (error?.message?.includes('503') || error?.status === 503) {
+      throw new Error('AI Service is currently experiencing high demand. Please try again in a moment.');
+    }
     throw new Error('Failed to analyze resume. Please upload a clear and valid resume PDF.');
   }
 };
@@ -392,7 +420,7 @@ export const evaluateResume = async (
 
     const prompt = INTERVIEWER_RESUME_EVALUATION_PROMPT(cleanedText);
 
-    const result = await model.generateContent(prompt);
+    const result = await generateContentWithRetry(model, prompt);
     const response = result.response.text().trim();
 
     // Try multiple parsing strategies
@@ -506,7 +534,7 @@ export const generateInterviewQuestions = async (
       previousQuestionsText
     );
 
-    const result = await model.generateContent(prompt);
+    const result = await generateContentWithRetry(model, prompt);
     const response = result.response.text();
 
     const jsonMatch = response.match(/\[[\s\S]*\]/);
@@ -569,7 +597,7 @@ export const generateAllInterviewQuestions = async (
       : '';
 
     const prompt = INTERVIEWER_ALL_QUESTIONS_PROMPT(uniqueSeed, field, skills, previousQuestionsText);
-    const result = await model.generateContent(prompt);
+    const result = await generateContentWithRetry(model, prompt);
     const response = result.response.text().trim();
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(response);
@@ -671,7 +699,7 @@ export const getInterviewResponse = async (
 
     const prompt = INTERVIEWER_ANSWER_EVALUATION_PROMPT(round, currentQuestion, userAnswer, resumeContext);
 
-    const result = await model.generateContent(prompt);
+    const result = await generateContentWithRetry(model, prompt);
     const response = result.response.text().trim();
 
     // Try multiple parsing strategies
@@ -785,7 +813,7 @@ export const generateFinalFeedback = async (
 
     const prompt = INTERVIEWER_FINAL_FEEDBACK_PROMPT(resumeScore, avgScore, roundBreakdown, answersText, resumeFeedback);
 
-    const result = await model.generateContent(prompt);
+    const result = await generateContentWithRetry(model, prompt);
     const response = result.response.text();
 
     const jsonMatch = response.match(/\[[\s\S]*\]/);
