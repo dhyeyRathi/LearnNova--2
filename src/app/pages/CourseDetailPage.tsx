@@ -9,16 +9,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { lessons, userProgress, reviews as allReviews, enrollments, courseInvitations, users } from '../data/mockData';
-import { getCourse, isUserEnrolled, type Course } from '../../utils/supabase/client';
-import { Play, FileText, Image as ImageIcon, HelpCircle, CheckCircle, Circle, Star, Clock, Award, Users, ArrowRight, Sparkles, Search, Lock, ShoppingCart, Trophy, Paperclip, BookOpen, Loader2 } from 'lucide-react';
+
+import { getCourse, isUserEnrolled, enrollInCourse, createCourseReview, getCourseReviews, getLessonsByCourse, getUserProgress, completeEnrollment, supabase, type Course } from '../../utils/supabase/client';
+import { Play, FileText, Image as ImageIcon, HelpCircle, CheckCircle, Circle, Star, Clock, Award, Users, ArrowRight, Sparkles, Search, Lock, ShoppingCart, Trophy, Paperclip, BookOpen, Loader2, Download, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import PaymentModal from '../components/PaymentModal';
+import { useData } from '../context/DataContext';
+import { issueCertificate, downloadCertificate, getCertificate } from '../../utils/certificateService';
 
 export default function CourseDetailPage() {
+  const { enrollments, courseInvitations, users } = useData();
   const { id } = useParams();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, updateUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const fromMyCourses = location.state?.from === 'my-courses' || new URLSearchParams(location.search).get('from') === 'my-courses';
@@ -32,6 +35,15 @@ export default function CourseDetailPage() {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [certificateNumber, setCertificateNumber] = useState<string | null>(null);
+  const [isIssuingCert, setIsIssuingCert] = useState(false);
+  
+  // Database state
+  const [courseLessons, setCourseLessons] = useState<any[]>([]);
+  const [progress, setProgress] = useState<any | null>(null);
+  const [courseReviews, setCourseReviews] = useState<any[]>([]);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isEnrolling, setIsEnrolling] = useState(false);
 
   // Fetch course data from database
   useEffect(() => {
@@ -40,20 +52,42 @@ export default function CourseDetailPage() {
 
       try {
         setLoading(true);
-        const courseData = await getCourse(id);
+        // Load course, lessons, and reviews in parallel
+        const [courseData, lessonsData, reviewsData] = await Promise.all([
+          getCourse(id),
+          getLessonsByCourse(id),
+          getCourseReviews(id)
+        ]);
+        
         setCourse(courseData);
+        setCourseLessons(lessonsData || []);
+        setCourseReviews(reviewsData || []);
 
         // Check enrollment status
         if (user?.id) {
-          const isEnrolled = await isUserEnrolled(user.id, id);
-          if (isEnrolled) {
-            // Mock enrollment object for compatibility
+          const [enrollmentData, userProgressData, cert] = await Promise.all([
+            supabase.from('course_enrollments').select('*').eq('user_id', user.id).eq('course_id', id).maybeSingle(),
+            getUserProgress(user.id),
+            getCertificate(user.id, id)
+          ]);
+          
+          if (enrollmentData.data) {
             setEnrollment({
               userId: user.id,
               courseId: id,
-              enrolledAt: new Date().toISOString(),
-              completed: false
+              enrolledAt: enrollmentData.data.enrolled_at,
+              completed: enrollmentData.data.is_completed || false,
+              completedAt: enrollmentData.data.completed_at ? new Date(enrollmentData.data.completed_at).toISOString().split('T')[0] : undefined,
             });
+          }
+          
+          // Find progress for this specific course
+          const currentProgress = userProgressData.find(p => p.courseId === id);
+          if (currentProgress) setProgress(currentProgress);
+
+          // Check for existing certificate
+          if (cert) {
+            setCertificateNumber(cert.certificateNumber);
           }
         }
       } catch (error) {
@@ -77,6 +111,55 @@ export default function CourseDetailPage() {
     }
   }, [course, loading, isAuthenticated, navigate]);
 
+  const completedLessonIds = progress?.completedLessons || [];
+  const allLessonsComplete = courseLessons.length > 0 && completedLessonIds.length === courseLessons.length;
+
+  const handleCompleteCourse = async () => {
+    if (enrollment && user && course) {
+      try {
+        // Persist enrollment completion to database
+        await completeEnrollment(user.id, course.id);
+        
+        // Update local enrollment state
+        const idx = enrollments.findIndex(e => e.userId === user.id && e.courseId === course.id);
+        if (idx >= 0) {
+          enrollments[idx].completed = true;
+          enrollments[idx].completedAt = new Date().toISOString().split('T')[0];
+        }
+
+        // Award and persist bonus points
+        const bonus = 20;
+        await updateUser({ points: (user.points || 0) + bonus });
+        const u = users.find(u => u.id === user.id);
+        if (u) u.points = (user.points || 0) + bonus;
+        
+        toast.success(`Course completed! +${bonus} bonus points!`);
+        setShowCompletionModal(true);
+
+        // Issue certificate
+        try {
+          setIsIssuingCert(true);
+          const certNum = await issueCertificate(user.id, course.id);
+          setCertificateNumber(certNum);
+        } catch (err) {
+          console.error('Certificate issuance error:', err);
+        } finally {
+          setIsIssuingCert(false);
+        }
+      } catch (error) {
+        console.error('Error completing course:', error);
+        toast.error('Failed to complete course. Please try again.');
+      }
+    }
+  };
+
+  // Auto-complete course when all lessons are done
+  useEffect(() => {
+    if (allLessonsComplete && enrollment && !enrollment.completed && !isIssuingCert) {
+      handleCompleteCourse();
+    }
+  }, [allLessonsComplete, enrollment, isIssuingCert]);
+
   // Loading state
   if (loading) {
     return (
@@ -99,24 +182,14 @@ export default function CourseDetailPage() {
 
   if (!course) return null;
 
-  const courseLessons = lessons.filter(l => l.courseId === id).sort((a, b) => a.order - b.order);
-  const progress = user ? userProgress.find(p => p.userId === user.id && p.courseId === id) : null;
-  const courseReviews = allReviews.filter(r => r.courseId === id);
-
   const completionPercentage = progress && courseLessons.length > 0
     ? (progress.completedLessons.length / courseLessons.length) * 100 : 0;
-  const completedLessonIds = progress?.completedLessons || [];
-  const allLessonsComplete = courseLessons.length > 0 && completedLessonIds.length === courseLessons.length;
 
   // Access control
   const canAccess = () => {
     if (!isAuthenticated || !user) return false;
-    if (course.access_rule === 'open') return true;
-    if (course.access_rule === 'invitation') {
-      return courseInvitations.some(i => i.courseId === course.id && i.userId === user.id) || !!enrollment;
-    }
-    if (course.access_rule === 'payment') return !!enrollment; // Payment would mark enrollment
-    return false;
+    if (user.role === 'admin' || user.role === 'tutor') return true;
+    return !!enrollment;
   };
 
   const hasAccess = canAccess();
@@ -137,70 +210,103 @@ export default function CourseDetailPage() {
   // Already reviewed?
   const hasReviewed = user ? courseReviews.some(r => r.userId === user.id) : false;
 
-  const handleSubmitReview = () => {
+
+
+  const handleSubmitReview = async () => {
     if (!user) { navigate('/login'); return; }
     if (rating === 0) { toast.error('Please select a rating'); return; }
     if (!review.trim()) { toast.error('Please write a review'); return; }
-    allReviews.push({
-      id: `rev-${Date.now()}`,
-      courseId: id!,
-      userId: user.id,
-      userName: user.name,
-      userAvatar: user.avatar,
-      rating,
-      comment: review,
-      createdAt: new Date().toISOString().split('T')[0],
-    });
-    toast.success('Review submitted successfully!');
-    setRating(0);
-    setReview('');
+    
+    setIsSubmittingReview(true);
+    try {
+      await createCourseReview({
+        course_id: id!,
+        user_id: user.id,
+        rating,
+        comment: review
+      });
+      
+      // Refresh reviews
+      const updatedReviews = await getCourseReviews(id!);
+      setCourseReviews(updatedReviews || []);
+      
+      toast.success('Review submitted successfully!');
+      setRating(0);
+      setReview('');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast.error('Failed to submit review');
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
-  const handleEnroll = () => {
+  const handleEnroll = async () => {
     if (!isAuthenticated) { navigate('/login'); return; }
     if (course.access_rule === 'payment') {
       // Show payment modal for paid courses
       setShowPaymentModal(true);
       return;
     }
-    if (!enrollment && user) {
-      enrollments.push({
-        userId: user.id,
-        courseId: course.id,
-        enrolledAt: new Date().toISOString().split('T')[0],
-        completed: false,
-      });
-      toast.success('Enrolled successfully!');
-    }
-    // Navigate to first lesson
-    if (courseLessons.length > 0) {
-      navigate(`/lesson/${id}/${courseLessons[0].id}`);
-    }
-  };
-
-  const handlePaymentSuccess = () => {
-    // Enrollment is handled automatically in PaymentModal
-    // Just refresh the page to show updated enrollment status
-    toast.success('Successfully enrolled! Welcome to the course!');
-    setTimeout(() => {
-      window.location.reload();
-    }, 1500);
-  };
-
-  const handleCompleteCourse = () => {
-    if (enrollment && user) {
-      const idx = enrollments.findIndex(e => e.userId === user.id && e.courseId === course.id);
-      if (idx >= 0) {
-        enrollments[idx].completed = true;
-        enrollments[idx].completedAt = new Date().toISOString().split('T')[0];
+    if (course.access_rule === 'invitation') {
+      const hasInvite = courseInvitations.some(i => i.courseId === course.id && i.userId === user.id);
+      if (!hasInvite) {
+        toast.error('This course is by invitation only.');
+        return;
       }
-      // Award bonus points for course completion
-      const bonus = 20;
-      const u = users.find(u => u.id === user.id);
-      if (u) u.points += bonus;
-      toast.success(`Course completed! +${bonus} bonus points!`);
-      setShowCompletionModal(true);
     }
+    if (!enrollment && user) {
+      setIsEnrolling(true);
+      try {
+        await enrollInCourse(user.id, course.id);
+        setEnrollment({
+          userId: user.id,
+          courseId: course.id,
+          enrolledAt: new Date().toISOString(),
+          completed: false,
+        });
+        toast.success(`You are now enrolled in ${course.title}!`);
+      } catch (error) {
+        console.error('Error enrolling:', error);
+        toast.error('Failed to enroll in course');
+      } finally {
+        setIsEnrolling(false);
+      }
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    if (user && course) {
+      setIsEnrolling(true);
+      try {
+        await enrollInCourse(user.id, course.id);
+        setEnrollment({
+          userId: user.id,
+          courseId: course.id,
+          enrolledAt: new Date().toISOString(),
+          completed: false,
+        });
+        toast.success(`Payment successful! You are now enrolled in ${course.title}!`);
+        setShowPaymentModal(false);
+      } catch (error) {
+        console.error('Error enrolling after payment:', error);
+        toast.error('Failed to enroll. Please contact support.');
+      } finally {
+        setIsEnrolling(false);
+      }
+    }
+  };
+
+  const handleDownloadCertificate = () => {
+    if (!user || !course || !certificateNumber) return;
+    downloadCertificate(
+      user.name,
+      course.title,
+      course.instructor_name,
+      certificateNumber,
+      new Date().toISOString()
+    );
+    toast.success('Certificate downloaded!');
   };
 
   const getLessonIcon = (type: string) => {
@@ -223,8 +329,8 @@ export default function CourseDetailPage() {
 
   const handleLessonClick = (lessonId: string) => {
     if (!isAuthenticated) { navigate('/login'); return; }
-    if (!hasAccess && course.access_rule !== 'open') {
-      toast.error('You need access to this course to view lessons');
+    if (!hasAccess) {
+      toast.error('You need to enroll in this course to view lessons');
       return;
     }
     navigate(`/lesson/${id}/${lessonId}`);
@@ -265,10 +371,31 @@ export default function CourseDetailPage() {
               <p className="text-xl font-bold bg-gradient-to-r from-purple-700 to-violet-600 bg-clip-text text-transparent mb-4">
                 {course.title}
               </p>
-              <div className="flex items-center justify-center gap-2 mb-6">
+              <div className="flex items-center justify-center gap-2 mb-4">
                 <Trophy className="w-5 h-5 text-violet-400" />
                 <span className="text-lg font-bold text-violet-600">+20 bonus points earned!</span>
               </div>
+              {certificateNumber && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6"
+                >
+                  <Button
+                    onClick={handleDownloadCertificate}
+                    className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl shadow-lg shadow-amber-500/20"
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    Download Certificate
+                  </Button>
+                </motion.div>
+              )}
+              {isIssuingCert && (
+                <div className="flex items-center justify-center gap-2 mb-4 text-slate-400">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Generating certificate...</span>
+                </div>
+              )}
               <div className="flex gap-3 justify-center">
                 <Button onClick={() => setShowCompletionModal(false)} className="bg-purple-600 text-white rounded-xl px-6">
                   Continue
@@ -386,29 +513,46 @@ export default function CourseDetailPage() {
                       </div>
                     </div>
 
-                    {/* Complete Course Button */}
+                    {/* Auto-complete course when all lessons are done */}
                     {allLessonsComplete && !enrollment?.completed && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="mt-4"
                       >
-                        <Button
-                          onClick={handleCompleteCourse}
-                          className="w-full h-12 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl shadow-xl shadow-emerald-500/20 text-lg"
-                        >
-                          <Trophy className="w-5 h-5 mr-2" />
-                          Complete This Course
-                          <Sparkles className="w-5 h-5 ml-2" />
-                        </Button>
+                        <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                          <p className="text-emerald-700 font-semibold flex items-center justify-center gap-2 mb-1">
+                            <CheckCircle className="w-5 h-5" /> All lessons completed!
+                          </p>
+                          <p className="text-emerald-600 text-sm">Your certificate is being prepared</p>
+                        </div>
                       </motion.div>
                     )}
 
                     {enrollment?.completed && (
-                      <div className="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
-                        <p className="text-emerald-700 font-semibold flex items-center justify-center gap-2">
-                          <CheckCircle className="w-5 h-5" /> Course completed on {enrollment.completedAt}
-                        </p>
+                      <div className="mt-4 space-y-3">
+                        <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                          <p className="text-emerald-700 font-semibold flex items-center justify-center gap-2">
+                            <CheckCircle className="w-5 h-5" /> Course completed on {enrollment.completedAt}
+                          </p>
+                          <p className="text-emerald-600 text-sm mt-1 flex items-center justify-center gap-1">
+                            <Trophy className="w-3.5 h-3.5" /> {(courseLessons.length * 10) + 20} points earned
+                          </p>
+                        </div>
+                        {certificateNumber ? (
+                          <Button
+                            onClick={handleDownloadCertificate}
+                            className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl shadow-lg shadow-amber-500/20 text-base font-semibold"
+                          >
+                            <Download className="w-5 h-5 mr-2" />
+                            Download Certificate
+                          </Button>
+                        ) : (
+                          <div className="flex items-center justify-center gap-2 p-3 bg-slate-50 rounded-xl text-slate-400">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span className="text-sm">Generating certificate...</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -599,8 +743,13 @@ export default function CourseDetailPage() {
                         </div>
                       </div>
                       <Textarea placeholder="Share your experience..." value={review} onChange={(e) => setReview(e.target.value)} className="mb-4 min-h-[100px] rounded-2xl glass-card border-white/40" />
-                      <Button onClick={handleSubmitReview} className="bg-purple-600 text-white rounded-xl shadow-lg">
-                        Submit Review <Sparkles className="w-4 h-4 ml-2" />
+                      <Button 
+                        onClick={handleSubmitReview}
+                        disabled={isSubmittingReview || rating === 0}
+                        className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl h-12"
+                      >
+                        {isSubmittingReview ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Send className="w-5 h-5 mr-2" />}
+                        {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
                       </Button>
                     </div>
                   )}
@@ -708,54 +857,74 @@ export default function CourseDetailPage() {
                   </div>
                 )}
 
-                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.access_rule === 'open' && (
+                {isAuthenticated && user?.role !== 'admin' && !enrollment && (
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button onClick={handleEnroll} className="w-full h-12 bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-xl shadow-emerald-500/20 rounded-xl">
-                      <Play className="w-4 h-4 mr-2" /> Start Learning <ArrowRight className="w-4 h-4 ml-2" />
+                    <Button 
+                      className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/20 rounded-xl"
+                      onClick={handleEnroll}
+                      disabled={isEnrolling}
+                    >
+                      {isEnrolling ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : course.access_rule === 'payment' ? <ShoppingCart className="w-5 h-5 mr-2" /> : <Lock className="w-5 h-5 mr-2" />}
+                      {isEnrolling ? 'Enrolling...' : course.access_rule === 'payment' ? 'Buy Course' : 'Enroll Now'}
                     </Button>
                   </motion.div>
-                )}
-
-                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.access_rule === 'payment' && (
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button onClick={handleEnroll} className="w-full h-12 bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-xl shadow-violet-500/20 rounded-xl">
-                      <ShoppingCart className="w-4 h-4 mr-2" /> Buy Now ${course.price?.toFixed(2) || '0.00'}
-                    </Button>
-                  </motion.div>
-                )}
-
-                {isAuthenticated && user?.role !== 'admin' && !enrollment && course.access_rule === 'invitation' && (
-                  <>
-                    {courseInvitations.some(i => i.courseId === course.id && i.userId === user?.id) ? (
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button onClick={handleEnroll} className="w-full h-12 bg-purple-600 text-white shadow-xl shadow-purple-600/20 rounded-xl">
-                          <Play className="w-4 h-4 mr-2" /> Accept Invitation
-                        </Button>
-                      </motion.div>
-                    ) : (
-                      <Button disabled className="w-full h-12 rounded-xl">
-                        <Lock className="w-4 h-4 mr-2" /> Invitation Required
-                      </Button>
-                    )}
-                  </>
                 )}
 
                 {enrollment && !enrollment.completed && (
-                  <Link to={`/lesson/${id}/${firstIncompleteLesson?.id || courseLessons[0]?.id}`}>
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Button className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 rounded-xl">
-                        {completedLessonIds.length > 0 ? 'Continue Learning' : 'Start Learning'}
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </motion.div>
-                  </Link>
+                  <div className="space-y-4">
+                    <Link to={`/lesson/${id}/${firstIncompleteLesson?.id || courseLessons[0]?.id}`}>
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                        <Button className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 rounded-xl">
+                          {completedLessonIds.length > 0 ? 'Continue Learning' : 'Start Learning'}
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </motion.div>
+                    </Link>
+                    
+                    {/* Show Download Certificate when all lessons complete */}
+                    {allLessonsComplete && certificateNumber && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ scale: 1.02 }} 
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Button
+                          onClick={handleDownloadCertificate}
+                          className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl shadow-lg shadow-amber-500/20 text-base font-semibold"
+                        >
+                          <Download className="w-5 h-5 mr-2" />
+                          Download Certificate
+                        </Button>
+                      </motion.div>
+                    )}
+                  </div>
                 )}
 
                 {enrollment?.completed && (
-                  <div className="text-center">
-                    <Badge className="bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl px-4 py-2 text-sm shadow-lg shadow-emerald-500/20">
+                  <div className="space-y-4">
+                    <Badge className="w-full justify-center bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl px-4 py-2.5 text-sm shadow-lg shadow-emerald-500/20">
                       <CheckCircle className="w-4 h-4 mr-2" /> Course Completed
                     </Badge>
+                    <div className="text-center text-sm text-emerald-600 font-medium flex items-center justify-center gap-1.5">
+                      <Trophy className="w-4 h-4" /> {(courseLessons.length * 10) + 20} points earned
+                    </div>
+                    {certificateNumber ? (
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          onClick={handleDownloadCertificate}
+                          className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl shadow-lg shadow-amber-500/20 text-base font-semibold"
+                        >
+                          <Download className="w-5 h-5 mr-2" />
+                          Download Certificate
+                        </Button>
+                      </motion.div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 p-3 bg-slate-50 rounded-xl text-slate-400">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">Generating certificate...</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

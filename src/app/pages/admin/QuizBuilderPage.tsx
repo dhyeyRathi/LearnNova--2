@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -9,10 +9,11 @@ import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { quizzes } from '../../data/mockData';
-import { ArrowLeft, Plus, Trash2, Check, Gift, HelpCircle, GripVertical, Save, Trophy } from 'lucide-react';
+
+import { ArrowLeft, Plus, Trash2, Check, Gift, HelpCircle, GripVertical, Save, Trophy, Crown, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+import { createQuiz, updateQuiz, getCourse, getQuizzesByCourse } from '../../../utils/supabase/client';
 
 interface QuestionDraft {
   id: string;
@@ -31,42 +32,122 @@ export default function QuizBuilderPage() {
   const { id: courseId } = useParams();
   const [searchParams] = useSearchParams();
   const quizId = searchParams.get('quizId');
-  const existingQuiz = quizId ? quizzes.find(q => q.id === quizId) : null;
-
+  
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [quizTitle, setQuizTitle] = useState(existingQuiz?.title || '');
-  const [questions, setQuestions] = useState<QuestionDraft[]>(
-    existingQuiz
-      ? existingQuiz.questions.map(q => ({
-          id: q.id,
-          text: q.text,
-          options: q.options.map((opt, i) => ({
-            id: `opt-${q.id}-${i}`,
-            text: opt,
-            isCorrect: i === q.correctAnswer,
-          })),
-        }))
-      : [{ id: 'q-1', text: '', options: [{ id: 'o-1', text: '', isCorrect: false }, { id: 'o-2', text: '', isCorrect: false }] }]
-  );
+  // State
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [quizTitle, setQuizTitle] = useState('');
+  const [questions, setQuestions] = useState<QuestionDraft[]>([
+    { id: 'q-1', text: '', options: [{ id: 'o-1', text: '', isCorrect: false }, { id: 'o-2', text: '', isCorrect: false }] }
+  ]);
   const [activeQuestion, setActiveQuestion] = useState(0);
   const [rewardsOpen, setRewardsOpen] = useState(false);
   const [rewards, setRewards] = useState<RewardsConfig>({
-    attempt1: existingQuiz?.questions[0]?.basePoints || 10,
-    attempt2: existingQuiz?.questions[0]?.pointsPerAttempt || 7,
+    attempt1: 10,
+    attempt2: 7,
     attempt3: 5,
     attempt4plus: 3,
   });
 
-  if (!user || (user.role !== 'admin' && user.role !== 'tutor')) {
+  // Load data
+  useEffect(() => {
+    if (!user || (user.role !== 'admin' && user.role !== 'tutor')) {
+      navigate('/courses');
+      return;
+    }
+
+    if (!courseId) {
+      toast.error('Course ID is required');
+      navigate('/dashboard/admin');
+      return;
+    }
+
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        // 1. Check ownership
+        const course = await getCourse(courseId);
+        if (!course) {
+          toast.error('Course not found');
+          navigate('/dashboard/admin');
+          return;
+        }
+
+        const userIsOwner = user.role === 'admin' || course.instructor_id === user.id;
+        setIsOwner(userIsOwner);
+
+        if (!userIsOwner) {
+          setLoading(false);
+          return;
+        }
+
+        // 2. Load existing quiz if editing
+        if (quizId) {
+          const quizzes = await getQuizzesByCourse(courseId);
+          const existingQuiz = quizzes.find((q: any) => q.id === quizId);
+          
+          if (existingQuiz) {
+            setQuizTitle(existingQuiz.title);
+            if (existingQuiz.questions && existingQuiz.questions.length > 0) {
+              setQuestions(existingQuiz.questions.map((q: any) => ({
+                id: q.id,
+                text: q.text,
+                options: q.options.map((opt: string, i: number) => ({
+                  id: `opt-${q.id}-${i}`,
+                  text: opt,
+                  isCorrect: i === q.correctAnswer,
+                })),
+              })));
+              
+              setRewards({
+                ...rewards,
+                attempt1: existingQuiz.questions[0]?.basePoints || 10,
+              });
+            }
+          } else {
+            toast.error('Quiz not found');
+            navigate(`/admin/courses/${courseId}/edit`);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading quiz builder:', error);
+        toast.error('Failed to load quiz data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [courseId, quizId, user, navigate]);
+
+  if (!user || (user.role !== 'admin' && user.role !== 'tutor')) return null;
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="glass-card rounded-3xl p-12 text-center">
-          <h2 className="text-2xl font-bold text-slate-700">Admin Access Required</h2>
-          <Button onClick={() => navigate('/courses')} className="mt-4 rounded-xl">Go to Courses</Button>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
         </div>
-      </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (courseId && !isOwner) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-lg mx-auto px-4 py-20 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mx-auto mb-4">
+            <Crown className="w-8 h-8 text-purple-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-700 mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Not Your Course</h2>
+          <p className="text-slate-500 mb-6">You can only create quizzes for courses you authored.</p>
+          <Button onClick={() => navigate(-1)} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl">Go Back</Button>
+        </div>
+      </DashboardLayout>
     );
   }
 
@@ -130,7 +211,7 @@ export default function QuizBuilderPage() {
     setQuestions(updated);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!quizTitle.trim()) { toast.error('Quiz title required'); return; }
     for (let i = 0; i < questions.length; i++) {
       if (!questions[i].text.trim()) { toast.error(`Question ${i + 1} text is empty`); setActiveQuestion(i); return; }
@@ -138,45 +219,36 @@ export default function QuizBuilderPage() {
       if (questions[i].options.some(o => !o.text.trim())) { toast.error(`Question ${i + 1} has empty options`); setActiveQuestion(i); return; }
     }
     
-    // Create quiz object
-    const newQuiz = {
-      id: quizId || `quiz-${Date.now()}`,
-      title: quizTitle,
-      questions: questions.map((q, idx) => ({
-        id: q.id,
-        text: q.text,
-        options: q.options.map(o => o.text),
-        correctAnswer: q.options.findIndex(o => o.isCorrect),
-        basePoints: rewards.attempt1,
-        pointsPerAttempt: rewards.attempt2,
-      })),
-      published: existingQuiz?.published || false,
-      publishedAt: existingQuiz?.publishedAt,
-      studentIds: existingQuiz?.studentIds || [],
-    };
-    
-    // Save to localStorage
+    setSaving(true);
     try {
-      const saved = localStorage.getItem('quizzesList');
-      const userQuizzes = saved ? JSON.parse(saved) : [];
-      
+      const quizData = {
+        title: quizTitle,
+        course_id: courseId!,
+        is_published: true
+      };
+
+      const quizQuestions = questions.map(q => ({
+        question_text: q.text,
+        options: q.options.map(o => o.text),
+        correct_option_index: q.options.findIndex(o => o.isCorrect),
+        points: rewards.attempt1, // Use attempt1 points for base points
+      }));
+
       if (quizId) {
-        // Update existing
-        const idx = userQuizzes.findIndex(q => q.id === quizId);
-        if (idx !== -1) userQuizzes[idx] = newQuiz;
-        else userQuizzes.push(newQuiz);
+        await updateQuiz(quizId, quizData, quizQuestions);
+        toast.success('Quiz updated successfully!');
       } else {
-        // Add new
-        userQuizzes.push(newQuiz);
+        await createQuiz(quizData, quizQuestions);
+        toast.success('Quiz created successfully!');
       }
       
-      localStorage.setItem('quizzesList', JSON.stringify(userQuizzes));
-    } catch (error) {
+      navigate(`/admin/courses/${courseId}/edit`);
+    } catch (error: any) {
       console.error('Error saving quiz:', error);
+      toast.error(error.message || 'Failed to save quiz to database');
+    } finally {
+      setSaving(false);
     }
-    
-    toast.success('Quiz saved successfully!');
-    navigate(`/admin/courses/${courseId}/edit`);
   };
 
   return (
@@ -199,8 +271,9 @@ export default function QuizBuilderPage() {
             <Button variant="outline" onClick={() => setRewardsOpen(true)} className="rounded-xl">
               <Gift className="w-4 h-4 mr-2 text-purple-600" />Rewards
             </Button>
-            <Button onClick={handleSave} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-600/20">
-              <Save className="w-4 h-4 mr-2" />Save Quiz
+            <Button onClick={handleSave} disabled={saving} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-600/20">
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              {saving ? 'Saving...' : 'Save Quiz'}
             </Button>
           </div>
         </div>

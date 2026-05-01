@@ -9,7 +9,7 @@ import { Label } from '../../components/ui/label';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { getAllCoursesForAdmin, type Course } from '../../../utils/supabase/client';
+import { getAllCoursesForAdmin, deleteCourse, type Course } from '../../../utils/supabase/client';
 import { Search, Plus, Eye, Clock, Tag, LayoutGrid, List, Edit, Share2, Crown, BookOpen, Copy, Check, ExternalLink, GripVertical, Trash2, GraduationCap, Video, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -225,13 +225,19 @@ export default function AdminCoursesPage() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDeleteCourse = () => {
+  const confirmDeleteCourse = async () => {
     if (courseToDelete) {
-      // Actually delete from the state
-      setCoursesList(coursesList.filter(c => c.id !== courseToDelete.id));
-      toast.success(`Course "${courseToDelete.title}" deleted successfully`);
-      setDeleteDialogOpen(false);
-      setCourseToDelete(null);
+      try {
+        await deleteCourse(courseToDelete.id);
+        setCoursesList(coursesList.filter(c => c.id !== courseToDelete.id));
+        toast.success(`Course "${courseToDelete.title}" deleted successfully`);
+      } catch (err) {
+        console.error('Delete failed:', err);
+        toast.error('Failed to delete course from database');
+      } finally {
+        setDeleteDialogOpen(false);
+        setCourseToDelete(null);
+      }
     }
   };
 
@@ -400,7 +406,7 @@ export default function AdminCoursesPage() {
               }
             </p>
           </div>
-          <Button onClick={() => setCreateOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg h-10 px-5 text-sm font-medium">
+          <Button onClick={() => navigate('/admin/courses/new/edit')} className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg h-10 px-5 text-sm font-medium">
             <Plus className="w-4 h-4 mr-2" /> Create Course
           </Button>
         </div>
@@ -470,13 +476,33 @@ export default function AdminCoursesPage() {
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={handleCloseCreateDialog}>
-        <DialogContent className="bg-white rounded-xl border border-[#E5E2DC] shadow-xl max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-[#1A1F2E]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              {courseCreationStep === 1 ? 'Course Name' : 'Course Details'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
+        <DialogContent className={`bg-white rounded-xl border border-[#E5E2DC] shadow-xl ${courseCreationStep === 2 ? 'max-w-2xl' : 'max-w-md'}`}>
+          {/* Header with action buttons on top */}
+          <div className="flex items-center justify-between">
+            <DialogHeader className="flex-1">
+              <DialogTitle className="text-lg font-semibold text-[#1A1F2E]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                {courseCreationStep === 1 ? 'Course Name' : 'Course Details'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex gap-2.5">
+              <Button 
+                variant="outline" 
+                onClick={courseCreationStep === 1 ? handleCloseCreateDialog : handleGoBack} 
+                className="rounded-lg text-sm border-[#E5E2DC] h-9"
+              >
+                {courseCreationStep === 1 ? 'Cancel' : 'Back'}
+              </Button>
+              <Button 
+                onClick={handleCreate} 
+                className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm h-9"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                {courseCreationStep === 1 ? 'Next' : 'Create Course'}
+              </Button>
+            </div>
+          </div>
+
+          <div className="pt-2">
             {/* Step 1: Course Name Only */}
             {courseCreationStep === 1 && (
               <div className="space-y-1.5">
@@ -492,57 +518,78 @@ export default function AdminCoursesPage() {
               </div>
             )}
 
-            {/* Step 2: Additional Details */}
+            {/* Step 2: Additional Details - Two Column Grid */}
             {courseCreationStep === 2 && (
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-x-5 gap-y-3">
+                {/* Left Column */}
                 <div className="space-y-1.5">
                   <Label className="text-[13px] text-[#1A1F2E]">Publisher Name</Label>
                   <Input 
                     value={newCoursePublisher} 
                     onChange={e => setNewCoursePublisher(e.target.value)} 
-                    placeholder="e.g. John Doe, Tech Academy" 
+                    placeholder="e.g. John Doe" 
                     className="rounded-lg border-[#E5E2DC] h-10 text-sm" 
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[13px] text-[#1A1F2E]">Reference Links (comma-separated)</Label>
+                  <Label className="text-[13px] text-[#1A1F2E]">Tags (comma-separated)</Label>
+                  <Input 
+                    value={newCourseTags} 
+                    onChange={e => setNewCourseTags(e.target.value)} 
+                    placeholder="e.g. React, Advanced, JS" 
+                    className="rounded-lg border-[#E5E2DC] h-10 text-sm" 
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[13px] text-[#1A1F2E]">Reference Links</Label>
                   <Input 
                     value={newCourseRefLinks} 
                     onChange={e => setNewCourseRefLinks(e.target.value)} 
-                    placeholder="e.g. https://example.com, https://docs.com" 
+                    placeholder="https://example.com, ..." 
                     className="rounded-lg border-[#E5E2DC] h-10 text-sm" 
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[13px] text-[#1A1F2E]">Resource Links (comma-separated)</Label>
+                  <Label className="text-[13px] text-[#1A1F2E]">Resource Links</Label>
                   <Input 
                     value={newCourseResourceLinks} 
                     onChange={e => setNewCourseResourceLinks(e.target.value)} 
-                    placeholder="e.g. https://resources.com, https://files.com" 
+                    placeholder="https://resources.com, ..." 
+                    className="rounded-lg border-[#E5E2DC] h-10 text-sm" 
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[13px] text-[#1A1F2E]">Quiz Integration (optional)</Label>
+                  <Input 
+                    value={newCourseQuizIntegration} 
+                    onChange={e => setNewCourseQuizIntegration(e.target.value)} 
+                    placeholder="Quiz ID or leave blank" 
                     className="rounded-lg border-[#E5E2DC] h-10 text-sm" 
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[13px] text-[#1A1F2E]">Thumbnail</Label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleThumbnailChange} 
-                      className="hidden" 
-                      id="thumbnail-upload"
-                    />
-                    <label htmlFor="thumbnail-upload" className="flex-1 cursor-pointer">
-                      <div className="rounded-lg border border-[#E5E2DC] h-10 flex items-center px-3 text-sm text-[#7A766F] hover:bg-[#F9F7F3] transition-colors">
-                        {newCourseThumbnail ? newCourseThumbnail.name : 'Choose image...'}
-                      </div>
-                    </label>
-                  </div>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleThumbnailChange} 
+                    className="hidden" 
+                    id="thumbnail-upload"
+                  />
+                  <label htmlFor="thumbnail-upload" className="block cursor-pointer">
+                    <div className="rounded-lg border border-[#E5E2DC] h-10 flex items-center px-3 text-sm text-[#7A766F] hover:bg-[#F9F7F3] transition-colors">
+                      {newCourseThumbnail ? newCourseThumbnail.name : 'Choose image...'}
+                    </div>
+                  </label>
                   {newCourseThumbnailPreview && (
-                    <img src={newCourseThumbnailPreview} alt="Preview" className="rounded-lg h-20 w-20 object-cover" />
+                    <img src={newCourseThumbnailPreview} alt="Preview" className="rounded-lg h-16 w-24 object-cover mt-1" />
                   )}
                 </div>
-                <div className="space-y-1.5">
+
+                {/* Video Upload - spans full width */}
+                <div className="col-span-2 space-y-1.5">
                   <Label className="text-[13px] text-[#1A1F2E]">Video Upload</Label>
                   <div 
                     className="border-2 border-dashed border-[#E5E2DC] rounded-lg p-4 text-center bg-[#F9F7F3] cursor-pointer hover:border-[#D5D0CB] hover:bg-[#F5F1EA] transition-colors"
@@ -565,7 +612,7 @@ export default function AdminCoursesPage() {
                   >
                     <Video className="w-6 h-6 mx-auto mb-1 text-orange-400" />
                     <p className="text-sm font-medium text-[#1A1F2E]">Click or drag video</p>
-                    <p className="text-xs text-[#7A766F]">MP4, WebM, OGG (Max 500MB)</p>
+                    <p className="text-xs text-[#7A766F]">MP4, WebM, OGG (Max 50MB)</p>
                     <input 
                       type="file" 
                       accept="video/*" 
@@ -595,43 +642,8 @@ export default function AdminCoursesPage() {
                     </div>
                   )}
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[13px] text-[#1A1F2E]">Tags (comma-separated)</Label>
-                  <Input 
-                    value={newCourseTags} 
-                    onChange={e => setNewCourseTags(e.target.value)} 
-                    placeholder="e.g. React, Advanced, JavaScript" 
-                    className="rounded-lg border-[#E5E2DC] h-10 text-sm" 
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[13px] text-[#1A1F2E]">Quiz Integration (optional)</Label>
-                  <Input 
-                    value={newCourseQuizIntegration} 
-                    onChange={e => setNewCourseQuizIntegration(e.target.value)} 
-                    placeholder="Select existing quiz ID or leave blank" 
-                    className="rounded-lg border-[#E5E2DC] h-10 text-sm" 
-                  />
-                </div>
               </div>
             )}
-
-            <div className="flex gap-2.5 justify-end pt-2">
-              <Button 
-                variant="outline" 
-                onClick={courseCreationStep === 1 ? handleCloseCreateDialog : handleGoBack} 
-                className="rounded-lg text-sm border-[#E5E2DC]"
-              >
-                {courseCreationStep === 1 ? 'Cancel' : 'Back'}
-              </Button>
-              <Button 
-                onClick={handleCreate} 
-                className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm"
-              >
-                <Plus className="w-4 h-4 mr-1.5" />
-                {courseCreationStep === 1 ? 'Next' : 'Create'}
-              </Button>
-            </div>
           </div>
         </DialogContent>
       </Dialog>

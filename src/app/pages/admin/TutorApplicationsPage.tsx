@@ -10,11 +10,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { motion } from 'motion/react';
 import { Crown, Check, X, Clock, Mail, User, Calendar, MessageSquare, Sparkles, Star } from 'lucide-react';
 import { RefreshCw } from 'lucide-react';
-import { type TutorApplication } from '../../data/mockData';
+
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 import { getApplications, updateApplicationStatus } from '../../services/applicationsService'; // FIXED: Import application service
 import { sendCredentialsEmail, sendApplicationRejectionEmail } from '../../../utils/email';
+import type { TutorApplication } from '../../data/types';
 
 export default function TutorApplicationsPage() {
   const { user } = useAuth();
@@ -22,10 +23,10 @@ export default function TutorApplicationsPage() {
   const [applications, setApplications] = useState<TutorApplication[]>([]);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
-  // FIXED: Load applications from localStorage on mount
-  const loadApplications = () => {
-    console.log('🔄 Loading applications from localStorage...');
-    const loadedApplications = getApplications();
+  // FIXED: Load applications from Supabase on mount
+  const loadApplications = async () => {
+    console.log('🔄 Loading applications from database...');
+    const loadedApplications = await getApplications();
     console.log('📊 Loaded applications:', loadedApplications);
     console.log(`✅ Found ${loadedApplications.length} applications`);
     setApplications(loadedApplications);
@@ -103,7 +104,7 @@ export default function TutorApplicationsPage() {
     }
 
     // Update application status in the service
-    updateApplicationStatus(applicationId, 'approved', user.id);
+    await updateApplicationStatus(applicationId, 'approved', user.id);
   };
 
   const handleReject = async (applicationId: string) => {
@@ -130,7 +131,7 @@ export default function TutorApplicationsPage() {
     }
 
     // Update application status in the service
-    updateApplicationStatus(applicationId, 'rejected', user.id);
+    await updateApplicationStatus(applicationId, 'rejected', user.id);
   };
 
   const filteredApplications = applications.filter(app => 

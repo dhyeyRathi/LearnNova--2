@@ -2,6 +2,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router';
 import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { AuthProvider } from '../context/AuthContext';
+import { DataProvider } from '../context/DataContext';
 import { Toaster } from '../components/ui/sonner';
 import AIAssistant from '../components/AIAssistant';
 
@@ -56,7 +57,9 @@ function RootContent() {
 export default function Root() {
   return (
     <AuthProvider>
-      <RootContent />
+      <DataProvider>
+        <RootContent />
+      </DataProvider>
     </AuthProvider>
   );
 }

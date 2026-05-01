@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { getBadgeLevel } from '../data/mockData';
+import { useData } from '../context/DataContext';
+
 
 interface PointsPopupProps {
   points: number;
@@ -12,6 +13,7 @@ interface PointsPopupProps {
 }
 
 export default function PointsPopup({ points, totalPoints, show, onClose }: PointsPopupProps) {
+  const { getBadgeLevel } = useData();
   const [leveledUp, setLeveledUp] = useState(false);
   const badge = getBadgeLevel(totalPoints);
   const prevBadge = getBadgeLevel(totalPoints - points);

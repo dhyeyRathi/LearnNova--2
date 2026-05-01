@@ -9,7 +9,9 @@ import { Card } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
-import { enrollments, userProgress, courses, lessons, getBadgeLevel, badges } from '../data/mockData';
+
+import { getUserEnrollments, getUserProgress, getUserCreatedCourses, getCourses, getLessons } from '../../utils/supabase/client';
+import { useEffect } from 'react';
 import {
   User, Mail, Phone, FileText, Camera, Save, BookOpen, Trophy,
   Clock, Target, TrendingUp, Award, Pencil, X, Check, Edit2, AlertCircle
@@ -17,8 +19,10 @@ import {
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '../components/ui/ImageWithFallback';
+import { useData } from '../context/DataContext';
 
 export default function ProfilePage() {
+  const { getBadgeLevel, badges } = useData();
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -26,19 +30,70 @@ export default function ProfilePage() {
   const [editPhone, setEditPhone] = useState(user?.phone || '');
   const [editBio, setEditBio] = useState(user?.bio || '');
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [userEnrollments, setUserEnrollments] = useState<any[]>([]);
+  const [progress, setProgress] = useState<any[]>([]);
+  const [tutoredCourses, setTutoredCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [lessons, setLessons] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    const loadProfileData = async () => {
+      try {
+        setIsLoading(true);
+        if (user.role === 'learner') {
+          const [eData, pData, cData, lData] = await Promise.all([
+            getUserEnrollments(user.id),
+            getUserProgress(user.id),
+            getCourses(),
+            getLessons()
+          ]);
+          setUserEnrollments(eData.map((e: any) => ({...e, completed: e.is_completed})));
+          setProgress(pData);
+          setCourses(cData);
+          setLessons(lData);
+        } else if (user.role === 'tutor') {
+          const tData = await getUserCreatedCourses(user.id);
+          setTutoredCourses(tData);
+        } else {
+          // Admin
+          const [cData, lData] = await Promise.all([
+            getCourses(),
+            getLessons()
+          ]);
+          setCourses(cData);
+          setLessons(lData);
+        }
+      } catch (err) {
+        console.error('Failed to load profile data', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadProfileData();
+  }, [user]);
+
   if (!user) {
     navigate('/login');
     return null;
   }
 
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex-1 overflow-auto p-8 max-w-7xl mx-auto flex items-center justify-center min-h-[50vh]">
+          <p className="text-lg text-slate-500 animate-pulse">Loading profile...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const badge = getBadgeLevel(user.points);
-  const userEnrollments = enrollments.filter(e => e.userId === user.id);
-  const completedCourses = userEnrollments.filter(e => e.completed).length;
+  const completedCourses = userEnrollments.filter((e: any) => e.completed).length;
   const totalEnrolled = userEnrollments.length;
-  const progress = userProgress.filter(p => p.userId === user.id);
-  const totalLessonsCompleted = progress.reduce((acc, p) => acc + p.completedLessons.length, 0);
-  const totalTimeSpent = progress.reduce((acc, p) => acc + p.timeSpent, 0);
-  const tutoredCourses = courses.filter(c => c.instructorId === user.id);
+  const totalLessonsCompleted = progress.reduce((acc, p) => acc + (p.completedLessons?.length || 0), 0);
+  const totalTimeSpent = progress.reduce((acc, p) => acc + (p.timeSpent || 0), 0);
 
   // Next badge
   const currentBadgeIndex = badges.findIndex(b => b.level === badge.level);
@@ -104,9 +159,9 @@ export default function ProfilePage() {
     { icon: Clock, label: 'Time Spent', value: formatTime(totalTimeSpent) },
   ] : user.role === 'tutor' ? [
     { icon: BookOpen, label: 'Courses Created', value: tutoredCourses.length },
-    { icon: Target, label: 'Published', value: tutoredCourses.filter(c => c.published).length },
-    { icon: TrendingUp, label: 'Total Views', value: tutoredCourses.reduce((a, c) => a + c.views, 0) },
-    { icon: Clock, label: 'Total Hours', value: tutoredCourses.reduce((a, c) => a + parseInt(c.duration), 0) + 'h' },
+    { icon: Target, label: 'Published', value: tutoredCourses.filter((c: any) => c.is_published).length },
+    { icon: TrendingUp, label: 'Total Views', value: tutoredCourses.reduce((a: any, c: any) => a + (c.views || 0), 0) },
+    { icon: Clock, label: 'Total Hours', value: tutoredCourses.reduce((a: any, c: any) => a + parseInt(c.duration || '0'), 0) + 'h' },
   ] : [
     { icon: BookOpen, label: 'Total Courses', value: courses.length },
     { icon: Target, label: 'Total Lessons', value: lessons.length },
@@ -351,11 +406,11 @@ export default function ProfilePage() {
                   <Badge className="ml-auto bg-indigo-100 text-indigo-700">{userEnrollments.length}</Badge>
                 </div>
                 <div className="space-y-3">
-                  {userEnrollments.map(enrollment => {
-                    const course = courses.find(c => c.id === enrollment.courseId);
+                  {userEnrollments.map((enrollment: any) => {
+                    const course = courses.find((c: any) => c.id === enrollment.course_id || c.id === enrollment.courseId);
                     if (!course) return null;
-                    const prog = progress.find(p => p.courseId === course.id);
-                    const lessonCount = lessons.filter(l => l.courseId === course.id).length;
+                    const prog = progress.find((p: any) => p.courseId === course.id);
+                    const lessonCount = lessons.filter((l: any) => l.courseId === course.id).length;
                     const pct = prog && lessonCount > 0 ? Math.round((prog.completedLessons.length / lessonCount) * 100) : 0;
                     return (
                       <motion.div 
@@ -364,7 +419,7 @@ export default function ProfilePage() {
                         className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 hover:shadow-md transition-all cursor-pointer border border-gray-200" 
                         onClick={() => navigate(`/course/${course.id}`)}
                       >
-                        <img src={course.coverImage} alt={course.title} className="w-14 h-10 rounded-lg object-cover flex-shrink-0 shadow-sm" />
+                        <img src={course.cover_image || course.coverImage} alt={course.title} className="w-14 h-10 rounded-lg object-cover flex-shrink-0 shadow-sm" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">{course.title}</p>
                           <div className="flex items-center gap-2 mt-2">
@@ -407,13 +462,13 @@ export default function ProfilePage() {
                       className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 hover:shadow-md transition-all cursor-pointer border border-gray-200" 
                       onClick={() => navigate(`/admin/courses/${course.id}/edit`)}
                     >
-                      <img src={course.coverImage} alt={course.title} className="w-14 h-10 rounded-lg object-cover flex-shrink-0 shadow-sm" />
+                      <img src={course.cover_image || course.coverImage} alt={course.title} className="w-14 h-10 rounded-lg object-cover flex-shrink-0 shadow-sm" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-900 truncate">{course.title}</p>
                         <p className="text-xs text-gray-600 mt-1">{course.views} views · {course.duration}</p>
                       </div>
-                      <Badge className={`rounded-lg font-semibold ${course.published ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-700'}`}>
-                        {course.published ? 'Published' : 'Draft'}
+                      <Badge className={`rounded-lg font-semibold ${course.is_published ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-700'}`}>
+                        {course.is_published ? 'Published' : 'Draft'}
                       </Badge>
                     </motion.div>
                   ))}

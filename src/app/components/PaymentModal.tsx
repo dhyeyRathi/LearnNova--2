@@ -422,7 +422,7 @@ export default function PaymentModal({ isOpen, onClose, courseId, courseTitle, p
             {/* Footer */}
             <div className="border-t border-white/10 bg-white/5 px-6 py-3 flex items-center justify-center text-xs text-white/50">
               <Lock className="w-3 h-3 mr-2" />
-              Secured by mock payment gateway
+              Secured by LearnNova payments
             </div>
           </motion.div>
         </motion.div>

@@ -2,11 +2,13 @@ import { Link, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/button';
 import { BookOpen, LayoutDashboard, Zap, HelpCircle, Settings, Crown, Trophy, Video, ChevronLeft, ChevronRight, UsersRound, User, FileText, Bot } from 'lucide-react';
-import { getBadgeLevel } from '../data/mockData';
+
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
+import { useData } from '../context/DataContext';
 
 export default function Sidebar() {
+  const { getBadgeLevel } = useData();
   const { user } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);

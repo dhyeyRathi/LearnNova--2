@@ -1,0 +1,41 @@
+LearnNova Project Summary (End-to-End)
+
+Overview:
+LearnNova is a complete online learning platform (like a digital school) where students can take courses, track their progress, and test their skills. What makes LearnNova special is its use of Artificial Intelligence (AI) to act as a personal tutor and a job interview coach.
+
+Technology Used (The Building Blocks):
+- The User Interface (What you see): Built with React and styled beautifully to work on any screen size.
+- The Brain and Storage: Uses Supabase to safely store user accounts, course data, and handle user log-ins.
+- The Smart AI: Powered by Google Gemini AI, which runs all the intelligent chatting and feedback features.
+
+Key Features of the Platform:
+
+1. Courses and Learning Spaces:
+- Students can browse different courses, view the details, and enroll in them.
+- A "Lesson Player" lets students go through course materials step by step.
+- There are "Quizzes" to test knowledge, and a "Leaderboard" with points to make learning fun and rewarding.
+- Special areas for Teachers and Admins to manage the courses and track student progress.
+
+2. Nova: The AI Personal Tutor:
+- A smart chat assistant available throughout the platform.
+- Nova can answer student questions, summarize entire courses, and suggest what lesson to study next.
+- After a student finishes a quiz, Nova instantly gives warm, personalized feedback on what they got wrong and how they can improve.
+
+3. The AI Mock Interviewer:
+- A dedicated feature where students can practice real job interviews.
+- Users can upload their Resume as a PDF. The AI reads it, understands their skills, and tailors the interview questions just for them.
+- The system conducts a 4-part interview: General Logic, Technical Skills, Managerial Scenarios, and Human Resources (HR) fit.
+- It uses voice technology so the AI can speak the questions out loud, and users can practice speaking their answers back.
+- At the end, it scores the interview and gives structured advice on how to perform better in real life.
+
+Data Map & Organization (How Information is Stored):
+To keep everything running smoothly, LearnNova organizes its information into the following main data buckets:
+
+- Users table: Holds student, teacher, and admin profiles (including names, account roles, earned points, and current badges).
+- Courses & Lessons table: Stores the details of every class offered, category info, videos, and reading materials inside each course.
+- Enrollments & Progress table: Acts as a digital record book linking a student to a course to precisely track what percentage they have finished, and what lessons they have completed.
+- Quizzes & Attempts table: Contains all the test questions, scoring rules, and time limits. It also saves every student's graded attempt so they can review their past quiz scores.
+- Social & Achievements table: Stores discussion threads, student reviews, certificates earned, and badges unlocked by leveling up.
+
+Summary:
+In short, LearnNova is an all-in-one educational website. It handles everything from logging in and viewing courses to actually studying the content. Above all, it acts as a very smart companion that ensures students are truly understanding the material and getting fully prepared to land a job.

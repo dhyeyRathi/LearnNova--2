@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import PointsPopup from '../components/PointsPopup';
@@ -9,14 +9,16 @@ import { ScrollArea } from '../components/ui/scroll-area';
 import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
-import { courses, lessons, quizzes, userProgress, users } from '../data/mockData';
-import { X, ChevronLeft, ChevronRight, Menu, CheckCircle, Circle, FileText, Video, Image as ImageIcon, HelpCircle, LogOut, User, Trophy, Minimize2, Paperclip, ArrowLeft } from 'lucide-react';
+
+import { X, ChevronLeft, ChevronRight, Menu, CheckCircle, Circle, FileText, Video, Image as ImageIcon, HelpCircle, LogOut, User, Trophy, Minimize2, Paperclip, ArrowLeft, Loader2, Sparkles, Send, Bot, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+import { getCourse, getLessonsByCourse, getUserProgress, updateLessonProgress, getQuizzesByCourse, submitQuizAttempt, type Course, type Lesson } from '../../utils/supabase/client';
+import { toolAwareChatResponse } from '../../utils/novaAgent';
 
 export default function LessonPlayerPage() {
   const { courseId, lessonId } = useParams();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -37,11 +39,20 @@ export default function LessonPlayerPage() {
     is_correct: boolean;
   }>>([]);
 
-  const course = courses.find(c => c.id === courseId);
-  const lesson = lessons.find(l => l.id === lessonId);
-  const courseLessons = lessons.filter(l => l.courseId === courseId).sort((a, b) => a.order - b.order);
-  const quiz = lesson?.type === 'quiz' ? quizzes.find(q => q.id === lesson.content) : null;
-  const progress = user ? userProgress.find(p => p.userId === user.id && p.courseId === courseId) : null;
+  const [course, setCourse] = useState<Course | null>(null);
+  const [courseLessons, setCourseLessons] = useState<Lesson[]>([]);
+  const [quiz, setQuiz] = useState<any>(null);
+  const [progress, setProgress] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [completing, setCompleting] = useState(false);
+
+  // Inline Nova chat state
+  const [novaOpen, setNovaOpen] = useState(false);
+  const [novaMessages, setNovaMessages] = useState<Array<{id: string; role: 'user'|'assistant'; content: string}>>([]);
+  const [novaInput, setNovaInput] = useState('');
+  const [novaLoading, setNovaLoading] = useState(false);
+  const novaEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Redirect admins to dashboard
@@ -54,39 +65,168 @@ export default function LessonPlayerPage() {
       navigate('/login');
       return;
     }
-    if (!course || !lesson) {
-      navigate('/courses');
+
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        if (!courseId) return;
+        
+        const [courseData, lessonsData, progressData, quizzesData] = await Promise.all([
+          getCourse(courseId),
+          getLessonsByCourse(courseId),
+          getUserProgress(user.id),
+          getQuizzesByCourse(courseId)
+        ]);
+
+        setCourse(courseData);
+        const normalizedLessons = lessonsData ? lessonsData.map(l => ({...l, type: l.type ? l.type.toLowerCase() : 'video'})) : [];
+        setCourseLessons(normalizedLessons);
+        
+        const currentProgress = progressData.find((p: any) => p.courseId === courseId);
+        if (currentProgress) {
+          setProgress(currentProgress);
+        }
+
+        if (lessonId && normalizedLessons.length > 0) {
+          const currentLesson = normalizedLessons.find(l => l.id === lessonId);
+          setLesson(currentLesson || null);
+
+          if (currentLesson?.type === 'quiz' && currentLesson.content) {
+            const currentQuiz = quizzesData.find((q: any) => q.id === currentLesson.content);
+            setQuiz(currentQuiz || null);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading lesson player data:', error);
+        toast.error('Failed to load lesson data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [courseId, lessonId, user, navigate]);
+
+  // Hide global AI floater on lesson page
+  useEffect(() => {
+    const aiAssistant = document.querySelector('[data-ai-assistant]') as HTMLElement;
+    if (aiAssistant) {
+      aiAssistant.style.display = 'none';
     }
-  }, [user, course, lesson, navigate]);
+    return () => {
+      if (aiAssistant) {
+        aiAssistant.style.display = '';
+      }
+    };
+  }, []);
+
+  // Scroll nova chat to bottom
+  useEffect(() => {
+    novaEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [novaMessages, novaLoading]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="mr-4">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div className="h-4 w-48 bg-slate-200 rounded animate-pulse"></div>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex items-center text-purple-600 font-medium">
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Loading lesson...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!course || !lesson || !user) return null;
 
   const currentLessonIndex = courseLessons.findIndex(l => l.id === lessonId);
   const nextLesson = courseLessons[currentLessonIndex + 1];
   const prevLesson = courseLessons[currentLessonIndex - 1];
-  const isCompleted = progress?.completedLessons.includes(lessonId || '');
+  const isCompleted = progress?.completedLessons?.includes(lessonId || '') || false;
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const handleComplete = () => {
-    if (!isCompleted) {
-      // Award base points for lesson completion
-      const points = lesson.type === 'quiz' ? 0 : 10; // Quizzes award points per question
-      if (points > 0) {
-        const updatedUser = { ...user, points: user.points + points };
-        users.find(u => u.id === user.id)!.points = updatedUser.points;
-        setEarnedPoints(points);
-        setShowPointsPopup(true);
+  const handleComplete = async () => {
+    setCompleting(true);
+    try {
+      if (!isCompleted && courseId && lessonId) {
+        console.log('📝 Marking lesson as complete:', { userId: user.id, courseId, lessonId });
+        
+        // Record progress in Supabase
+        const result = await updateLessonProgress(user.id, courseId, lessonId);
+        console.log('✅ Progress updated in Supabase:', result);
+        
+        // Award base points for lesson completion
+        const points = lesson.type === 'quiz' ? 0 : 10;
+        if (points > 0) {
+          // Persist points to database
+          try {
+            await updateUser({ points: (user.points || 0) + points });
+          } catch (e) { console.error('Failed to persist points:', e); }
+          setEarnedPoints(points);
+          setShowPointsPopup(true);
+        }
+        toast.success('Lesson completed!');
+        
+        // Update local progress state to reflect completion instantly
+        const newCompletedLessons = [...(progress?.completedLessons || []), lessonId];
+        setProgress({
+          userId: user.id,
+          courseId: courseId,
+          completedLessons: newCompletedLessons,
+          timeSpent: progress?.timeSpent || 0,
+          lastAccessed: new Date().toISOString()
+        });
+        console.log('📊 Local progress updated:', newCompletedLessons);
       }
-      toast.success('Lesson completed!');
+      
+      if (nextLesson) {
+        navigate(`/lesson/${courseId}/${nextLesson.id}`);
+      } else {
+        navigate(`/course/${courseId}`);
+      }
+    } catch (error) {
+      console.error('❌ Error completing lesson:', error);
+      toast.error('Failed to mark lesson as complete');
+    } finally {
+      setCompleting(false);
     }
-    if (nextLesson) {
-      navigate(`/lesson/${courseId}/${nextLesson.id}`);
-    } else {
-      navigate(`/course/${courseId}`);
+  };
+
+  const handleNovaSend = async (text?: string) => {
+    const msg = text || novaInput.trim();
+    if (!msg || novaLoading) return;
+
+    const userMsg = { id: Date.now().toString(), role: 'user' as const, content: msg };
+    setNovaMessages(prev => [...prev, userMsg]);
+    setNovaInput('');
+    setNovaLoading(true);
+
+    try {
+      // Add lesson context to the prompt
+      const contextualPrompt = `[Context: The user is currently viewing the lesson "${lesson.title}" (${lesson.type}) in the course "${course.title}". Lesson description: ${lesson.description || 'N/A'}]\n\nUser question: ${msg}`;
+      const response = await toolAwareChatResponse(contextualPrompt, user);
+      const aiMsg = { id: (Date.now() + 1).toString(), role: 'assistant' as const, content: response };
+      setNovaMessages(prev => [...prev, aiMsg]);
+    } catch (error) {
+      console.error('Nova error:', error);
+      const errorMsg = { id: (Date.now() + 1).toString(), role: 'assistant' as const, content: "Sorry, I couldn't process that right now. Please try again! 💙" };
+      setNovaMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setNovaLoading(false);
     }
   };
 
@@ -118,8 +258,8 @@ export default function LessonPlayerPage() {
     if (isCorrect) {
       // Calculate points based on attempts
       const points = Math.max(question.basePoints - ((attempts - 1) * question.pointsPerAttempt), 1);
-      const updatedUser = { ...user, points: user.points + points };
-      users.find(u => u.id === user.id)!.points = updatedUser.points;
+      
+      // Update score in local state
       setEarnedPoints(points);
       setQuizScore(prev => prev + points);
       setShowPointsPopup(true);
@@ -129,7 +269,7 @@ export default function LessonPlayerPage() {
     }
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (currentQuestionIndex < quiz!.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setShowAnswer(false);
@@ -137,6 +277,15 @@ export default function LessonPlayerPage() {
       setQuizCompleted(true);
       // Auto-show feedback modal after brief delay
       setTimeout(() => setShowFeedbackModal(true), 500);
+      
+      // Submit the quiz attempt to Supabase
+      try {
+        if (quiz?.id) {
+          await submitQuizAttempt(user.id, quiz.id, quizScore, quizScore); // Points earned same as score here
+        }
+      } catch (error) {
+        console.error('Error saving quiz attempt:', error);
+      }
     }
   };
 
@@ -286,8 +435,10 @@ export default function LessonPlayerPage() {
                 </p>
                 <div className="flex gap-4 justify-center">
                   {nextLesson ? (
-                    <Button onClick={() => { handleComplete(); }} className="bg-purple-600 text-white rounded-xl px-8 h-12">
-                      Next Lesson <ChevronRight className="w-4 h-4 ml-2" />
+                    <Button onClick={() => { handleComplete(); }} disabled={completing} className="bg-purple-600 text-white rounded-xl px-8 h-12">
+                      {completing ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
+                      {completing ? 'Completing...' : (nextLesson ? 'Next Lesson' : 'Finish Course')}
+                      {!completing && <ChevronRight className="w-5 h-5 ml-2" />}
                     </Button>
                   ) : (
                     <Button onClick={() => navigate(`/course/${courseId}`)} className="bg-purple-600 text-white rounded-xl px-8 h-12">
@@ -544,8 +695,7 @@ export default function LessonPlayerPage() {
               <div className="p-4 border-t border-slate-700/50">
                 <Button
                   onClick={() => navigate('/my-courses')}
-                  variant="outline"
-                  className="w-full text-slate-300 border-slate-600 hover:bg-slate-800 rounded-xl"
+                  className="w-full bg-gradient-to-r from-purple-600/20 to-violet-600/20 text-purple-300 border border-purple-500/30 hover:from-purple-600/30 hover:to-violet-600/30 hover:text-white rounded-xl h-11 font-medium transition-all"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to My Courses
@@ -562,12 +712,37 @@ export default function LessonPlayerPage() {
               {/* Video Lesson */}
               {lesson.type === 'video' && (
                 <Card className="overflow-hidden bg-slate-800 border-slate-700">
-                  <div className="aspect-video bg-slate-900 flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-slate-400">Video Player</p>
-                      <p className="text-sm text-slate-500 mt-2">{lesson.content}</p>
-                    </div>
+                  <div className="aspect-video bg-black flex items-center justify-center">
+                    <video 
+                      src={lesson.video_url || lesson.content}
+                      controls
+                      className="w-full h-full object-contain"
+                      controlsList="nodownload"
+                      onEnded={async () => {
+                        if (!isCompleted && courseId && lessonId) {
+                          try {
+                            await updateLessonProgress(user.id, courseId, lessonId);
+                            const newCompletedLessons = [...(progress?.completedLessons || []), lessonId];
+                            setProgress({
+                              userId: user.id,
+                              courseId: courseId,
+                              completedLessons: newCompletedLessons,
+                              timeSpent: progress?.timeSpent || 0,
+                              lastAccessed: new Date().toISOString()
+                            });
+                            setEarnedPoints(10);
+                            setShowPointsPopup(true);
+                            // Persist points to database
+                            try {
+                              await updateUser({ points: (user.points || 0) + 10 });
+                            } catch (e) { console.error('Failed to persist points:', e); }
+                            toast.success('Lesson completed! +10 points');
+                          } catch (error) {
+                            console.error('Error auto-completing lesson:', error);
+                          }
+                        }
+                      }}
+                    />
                   </div>
                   <div className="p-6 text-white">
                     <h2 className="text-2xl font-bold mb-2">{lesson.title}</h2>
@@ -599,6 +774,132 @@ export default function LessonPlayerPage() {
                   </div>
                 </Card>
               )}
+
+              {/* Inline Nova Help - shown for all lesson types */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-6"
+              >
+                {!novaOpen ? (
+                  <button
+                    onClick={() => setNovaOpen(true)}
+                    className="w-full p-4 rounded-2xl bg-gradient-to-r from-purple-600/10 to-violet-600/10 border border-purple-500/20 hover:border-purple-500/40 hover:from-purple-600/15 hover:to-violet-600/15 transition-all group flex items-center justify-center gap-3"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/20 group-hover:scale-110 transition-transform">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-white text-sm">Ask Nova for help with this content</p>
+                      <p className="text-xs text-slate-400">Get summaries, explanations, and answers about this lesson</p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                ) : (
+                  <Card className="overflow-hidden bg-slate-800 border-slate-700 rounded-2xl">
+                    {/* Nova Header */}
+                    <div className="flex items-center justify-between px-5 py-3 bg-purple-600">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+                          <Sparkles className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-sm text-white leading-tight">Nova AI</h3>
+                          <p className="text-[10px] text-white/50">Lesson Assistant</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setNovaOpen(false)} className="w-7 h-7 rounded-lg hover:bg-white/15 flex items-center justify-center transition-colors text-white">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="px-4 py-3 border-b border-slate-700/50 flex gap-2 overflow-x-auto">
+                      {[
+                        { label: '📝 Summarize this lesson', prompt: `Summarize the lesson titled "${lesson.title}". Description: ${lesson.description || 'No description'}. This is a ${lesson.type} lesson from the course "${course.title}".` },
+                        { label: '🔑 Key takeaways', prompt: `What are the key takeaways from the lesson "${lesson.title}" in the course "${course.title}"? Description: ${lesson.description || 'No description'}.` },
+                        { label: '❓ Quiz me', prompt: `Generate 3 quick quiz questions based on the lesson "${lesson.title}" from course "${course.title}". Description: ${lesson.description || 'No description'}. Format each as a question with 4 options and indicate the correct answer.` },
+                      ].map(action => (
+                        <button
+                          key={action.label}
+                          onClick={() => handleNovaSend(action.prompt)}
+                          disabled={novaLoading}
+                          className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-purple-300 bg-purple-600/10 hover:bg-purple-600/20 rounded-lg border border-purple-500/20 transition-colors whitespace-nowrap disabled:opacity-50"
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Messages */}
+                    {novaMessages.length > 0 && (
+                      <div className="max-h-80 overflow-y-auto px-4 py-4 space-y-3">
+                        {novaMessages.map(msg => (
+                          <motion.div
+                            key={msg.id}
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                          >
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                              msg.role === 'assistant' ? 'bg-purple-600 text-white' : 'bg-slate-600 text-purple-300'
+                            }`}>
+                              {msg.role === 'assistant' ? <Bot className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                            </div>
+                            <div className={`max-w-[80%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                              msg.role === 'assistant'
+                                ? 'bg-slate-700 text-slate-200 border border-slate-600'
+                                : 'bg-purple-600 text-white'
+                            }`}>
+                              <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
+                            </div>
+                          </motion.div>
+                        ))}
+                        {novaLoading && (
+                          <div className="flex gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center flex-shrink-0">
+                              <Bot className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="bg-slate-700 border border-slate-600 rounded-xl px-4 py-3">
+                              <div className="flex gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <span className="w-2 h-2 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <span className="w-2 h-2 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <div ref={novaEndRef} />
+                      </div>
+                    )}
+
+                    {/* Input */}
+                    <div className="px-4 py-3 border-t border-slate-700/50">
+                      <form
+                        onSubmit={(e) => { e.preventDefault(); handleNovaSend(); }}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          type="text"
+                          value={novaInput}
+                          onChange={(e) => setNovaInput(e.target.value)}
+                          placeholder="Ask about this lesson..."
+                          className="flex-1 h-10 px-3.5 rounded-xl bg-slate-700 border border-slate-600 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500 transition-all"
+                        />
+                        <Button
+                          type="submit"
+                          size="icon"
+                          disabled={!novaInput.trim() || novaLoading}
+                          className="h-10 w-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0 shadow-sm disabled:opacity-40"
+                        >
+                          {novaLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        </Button>
+                      </form>
+                    </div>
+                  </Card>
+                )}
+              </motion.div>
 
               {/* Document Lesson */}
               {lesson.type === 'document' && (
@@ -740,24 +1041,38 @@ export default function LessonPlayerPage() {
 
           {/* Navigation Footer */}
           {lesson.type !== 'quiz' && (
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-4 border-t border-slate-700">
-              <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-3 border-t border-slate-700">
+              <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
                 <Button
                   onClick={() => prevLesson && navigate(`/lesson/${courseId}/${prevLesson.id}`)}
                   disabled={!prevLesson}
                   variant="outline"
-                  className="text-white border-slate-600 hover:bg-slate-700"
+                  className="text-white border-slate-600 hover:bg-slate-700 h-10 rounded-xl px-5 text-sm font-medium"
                 >
-                  <ChevronLeft className="mr-2 w-4 h-4" />
+                  <ChevronLeft className="mr-1.5 w-4 h-4" />
                   Previous
                 </Button>
-                <Button
-                  onClick={handleComplete}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  {nextLesson ? 'Next Lesson' : 'Complete Course'}
-                  <ChevronRight className="ml-2 w-4 h-4" />
-                </Button>
+                <div className="text-xs text-slate-400">
+                  {isCompleted && <span className="text-emerald-400 flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Completed</span>}
+                  {!isCompleted && <span>Watch to complete</span>}
+                </div>
+                {nextLesson ? (
+                  <Button
+                    onClick={() => navigate(`/lesson/${courseId}/${nextLesson.id}`)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white h-10 rounded-xl px-5 text-sm font-medium"
+                  >
+                    Next Lesson
+                    <ChevronRight className="ml-1.5 w-4 h-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => navigate(`/course/${courseId}`)}
+                    variant="outline"
+                    className="text-white border-slate-600 hover:bg-slate-700 h-10 rounded-xl px-5 text-sm font-medium"
+                  >
+                    Back to Course
+                  </Button>
+                )}
               </div>
             </div>
           )}

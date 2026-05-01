@@ -12,7 +12,7 @@ import { motion } from 'motion/react';
 import { GraduationCap, ArrowLeft, Upload, CheckCircle2, Sparkles, Rocket, User, Briefcase, FileText, Camera, Crown } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
-import { submitApplication, checkDuplicateApplication, getRecentRejectionReason } from '../services/applicationsService';
+import { submitApplication, checkDuplicateApplication } from '../services/applicationsService';
 import DashboardLayout from '../components/DashboardLayout';
 
 export default function TutorApplicationPage() {
@@ -73,50 +73,52 @@ export default function TutorApplicationPage() {
     { number: 3, title: 'Documents', icon: FileText },
   ];
 
-  const handleSubmit = useCallback(() => {
-    // Save to applications service so admin sees it
-    const result = submitApplication({
-      userId: user?.id || `applicant-${Date.now()}`,
-      userName: form.fullName,
-      userEmail: form.email,
-      userAvatar: user?.avatar,
-      status: 'pending',
-      submittedAt: new Date().toISOString().split('T')[0],
-      message: `Expertise: ${form.expertise} | ${form.yearsExperience} years experience\n\n${form.motivation}\n\nBio: ${form.bio}`,
-    });
-
-    // Handle submission result
-    if (result === null) {
-      // Check if duplicate or recently rejected
-      const existingApp = checkDuplicateApplication(form.email);
-      if (existingApp) {
+  const handleSubmit = useCallback(async () => {
+    try {
+      const isDuplicate = await checkDuplicateApplication(form.email);
+      if (isDuplicate) {
         toast.error('Application Already Submitted', {
-          description: `You already have an application submitted on ${existingApp.submittedAt}. Please wait for the admin to review it.`
+          description: `You already have an application submitted. Please wait for the admin to review it.`
         });
         return;
       }
 
-      const recentRejection = getRecentRejectionReason(form.email);
-      if (recentRejection) {
-        toast.error('Cannot Reapply Yet', {
-          description: 'Your previous application was rejected. Please wait 30 days before reapplying.'
+      // Save to applications service so admin sees it
+      const success = await submitApplication({
+        userId: user?.id || `applicant-${Date.now()}`,
+        userName: form.fullName,
+        userEmail: form.email,
+        userAvatar: user?.avatar,
+        status: 'pending',
+        submittedAt: new Date().toISOString().split('T')[0],
+        message: `Expertise: ${form.expertise} | ${form.yearsExperience} years experience\n\n${form.motivation}\n\nBio: ${form.bio}`,
+      });
+
+      if (!success) {
+        toast.error('Failed to submit application', {
+          description: 'An error occurred while submitting your application. Please try again.'
         });
         return;
       }
+
+      // Confetti
+      const duration = 3000;
+      const end = Date.now() + duration;
+      const frame = () => {
+        confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#6366f1', '#8b5cf6', '#ec4899'] });
+        confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#6366f1', '#8b5cf6', '#ec4899'] });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      };
+      frame();
+
+      setIsSubmitted(true);
+      toast.success('Application Submitted! ✨');
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast.error('Submission Failed', {
+        description: 'An unexpected error occurred. Please try again later.'
+      });
     }
-
-    // Confetti
-    const duration = 3000;
-    const end = Date.now() + duration;
-    const frame = () => {
-      confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#6366f1', '#8b5cf6', '#ec4899'] });
-      confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#6366f1', '#8b5cf6', '#ec4899'] });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    };
-    frame();
-
-    setIsSubmitted(true);
-    toast.success('Application Submitted! ✨');
   }, [user, form]);
 
   const handleFileUpload = useCallback((field: 'idDocument' | 'teachingCert' | 'selfie', file: File) => {

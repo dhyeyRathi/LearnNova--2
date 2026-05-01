@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import DashboardLayout from '../components/DashboardLayout';
 import BackButton from '../components/BackButton';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { quizzes, courses, lessons } from '../data/mockData';
+import { getQuizzes, getLessons, getCourses, submitQuizAttempt } from '../../utils/supabase/client';
 import { HelpCircle, Clock, Trophy, X, CheckCircle, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -37,27 +37,58 @@ export default function QuizzesPage() {
   const [quizAnswers, setQuizAnswers] = useState<QuizAnswer[]>([]);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   
-  // Load quizzes from localStorage or fall back to mock data
-  const allQuizzes = (() => {
-    try {
-      const saved = localStorage.getItem('quizzesList');
-      if (saved) {
-        return [...quizzes, ...JSON.parse(saved)];
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [lessons, setLessons] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const [qData, cData, lData] = await Promise.all([
+          getQuizzes(),
+          getCourses(),
+          getLessons()
+        ]);
+        
+        // Load custom quizzes from localStorage
+        const saved = localStorage.getItem('quizzesList');
+        if (saved) {
+          setQuizzes([...qData, ...JSON.parse(saved)]);
+        } else {
+          setQuizzes(qData);
+        }
+        
+        setCourses(cData);
+        setLessons(lData);
+      } catch (error) {
+        console.error("Failed to load quizzes", error);
+      } finally {
+        setIsLoading(false);
       }
-      return quizzes;
-    } catch {
-      return quizzes;
-    }
-  })();
+    };
+    loadData();
+  }, []);
 
   if (!user) {
     navigate('/login');
     return null;
   }
 
-  const quizData = allQuizzes.map(quiz => {
-    const lesson = lessons.find(l => l.content === quiz.id);
-    const course = lesson ? courses.find(c => c.id === lesson.courseId) : null;
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex-1 overflow-auto p-8 max-w-7xl mx-auto flex items-center justify-center min-h-[50vh]">
+          <p className="text-lg text-slate-500 animate-pulse">Loading quizzes...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const quizData = quizzes.map(quiz => {
+    const lesson = lessons.find((l: any) => l.content === quiz.id);
+    const course = lesson ? courses.find((c: any) => c.id === lesson.courseId) : null;
     return { ...quiz, courseName: course?.title || 'General', lessonTitle: lesson?.title || quiz.title };
   });
 
@@ -83,7 +114,7 @@ export default function QuizzesPage() {
     setSelectedAnswer(answerIndex);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (selectedAnswer === null) return;
 
     const question = currentQuiz!.questions[currentQuestion];
@@ -97,9 +128,11 @@ export default function QuizzesPage() {
       is_correct: isCorrect,
     }]);
 
+    let newScore = score;
     // Update score if correct
     if (isCorrect) {
-      setScore(prev => prev + question.basePoints);
+      newScore = score + question.basePoints;
+      setScore(newScore);
     }
 
     // Move to next question or show results
@@ -109,8 +142,16 @@ export default function QuizzesPage() {
     } else {
       setShowResult(true);
       setShowFeedbackModal(true);
-      const finalScore = isCorrect ? score + question.basePoints : score;
-      toast.success(`Quiz complete! Score: ${finalScore}/${currentQuiz!.questions.length * 10}`);
+      toast.success(`Quiz complete! Score: ${newScore}/${currentQuiz!.questions.length * 10}`);
+      
+      // Submit attempt
+      if (user) {
+        try {
+          await submitQuizAttempt(user.id, currentQuiz!.id, newScore, newScore);
+        } catch (err) {
+          console.error("Failed to save quiz attempt", err);
+        }
+      }
     }
   };
 

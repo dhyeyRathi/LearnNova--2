@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -8,27 +8,38 @@ import { Input } from '../../components/ui/input';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Checkbox } from '../../components/ui/checkbox';
-import { quizzes, courses, lessons } from '../../data/mockData';
+
 import { Plus, Trash2, Check, Edit, Search, Crown, Copy, MoreVertical, BookOpen, Clock, Users, ArrowRight, X, Upload, HelpCircle, Trophy } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+import { useData } from '../../context/DataContext';
+import { deleteQuiz as deleteQuizFromDB } from '../../../utils/supabase/client';
 
 export default function AdminQuizzesPage() {
+  const { quizzes: allQuizzes, courses, lessons, refreshData, isLoading } = useData();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [allQuizzes, setAllQuizzes] = useState(() => {
-    try {
-      const saved = localStorage.getItem('quizzesList');
-      if (saved) {
-        return [...quizzes, ...JSON.parse(saved)];
-      }
-      return quizzes;
-    } catch {
-      return quizzes;
-    }
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Force refresh data on mount
+  useEffect(() => {
+    console.log('🔄 AdminQuizzesPage mounted, refreshing data...');
+    refreshData().then(() => {
+      // After refresh, log the actual data received
+      setTimeout(() => {
+        console.log('✅ Data refresh complete');
+      }, 100);
+    });
+  }, [refreshData]);
+
+  console.log('🎯 AdminQuizzesPage data:', {
+    allQuizzes: allQuizzes?.length,
+    courses: courses?.length,
+    lessons: lessons?.length,
+    isLoading,
   });
 
   if (!user || (user.role !== 'admin' && user.role !== 'tutor')) {
@@ -42,6 +53,45 @@ export default function AdminQuizzesPage() {
       </div>
     );
   }
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <p className="text-slate-500 animate-pulse">Loading quizzes...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Tutors can only see courses they authored; admins see all
+  const ownedCourseIds = user.role === 'admin'
+    ? (courses || []).map(c => c.id)
+    : (courses || []).filter(c => c.instructorId === user.id).map(c => c.id);
+
+  console.log('🔐 Admin check:', {
+    userRole: user.role,
+    isAdmin: user.role === 'admin',
+    ownedCourseIds,
+  });
+
+  // Filter quizzes: only those linked to owned courses (via lessons)
+  const visibleQuizzes = (allQuizzes || []).filter(q => {
+    const linkedLesson = (lessons || []).find(l => l.type === 'quiz' && l.content === q.id);
+    const isVisible = !linkedLesson ? user.role === 'admin' : ownedCourseIds.includes(linkedLesson.courseId);
+    if ((allQuizzes || []).length > 0) {
+      console.log('🔍 Quiz filter:', { quizId: q.id, title: q.title, linkedLesson: linkedLesson?.id, isVisible });
+    }
+    return isVisible;
+  });
+
+  console.log('📋 Filtered quizzes:', {
+    total: allQuizzes?.length,
+    visible: visibleQuizzes.length,
+    visibleQuizzes: visibleQuizzes.map(q => ({ id: q.id, title: q.title })),
+  });
 
   // Get course name for a quiz
   const getCourseForQuiz = (quizId: string) => {
@@ -58,7 +108,7 @@ export default function AdminQuizzesPage() {
     return quiz?.questions.length || 0;
   };
 
-  const filteredQuizzes = allQuizzes.filter(q => {
+  const filteredQuizzes = visibleQuizzes.filter(q => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return q.title.toLowerCase().includes(query) || getCourseForQuiz(q.id).toLowerCase().includes(query);
@@ -72,17 +122,20 @@ export default function AdminQuizzesPage() {
     navigate(`/admin/quiz-builder?quizId=${quizId}`);
   };
 
-  const handleDeleteQuiz = (quizId: string) => {
+  const handleDeleteQuiz = async (quizId: string) => {
     if (deleteConfirm === quizId) {
-      setAllQuizzes(allQuizzes.filter(q => q.id !== quizId));
+      setIsDeleting(true);
       try {
-        const userQuizzes = allQuizzes.filter(q => q.id !== quizId && q.id.startsWith('quiz-'));
-        localStorage.setItem('quizzesList', JSON.stringify(userQuizzes));
+        await deleteQuizFromDB(quizId);
+        toast.success('Quiz deleted successfully');
+        await refreshData();
       } catch (error) {
         console.error('Error deleting quiz:', error);
+        toast.error('Failed to delete quiz');
+      } finally {
+        setIsDeleting(false);
+        setDeleteConfirm(null);
       }
-      toast.success('Quiz deleted successfully');
-      setDeleteConfirm(null);
     } else {
       setDeleteConfirm(quizId);
       setTimeout(() => setDeleteConfirm(null), 3000);
@@ -90,49 +143,12 @@ export default function AdminQuizzesPage() {
   };
 
   const handleDuplicateQuiz = (quizId: string) => {
-    const quiz = allQuizzes.find(q => q.id === quizId);
-    if (!quiz) return;
-    
-    const duplicate = {
-      ...quiz,
-      id: `quiz-${Date.now()}`,
-      title: `${quiz.title} (Copy)`,
-    };
-    
-    const updated = [...allQuizzes, duplicate];
-    setAllQuizzes(updated);
-    
-    try {
-      const userQuizzes = updated.filter(q => q.id.startsWith('quiz-'));
-      localStorage.setItem('quizzesList', JSON.stringify(userQuizzes));
-    } catch (error) {
-      console.error('Error duplicating quiz:', error);
-    }
-    
-    toast.success('Quiz duplicated!');
+    // Requires full DB implementation for duplicating questions
+    toast.info('Duplication via UI coming soon. Please create a new quiz.');
   };
 
-  const handlePublishQuiz = (quizId: string) => {
-    const updated = allQuizzes.map(q => {
-      if (q.id === quizId) {
-        return { ...q, published: true, publishedAt: new Date().toISOString() };
-      }
-      return q;
-    });
-    
-    setAllQuizzes(updated);
-    
-    try {
-      const userQuizzes = updated.filter(q => q.id.startsWith('quiz-'));
-      localStorage.setItem('quizzesList', JSON.stringify(userQuizzes));
-    } catch (error) {
-      console.error('Error publishing quiz:', error);
-    }
-    
-    const quiz = updated.find(q => q.id === quizId);
-    toast.success('Quiz published! Students will now have access to this quiz.', {
-      description: `${quiz?.studentIds?.length || 0} students notified`,
-    });
+  const handlePublishQuiz = async (quizId: string) => {
+    toast.info('Publishing logic should be implemented in DB directly.');
   };
 
   return (
@@ -167,7 +183,7 @@ export default function AdminQuizzesPage() {
                   <HelpCircle className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-slate-800">{quizzes.length}</p>
+                  <p className="text-3xl font-bold text-slate-800">{visibleQuizzes.length}</p>
                   <p className="text-sm text-slate-500">Total Quizzes</p>
                 </div>
               </div>
@@ -180,7 +196,7 @@ export default function AdminQuizzesPage() {
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-slate-800">{quizzes.reduce((a, q) => a + q.questions.length, 0)}</p>
+                  <p className="text-3xl font-bold text-slate-800">{visibleQuizzes.reduce((a, q) => a + q.questions.length, 0)}</p>
                   <p className="text-sm text-slate-500">Total Questions</p>
                 </div>
               </div>
@@ -193,7 +209,7 @@ export default function AdminQuizzesPage() {
                   <Users className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-slate-800">{new Set(quizzes.map(q => { const l = lessons.find(l => l.type === 'quiz' && l.content === q.id); return l?.courseId; }).filter(Boolean)).size}</p>
+                  <p className="text-3xl font-bold text-slate-800">{new Set(visibleQuizzes.map(q => { const l = lessons.find(l => l.type === 'quiz' && l.content === q.id); return l?.courseId; }).filter(Boolean)).size}</p>
                   <p className="text-sm text-slate-500">Courses with Quizzes</p>
                 </div>
               </div>

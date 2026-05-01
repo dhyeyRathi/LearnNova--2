@@ -13,9 +13,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { Progress } from '../../components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
-import { users, courses, userProgress, lessons } from '../../data/mockData';
+
 import { Search, Users as UsersIcon, BookOpen, TrendingUp, Clock, CheckCircle, Target, Settings2, PlayCircle, Crown, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useData } from '../../context/DataContext';
 
 type StatusFilter = 'all' | 'yet-to-start' | 'in-progress' | 'completed';
 
@@ -32,6 +33,7 @@ const allColumns = [
 ];
 
 export default function ReportingPage() {
+  const { users, courses, userProgress, lessons } = useData();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,28 +79,6 @@ export default function ReportingPage() {
     };
   });
 
-  // Also add learners with no progress (yet to start)
-  const learnersWithProgress = new Set(userProgress.map(p => p.userId));
-  const learnerUsers = users.filter(u => u.role === 'learner');
-  // For learners with no enrollments at all, add mock "yet to start" for a few courses
-  learnerUsers.forEach(learner => {
-    if (!learnersWithProgress.has(learner.id)) {
-      const publishedCourses = courses.filter(c => c.published);
-      if (publishedCourses.length > 0) {
-        enrollmentRows.push({
-          id: `${learner.id}-${publishedCourses[0].id}`,
-          learner,
-          course: publishedCourses[0],
-          enrolledDate: '2026-03-15',
-          startDate: '—',
-          timeSpent: 0,
-          completionPct: 0,
-          completedDate: '—',
-          status: 'Yet to Start',
-        });
-      }
-    }
-  });
 
   const filteredRows = enrollmentRows.filter(row => {
     if (!row.learner || !row.course) return false;

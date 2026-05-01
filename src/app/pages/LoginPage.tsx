@@ -47,8 +47,8 @@ export default function LoginPage() {
         toast.success('Welcome back!');
         setLoginSuccess(true);
       } else {
-        // Check if error is about email not being confirmed
-        if (result.error?.includes('email') || result.error?.toLowerCase().includes('confirm')) {
+        // Check if error is specifically about email not being confirmed
+        if (result.error?.toLowerCase().includes('confirm')) {
           toast.error(result.error || 'Please confirm your email first');
           // Redirect to confirm-email page
           setTimeout(() => navigate('/confirm-email', { state: { email } }), 1000);
@@ -61,7 +61,7 @@ export default function LoginPage() {
       const errorMsg = error?.message || 'An error occurred during login';
       
       // Handle email-not-confirmed error
-      if (errorMsg.includes('email') || errorMsg.toLowerCase().includes('confirm')) {
+      if (errorMsg.toLowerCase().includes('confirm')) {
         toast.error('Please confirm your email first');
         setTimeout(() => navigate('/confirm-email', { state: { email } }), 1000);
       } else {

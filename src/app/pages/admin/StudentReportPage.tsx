@@ -8,14 +8,16 @@ import { Badge } from '../../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Progress } from '../../components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { users, courses, userProgress, lessons, quizzes, getBadgeLevel } from '../../data/mockData';
+
 import {
   ArrowLeft, BookOpen, Clock, CheckCircle, Target, Award, HelpCircle,
   TrendingUp, Calendar, Mail, Crown, BarChart3, Zap, Star, Trophy
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useData } from '../../context/DataContext';
 
 export default function StudentReportPage() {
+  const { users, courses, userProgress, lessons, quizzes, getBadgeLevel } = useData();
   const { studentId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();

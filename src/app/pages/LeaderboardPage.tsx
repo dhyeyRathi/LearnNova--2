@@ -1,20 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import DashboardLayout from '../components/DashboardLayout';
 import BackButton from '../components/BackButton';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
-import { users, getBadgeLevel, enrollments, userProgress } from '../data/mockData';
+
 import { Trophy, Medal, Crown, TrendingUp, Star, BookOpen, Target, ChevronUp, ChevronDown, Minus } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useData } from '../context/DataContext';
+import { supabase } from '../../utils/supabase/client';
 
 export default function LeaderboardPage() {
+  const { users: contextUsers, getBadgeLevel, enrollments, userProgress, isLoading } = useData();
   const { user } = useAuth();
   const [timeFilter, setTimeFilter] = useState<'all' | 'monthly' | 'weekly'>('all');
+  const [localUsers, setLocalUsers] = useState<any[]>([]);
+  const [isLocalLoading, setIsLocalLoading] = useState(true);
 
-  // Get all learners sorted by points
-  const learners = users
-    .filter(u => u.role === 'learner')
+  // Fallback to fetch users directly if Context users is empty
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase.from('users').select('*');
+        if (data) setLocalUsers(data);
+      } catch (err) {
+        console.error('Leaderboard direct fetch error:', err);
+      } finally {
+        setIsLocalLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const effectiveUsers = contextUsers && contextUsers.length > 0 ? contextUsers : localUsers;
+
+  if (isLoading || isLocalLoading) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <BackButton />
+          <div className="flex items-center justify-center min-h-96">
+            <div className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4 border-4 border-purple-600 border-t-transparent rounded-full" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Get all users sorted by points
+  const learners = effectiveUsers
     .map(learner => {
       const badge = getBadgeLevel(learner.points);
       const enrolled = enrollments.filter(e => e.userId === learner.id).length;
@@ -136,7 +170,7 @@ export default function LeaderboardPage() {
                 </div>
               </div>
               <p className="text-sm font-semibold text-slate-700 text-center max-w-[100px] truncate">{learners[1].name}</p>
-              <p className="text-xs text-slate-400">{learners[1].points} pts</p>
+              <p className="text-xs text-slate-400 text-center">{learners[1].completed} courses completed<br/>{learners[1].points} pts</p>
               <div className="w-24 h-20 mt-2 rounded-t-2xl bg-gradient-to-b from-slate-200 to-slate-300 flex items-center justify-center">
                 <Medal className="w-8 h-8 text-slate-500" />
               </div>
@@ -163,7 +197,7 @@ export default function LeaderboardPage() {
                 </div>
               </div>
               <p className="text-sm font-bold text-slate-800 text-center max-w-[110px] truncate">{learners[0].name}</p>
-              <p className="text-xs text-amber-600 font-semibold">{learners[0].points} pts</p>
+              <p className="text-sm text-amber-700/70 font-medium text-center">{learners[0].completed} courses completed<br/>{learners[0].points} pts</p>
               <div className="w-28 h-28 mt-2 rounded-t-2xl bg-gradient-to-b from-amber-300 to-amber-400 flex items-center justify-center">
                 <Trophy className="w-10 h-10 text-amber-700" />
               </div>
@@ -183,7 +217,7 @@ export default function LeaderboardPage() {
                 </div>
               </div>
               <p className="text-sm font-semibold text-slate-700 text-center max-w-[100px] truncate">{learners[2].name}</p>
-              <p className="text-xs text-slate-400">{learners[2].points} pts</p>
+              <p className="text-xs text-slate-400 text-center">{learners[2].completed} courses completed<br/>{learners[2].points} pts</p>
               <div className="w-24 h-14 mt-2 rounded-t-2xl bg-gradient-to-b from-orange-200 to-orange-300 flex items-center justify-center">
                 <Medal className="w-7 h-7 text-orange-600" />
               </div>
@@ -245,20 +279,17 @@ export default function LeaderboardPage() {
                           <span>{learner.badge.icon}</span> {learner.badge.level}
                         </span>
                         <span className="flex items-center gap-1">
-                          <BookOpen className="w-3 h-3" /> {learner.enrolled} courses
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Target className="w-3 h-3" /> {learner.completed} completed
+                          <BookOpen className="w-3 h-3" /> {learner.completed} completed
                         </span>
                       </div>
                     </div>
 
                     {/* Points */}
-                    <div className="text-right flex-shrink-0">
-                      <p className={`text-xl font-bold ${rank === 1 ? 'text-amber-600' : rank <= 3 ? 'text-slate-700' : 'text-slate-600'}`} style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-slate-800" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                         {learner.points}
                       </p>
-                      <p className="text-[10px] text-slate-400">points</p>
+                      <p className="text-xs text-slate-400">points</p>
                     </div>
                   </div>
                 </motion.div>

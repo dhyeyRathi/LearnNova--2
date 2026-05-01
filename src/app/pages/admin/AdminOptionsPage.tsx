@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -98,8 +98,49 @@ export default function AdminOptionsPage() {
     );
   }
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('adminSettings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.platformName) setPlatformName(parsed.platformName);
+        if (parsed.platformTagline) setPlatformTagline(parsed.platformTagline);
+        if (parsed.contactEmail) setContactEmail(parsed.contactEmail);
+        if (parsed.timezone) setTimezone(parsed.timezone);
+        if (parsed.maintenanceMode !== undefined) setMaintenanceMode(parsed.maintenanceMode);
+        if (parsed.allowRegistration !== undefined) setAllowRegistration(parsed.allowRegistration);
+        
+        if (parsed.defaultVisibility) setDefaultVisibility(parsed.defaultVisibility);
+        if (parsed.defaultAccess) setDefaultAccess(parsed.defaultAccess);
+        if (parsed.requireApproval !== undefined) setRequireApproval(parsed.requireApproval);
+        if (parsed.autoPublish !== undefined) setAutoPublish(parsed.autoPublish);
+        if (parsed.maxFileSize) setMaxFileSize(parsed.maxFileSize);
+        if (parsed.allowedFormats) setAllowedFormats(parsed.allowedFormats);
+        
+        if (parsed.gamificationEnabled !== undefined) setGamificationEnabled(parsed.gamificationEnabled);
+        if (parsed.lessonCompletePoints) setLessonCompletePoints(parsed.lessonCompletePoints);
+        if (parsed.courseCompletePoints) setCourseCompletePoints(parsed.courseCompletePoints);
+        if (parsed.quizBasePoints) setQuizBasePoints(parsed.quizBasePoints);
+        if (parsed.showLeaderboard !== undefined) setShowLeaderboard(parsed.showLeaderboard);
+        if (parsed.badgesEnabled !== undefined) setBadgesEnabled(parsed.badgesEnabled);
+      }
+    } catch (e) {
+      console.error('Failed to load admin settings', e);
+    }
+  }, []);
+
   const handleSave = () => {
-    toast.success('Settings saved successfully!');
+    const settingsToSave = {
+      platformName, platformTagline, contactEmail, timezone, maintenanceMode, allowRegistration,
+      defaultVisibility, defaultAccess, requireApproval, autoPublish, maxFileSize, allowedFormats,
+      gamificationEnabled, lessonCompletePoints, courseCompletePoints, quizBasePoints, showLeaderboard, badgesEnabled
+    };
+    try {
+      localStorage.setItem('adminSettings', JSON.stringify(settingsToSave));
+      toast.success('Settings saved successfully!');
+    } catch (e) {
+      toast.error('Failed to save settings');
+    }
   };
 
   const SettingRow = ({ icon: Icon, iconColor, label, description, children }: {

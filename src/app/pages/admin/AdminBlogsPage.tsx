@@ -10,25 +10,19 @@ import { Textarea } from '../../components/ui/textarea';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { blogs } from '../../data/mockData';
+
 import { Search, Plus, Eye, Calendar, User, Edit, Share2, Trash2, FileText, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+import { useData } from '../../context/DataContext';
 
 type ViewMode = 'kanban' | 'list';
 
 export default function AdminBlogsPage() {
+  const { blogs, refreshData } = useData();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [blogsList, setBlogsList] = useState(() => {
-    try {
-      const saved = localStorage.getItem('blogsList');
-      const userBlogs = saved ? JSON.parse(saved) : [];
-      return [...blogs, ...userBlogs];
-    } catch {
-      return blogs;
-    }
-  });
+  const [blogsList, setBlogsList] = useState(blogs);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [createOpen, setCreateOpen] = useState(false);
@@ -48,8 +42,8 @@ export default function AdminBlogsPage() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('blogsList', JSON.stringify(blogsList.filter(b => b.id.startsWith('blog-'))));
-  }, [blogsList]);
+    setBlogsList(blogs);
+  }, [blogs]);
 
   if (!user || (user.role !== 'admin' && user.role !== 'tutor')) {
     return (

@@ -9,7 +9,7 @@ import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { users as mockUsers, enrollments, userProgress, courses, getBadgeLevel } from '../../data/mockData';
+
 import { supabase } from '../../../utils/supabase/client';
 import {
   Search, UsersRound, Shield, GraduationCap, BookOpen, MoreHorizontal,
@@ -18,6 +18,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
+import { useData } from '../../context/DataContext';
 
 interface ManagedUser {
   id: string;
@@ -31,6 +32,7 @@ interface ManagedUser {
 }
 
 export default function UserManagementPage() {
+  const { enrollments, userProgress, courses, getBadgeLevel } = useData();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,13 +59,10 @@ export default function UserManagementPage() {
 
         if (error) {
           console.error('Error fetching users:', error);
-          // Fallback to mock users if Supabase fails
-          setManagedUsers(mockUsers.map(u => ({
-            ...u,
-            status: 'active' as const,
-            joinedAt: '2026-01-15',
-          })));
+          toast.error(`Failed to load users: ${error.message}`);
+          setManagedUsers([]);
         } else if (supabaseUsers) {
+          console.log(`Fetched ${supabaseUsers.length} users from database`);
           const formattedUsers: ManagedUser[] = supabaseUsers.map(u => ({
             id: u.id,
             email: u.email,
@@ -75,16 +74,13 @@ export default function UserManagementPage() {
             joinedAt: u.created_at ? new Date(u.created_at).toISOString().split('T')[0] : '2026-01-15',
           }));
           setManagedUsers(formattedUsers);
+        } else {
+          setManagedUsers([]);
         }
       } catch (err) {
         console.error('Failed to fetch users:', err);
         toast.error('Failed to load users');
-        // Fallback to mock data
-        setManagedUsers(mockUsers.map(u => ({
-          ...u,
-          status: 'active' as const,
-          joinedAt: '2026-01-15',
-        })));
+        setManagedUsers([]);
       } finally {
         setIsLoading(false);
       }
@@ -205,78 +201,84 @@ export default function UserManagementPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl sm:text-3xl font-semibold text-[#2C3E6B]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                User Management
-              </h1>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#2C3E6B]/[0.06] text-[#2C3E6B] rounded-md text-xs font-medium">
-                <Shield className="w-3.5 h-3.5" /> Admin Only
-              </span>
-            </div>
-            <p className="text-sm text-[#7A766F]">View and manage all platform users, roles, and access</p>
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1F2E]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              User Management
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-medium">
+              <Shield className="w-3.5 h-3.5" /> Admin Only
+            </span>
           </div>
-        </div>
+          <p className="text-base text-[#7A766F]">Manage all users, roles, and access permissions</p>
+        </motion.div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {([
             { key: 'all', label: 'All Users', icon: UsersRound },
             { key: 'learner', label: 'Learners', icon: BookOpen },
             { key: 'tutor', label: 'Tutors', icon: GraduationCap },
             { key: 'admin', label: 'Admins', icon: Shield },
-          ] as const).map(stat => (
-            <Card
+          ] as const).map((stat, i) => (
+            <motion.div
               key={stat.key}
-              onClick={() => setRoleFilter(stat.key)}
-              className={`p-4 rounded-lg cursor-pointer transition-all border ${
-                roleFilter === stat.key
-                  ? 'border-[#2C3E6B]/30 bg-[#2C3E6B]/[0.03]'
-                  : 'border-[#E5E2DC] bg-white hover:border-[#D8D4CD]'
-              }`}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
             >
-              <div className="w-8 h-8 rounded-lg bg-[#2C3E6B]/[0.06] flex items-center justify-center mb-2.5">
-                <stat.icon className="w-4 h-4 text-[#2C3E6B]" />
-              </div>
-              <p className="text-xl font-semibold text-[#2C3E6B]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                {roleCounts[stat.key]}
-              </p>
-              <p className="text-xs text-[#7A766F]">{stat.label}</p>
-            </Card>
+              <Card
+                onClick={() => setRoleFilter(stat.key)}
+                className={`p-5 rounded-xl cursor-pointer transition-all border ${
+                  roleFilter === stat.key
+                    ? 'border-purple-300 bg-purple-50 shadow-md'
+                    : 'border-[#DDD6CC] bg-white hover:border-purple-200 hover:shadow-sm'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
+                  <stat.icon className="w-5 h-5 text-purple-700" />
+                </div>
+                <p className="text-2xl font-semibold text-[#1A1F2E]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  {roleCounts[stat.key]}
+                </p>
+                <p className="text-xs text-[#7A766F]">{stat.label}</p>
+              </Card>
+            </motion.div>
           ))}
         </div>
 
         {/* Search */}
-        <div className="flex items-center gap-3 mb-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mb-8">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7A766F]/50" />
             <Input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search by name or email..."
-              className="pl-10 h-10 bg-white rounded-lg border-[#E5E2DC] text-sm"
+              className="pl-10 h-11 bg-white rounded-lg border-[#DDD6CC] text-sm focus:border-purple-300 focus:ring-purple-200"
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* User list */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <Loader className="w-8 h-8 text-[#2C3E6B] animate-spin mb-3" />
+            <Loader className="w-8 h-8 text-purple-600 animate-spin mb-3" />
             <p className="text-[#7A766F]">Loading users...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="text-center py-12 bg-[#F7F6F3] rounded-lg border border-[#E5E2DC]">
+          <div className="text-center py-12 bg-purple-50 rounded-xl border border-[#DDD6CC]">
             <UsersRound className="w-12 h-12 text-[#7A766F]/30 mx-auto mb-3" />
-            <p className="text-[#7A766F]">No users found matching your search.</p>
+            <p className="text-[#7A766F]">
+              {users.length === 0 ? 'No users in database' : 'No users match your search'}
+            </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="space-y-3">
           {/* Table header - desktop */}
-          <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-[11px] text-[#7A766F] uppercase tracking-wider font-medium">
+          <div className="hidden md:grid grid-cols-12 gap-4 px-5 py-3 text-xs text-[#7A766F] uppercase tracking-wider font-semibold">
             <div className="col-span-4">User</div>
             <div className="col-span-2">Role</div>
             <div className="col-span-2">Status</div>
@@ -296,18 +298,22 @@ export default function UserManagementPage() {
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ delay: i * 0.03 }}
                 >
-                  <Card className={`p-4 rounded-lg border transition-all ${u.status === 'disabled' ? 'bg-[#F7F6F3]/50 border-[#E5E2DC]/50 opacity-60' : 'bg-white border-[#E5E2DC] hover:border-[#D8D4CD]'}`}>
+                  <Card className={`p-5 rounded-xl border transition-all ${
+                    u.status === 'disabled' 
+                      ? 'bg-red-50/50 border-[#DDD6CC]/50 opacity-60' 
+                      : 'bg-white border-[#DDD6CC] hover:border-purple-200 hover:shadow-sm'
+                  }`}>
                     <div className="md:grid md:grid-cols-12 md:gap-4 md:items-center flex flex-col gap-3">
                       {/* User info */}
                       <div className="col-span-4 flex items-center gap-3 min-w-0">
-                        <Avatar className="h-9 w-9 flex-shrink-0 border border-[#E5E2DC]">
+                        <Avatar className="h-10 w-10 flex-shrink-0 border-2 border-[#DDD6CC]">
                           <AvatarImage src={u.avatar} alt={u.name} />
-                          <AvatarFallback className="bg-[#2C3E6B] text-white text-xs">{u.name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback className="bg-purple-600 text-white text-sm font-semibold">{u.name.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-medium text-[#2C3E6B] truncate">{u.name}</p>
-                            {isCurrentUser && <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#2C3E6B]/[0.06] text-[#2C3E6B] font-medium">You</span>}
+                            <p className="text-sm font-medium text-[#1A1F2E] truncate">{u.name}</p>
+                            {isCurrentUser && <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">You</span>}
                           </div>
                           <p className="text-xs text-[#7A766F] truncate">{u.email}</p>
                         </div>
@@ -315,18 +321,20 @@ export default function UserManagementPage() {
 
                       {/* Role */}
                       <div className="col-span-2">
-                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium bg-[#2C3E6B]/[0.06] text-[#2C3E6B] capitalize">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 capitalize">
                           {getRoleIcon(u.role)} {u.role}
                         </span>
                       </div>
 
                       {/* Status */}
                       <div className="col-span-2">
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium ${
-                          u.status === 'active' ? 'bg-[#2C3E6B]/[0.06] text-[#2C3E6B]' : 'bg-[#B5403A]/10 text-[#B5403A]'
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${
+                          u.status === 'active' 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-red-100 text-red-700'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${u.status === 'active' ? 'bg-[#2C3E6B]' : 'bg-[#B5403A]'}`} />
-                          {u.status === 'active' ? 'Active' : 'Disabled'}
+                          <span className={`w-2 h-2 rounded-full ${u.status === 'active' ? 'bg-green-600' : 'bg-red-600'}`} />
+                          {u.status === 'active' ? 'Active' : 'Inactive'}
                         </span>
                       </div>
 
@@ -347,26 +355,26 @@ export default function UserManagementPage() {
                         {!isCurrentUser && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-[#7A766F] hover:text-[#2C3E6B] hover:bg-[#2C3E6B]/[0.04]">
+                              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg text-[#7A766F] hover:text-purple-600 hover:bg-purple-50">
                                 <MoreHorizontal className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44 rounded-lg border-[#E5E2DC] bg-white p-1">
-                              <DropdownMenuItem onClick={() => handleEditRole(u)} className="rounded-md text-[13px] cursor-pointer text-[#2C3E6B]">
-                                <Pencil className="w-3.5 h-3.5 mr-2 text-[#7A766F]" /> Change Role
+                            <DropdownMenuContent align="end" className="w-44 rounded-xl border-[#DDD6CC] bg-white p-1.5">
+                              <DropdownMenuItem onClick={() => handleEditRole(u)} className="rounded-lg text-sm cursor-pointer text-[#1A1F2E] hover:bg-purple-50">
+                                <Pencil className="w-4 h-4 mr-2 text-[#7A766F]" /> Change Role
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleStatus(u.id)} className="rounded-md text-[13px] cursor-pointer text-[#2C3E6B]">
+                              <DropdownMenuItem onClick={() => handleToggleStatus(u.id)} className="rounded-lg text-sm cursor-pointer text-[#1A1F2E] hover:bg-purple-50">
                                 {u.status === 'active'
-                                  ? <><UserX className="w-3.5 h-3.5 mr-2 text-[#7A766F]" /> Disable User</>
-                                  : <><UserCheck className="w-3.5 h-3.5 mr-2 text-[#7A766F]" /> Enable User</>
+                                  ? <><UserX className="w-4 h-4 mr-2 text-[#7A766F]" /> Disable User</>
+                                  : <><UserCheck className="w-4 h-4 mr-2 text-[#7A766F]" /> Enable User</>
                                 }
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toast.success(`Email sent to ${u.email}`)} className="rounded-md text-[13px] cursor-pointer text-[#2C3E6B]">
-                                <Mail className="w-3.5 h-3.5 mr-2 text-[#7A766F]" /> Send Email
+                              <DropdownMenuItem onClick={() => toast.success(`Email sent to ${u.email}`)} className="rounded-lg text-sm cursor-pointer text-[#1A1F2E] hover:bg-purple-50">
+                                <Mail className="w-4 h-4 mr-2 text-[#7A766F]" /> Send Email
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator className="bg-[#E5E2DC]/50" />
-                              <DropdownMenuItem onClick={() => handleDeleteUser(u)} className="rounded-md text-[13px] cursor-pointer text-[#B5403A]">
-                                <Trash2 className="w-3.5 h-3.5 mr-2" />
+                              <DropdownMenuSeparator className="bg-[#DDD6CC]/50" />
+                              <DropdownMenuItem onClick={() => handleDeleteUser(u)} className="rounded-lg text-sm cursor-pointer text-red-600 hover:bg-red-50">
+                                <Trash2 className="w-4 h-4 mr-2" />
                                 Delete User
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -379,37 +387,39 @@ export default function UserManagementPage() {
               );
             })}
           </AnimatePresence>
-        </div>
+        </motion.div>
         )}
       </div>
 
       {/* Edit Role Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="bg-white rounded-xl border border-[#E5E2DC] shadow-xl max-w-sm">
+        <DialogContent className="bg-white rounded-2xl border border-[#DDD6CC] shadow-xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-[#2C3E6B]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Change User Role</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-[#1A1F2E]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Change User Role</DialogTitle>
           </DialogHeader>
           {editingUser && (
-            <div className="space-y-4 pt-1">
-              <div className="flex items-center gap-3 p-3 bg-[#F7F6F3] rounded-lg">
-                <Avatar className="h-9 w-9 border border-[#E5E2DC]">
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
+                <Avatar className="h-10 w-10 border-2 border-[#DDD6CC]">
                   <AvatarImage src={editingUser.avatar} />
-                  <AvatarFallback className="bg-[#2C3E6B] text-white text-xs">{editingUser.name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="bg-purple-600 text-white text-sm font-semibold">{editingUser.name.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium text-[#2C3E6B]">{editingUser.name}</p>
+                  <p className="text-sm font-medium text-[#1A1F2E]">{editingUser.name}</p>
                   <p className="text-xs text-[#7A766F]">{editingUser.email}</p>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-[13px] text-[#2C3E6B]">New Role</Label>
-                <div className="space-y-1.5">
+              <div className="space-y-2">
+                <Label className="text-sm text-[#1A1F2E] font-medium">New Role</Label>
+                <div className="space-y-2">
                   {(['learner', 'tutor', 'admin'] as const).map(role => (
                     <label
                       key={role}
-                      className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all border ${
-                        editRole === role ? 'border-[#2C3E6B]/30 bg-[#2C3E6B]/[0.03]' : 'border-[#E5E2DC] hover:border-[#D8D4CD]'
+                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all border ${
+                        editRole === role 
+                          ? 'border-purple-300 bg-purple-50' 
+                          : 'border-[#DDD6CC] hover:border-purple-200'
                       }`}
                     >
                       <input
@@ -418,20 +428,24 @@ export default function UserManagementPage() {
                         value={role}
                         checked={editRole === role}
                         onChange={() => setEditRole(role)}
-                        className="accent-[#2C3E6B]"
+                        className="accent-purple-600"
                       />
                       <div className="flex items-center gap-2">
                         {getRoleIcon(role)}
-                        <span className="text-sm font-medium text-[#2C3E6B] capitalize">{role}</span>
+                        <span className="text-sm font-medium text-[#1A1F2E] capitalize">{role}</span>
                       </div>
                     </label>
                   ))}
                 </div>
               </div>
 
-              <div className="flex gap-2 justify-end pt-1">
-                <Button variant="outline" onClick={() => setEditOpen(false)} className="rounded-lg text-sm border-[#E5E2DC]">Cancel</Button>
-                <Button onClick={handleSaveRole} className="bg-[#2C3E6B] hover:bg-[#243356] text-white rounded-lg text-sm">Save Changes</Button>
+              <div className="flex gap-2 justify-end pt-3">
+                <Button variant="outline" onClick={() => setEditOpen(false)} className="rounded-lg text-sm border-[#DDD6CC] text-[#1A1F2E]">
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveRole} className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
+                  Save Changes
+                </Button>
               </div>
             </div>
           )}
@@ -440,38 +454,40 @@ export default function UserManagementPage() {
 
       {/* Delete User Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="bg-white rounded-xl border border-[#E5E2DC] shadow-xl max-w-sm">
+        <DialogContent className="bg-white rounded-2xl border border-[#DDD6CC] shadow-xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-[#B5403A]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Delete User Permanently</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-red-600" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Delete User Permanently
+            </DialogTitle>
           </DialogHeader>
           {userToDelete && (
             <div className="space-y-4 pt-2">
-              <div className="flex items-center gap-3 p-3 bg-[#B5403A]/10 rounded-lg border border-[#B5403A]/20">
-                <div className="w-10 h-10 rounded-lg bg-[#B5403A]/20 flex items-center justify-center flex-shrink-0">
-                  <Trash2 className="w-5 h-5 text-[#B5403A]" />
+              <div className="flex items-center gap-3 p-4 bg-red-50 rounded-xl border border-red-200">
+                <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-5 h-5 text-red-600" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-[#B5403A]">This action cannot be undone</p>
-                  <p className="text-xs text-[#B5403A]/80">The user will be permanently deleted from the platform</p>
+                  <p className="text-sm font-medium text-red-900">This action cannot be undone</p>
+                  <p className="text-xs text-red-700">The user will be permanently deleted from the platform</p>
                 </div>
               </div>
 
-              <div className="p-3 bg-[#F7F6F3] rounded-lg border border-[#E5E2DC]">
-                <p className="text-xs text-[#7A766F] mb-2">User being deleted:</p>
+              <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                <p className="text-xs text-[#7A766F] mb-2 font-medium">User being deleted:</p>
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8 border border-[#E5E2DC]">
+                  <Avatar className="h-9 w-9 border-2 border-[#DDD6CC]">
                     <AvatarImage src={userToDelete.avatar} />
-                    <AvatarFallback className="bg-[#2C3E6B] text-white text-xs">{userToDelete.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-purple-600 text-white text-xs font-semibold">{userToDelete.name.charAt(0).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[#2C3E6B] truncate">{userToDelete.name}</p>
+                    <p className="text-sm font-medium text-[#1A1F2E] truncate">{userToDelete.name}</p>
                     <p className="text-xs text-[#7A766F] truncate">{userToDelete.email}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2 pt-1">
-                <p className="text-sm text-[#7A766F]">This will:</p>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-[#1A1F2E]">This will:</p>
                 <ul className="text-sm text-[#7A766F] space-y-1 ml-4">
                   <li>• Delete all user profile data</li>
                   <li>• Remove all enrollments and progress</li>
@@ -480,28 +496,28 @@ export default function UserManagementPage() {
                 </ul>
               </div>
 
-              <div className="flex gap-2 justify-end pt-2">
+              <div className="flex gap-2 justify-end pt-4">
                 <Button 
                   variant="outline" 
                   onClick={() => setDeleteConfirmOpen(false)} 
                   disabled={isDeleting}
-                  className="rounded-lg text-sm border-[#E5E2DC]"
+                  className="rounded-lg text-sm border-[#DDD6CC] text-[#1A1F2E]"
                 >
                   Cancel
                 </Button>
                 <Button 
                   onClick={confirmDelete}
                   disabled={isDeleting}
-                  className="bg-[#B5403A] hover:bg-[#A02F2A] text-white rounded-lg text-sm"
+                  className="bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
                 >
                   {isDeleting ? (
                     <>
-                      <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      <Loader className="w-4 h-4 mr-1.5 animate-spin" />
                       Deleting...
                     </>
                   ) : (
                     <>
-                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      <Trash2 className="w-4 h-4 mr-1.5" />
                       Delete Permanently
                     </>
                   )}

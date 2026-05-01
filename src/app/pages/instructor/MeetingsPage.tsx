@@ -8,13 +8,14 @@ import { Label } from '../../components/ui/label';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { courses, enrollments, users } from '../../data/mockData';
+
 import {
   Video, Plus, Send, Calendar, Clock, Link2, Users, Search,
   CheckCircle2, Mail, ExternalLink, GraduationCap, Trash2, Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+import { useData } from '../../context/DataContext';
 
 interface Meeting {
   id: string;
@@ -73,6 +74,7 @@ const initialMeetings: Meeting[] = [
 ];
 
 export default function MeetingsPage() {
+  const { courses, enrollments, users } = useData();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings);

@@ -8,10 +8,11 @@ import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
-import { badges, getBadgeLevel } from '../data/mockData';
+
 import { getUserEnrollments, type CourseEnrollment, type Course } from '../../utils/supabase/client';
 import { Search, Clock, Award, Trophy, Target, BookOpen, Flame, Star, Play, RotateCcw, CheckCircle, ChevronRight, Zap, Shield, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useData } from '../context/DataContext';
 
 interface EnrolledCourse extends Course {
   enrollment: CourseEnrollment;
@@ -26,6 +27,7 @@ interface EnrolledCourse extends Course {
 }
 
 export default function MyCoursesPage() {
+  const { badges, getBadgeLevel } = useData();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -55,21 +57,44 @@ export default function MyCoursesPage() {
         setLoading(true);
         const enrollments = await getUserEnrollments(user.id);
 
-        const coursesWithProgress: EnrolledCourse[] = enrollments.map(enrollment => {
-          const course = enrollment.courses;
-          return {
-            ...course,
-            enrollment,
-            progress: enrollment.progress_percentage,
-            timeSpent: 0, // Would need separate table for detailed progress
-            lastAccessed: enrollment.enrolled_at,
-            completedLessons: 0, // Would calculate from lessons progress
-            totalLessons: 10, // Default - would come from actual lesson count
-            isCompleted: enrollment.is_completed,
-            enrolledAt: enrollment.enrolled_at,
-            completedAt: enrollment.completed_at,
-          };
-        });
+        // Fetch actual lesson counts and progress for each enrolled course
+        const { getLessonsByCourse, getUserProgress } = await import('../../utils/supabase/client');
+        const progressData = await getUserProgress(user.id);
+
+        const coursesWithProgress: EnrolledCourse[] = await Promise.all(
+          enrollments.map(async (enrollment) => {
+            const course = enrollment.courses;
+            
+            // Get actual lesson count from DB
+            let actualLessonCount = 0;
+            try {
+              const lessons = await getLessonsByCourse(course.id);
+              actualLessonCount = lessons?.length || 0;
+            } catch { actualLessonCount = 0; }
+            
+            // Get completed lessons from user_progress
+            const courseProgress = progressData.find((p: any) => p.courseId === course.id);
+            const completedCount = courseProgress?.completedLessons?.length || 0;
+            const progressPct = actualLessonCount > 0 ? Math.round((completedCount / actualLessonCount) * 100) : 0;
+            const isComplete = actualLessonCount > 0 && completedCount >= actualLessonCount;
+
+            // Use actual course duration if available, otherwise fallback
+            const actualDuration = course.duration || '0 mins';
+            
+            return {
+              ...course,
+              enrollment,
+              progress: progressPct,
+              timeSpent: actualDuration,
+              lastAccessed: enrollment.enrolled_at,
+              completedLessons: completedCount,
+              totalLessons: actualLessonCount,
+              isCompleted: isComplete || enrollment.is_completed,
+              enrolledAt: enrollment.enrolled_at,
+              completedAt: enrollment.completed_at,
+            };
+          })
+        );
 
         setEnrolledCourses(coursesWithProgress);
       } catch (err) {
@@ -356,7 +381,7 @@ export default function MyCoursesPage() {
                           <div className="mb-4 flex-1">
                             <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
                               <span>{course.completedLessons} of {course.totalLessons} lessons</span>
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{course.timeSpent} min</span>
+                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{course.timeSpent}</span>
                             </div>
                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                               <motion.div

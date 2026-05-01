@@ -3,11 +3,13 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { GraduationCap, LogOut, User, Award, Menu, X } from 'lucide-react';
-import { getBadgeLevel } from '../data/mockData';
+
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
+import { useData } from '../context/DataContext';
 
 export default function Navbar() {
+  const { getBadgeLevel } = useData();
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
