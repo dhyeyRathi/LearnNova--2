@@ -1,27 +1,6 @@
 import DashboardLayout from '../components/DashboardLayout';
 import { motion } from 'motion/react';
-import { Heart, Target, Lightbulb, Users, Globe, Award, Sparkles } from 'lucide-react';
-
-const team = [
-  { name: 'Michael Chen', role: 'Founder & CEO', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300', bio: 'Passionate about making education accessible.' },
-  { name: 'Sarah Williams', role: 'Head of Education', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300', bio: '10+ years in edtech and curriculum design.' },
-  { name: 'Alex Rivera', role: 'Lead Engineer', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300', bio: 'Building scalable platforms for learners worldwide.' },
-  { name: 'Priya Sharma', role: 'Head of Design', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300', bio: 'Crafting delightful learning experiences.' },
-];
-
-const values = [
-  { icon: Heart, title: 'Learner First', desc: 'Every decision we make starts with the learner. Their success is our mission.', color: 'bg-purple-600' },
-  { icon: Target, title: 'Quality Content', desc: 'We partner with industry experts to deliver courses that truly matter.', color: 'bg-purple-600' },
-  { icon: Lightbulb, title: 'Innovation', desc: 'We constantly push boundaries to make learning more engaging and effective.', color: 'bg-purple-600' },
-  { icon: Globe, title: 'Accessibility', desc: 'Education should be available to everyone, everywhere, at any time.', color: 'bg-purple-600' },
-];
-
-const milestones = [
-  { year: '2023', title: 'Founded', desc: 'LearnNova was born from a simple idea: make tech education better.' },
-  { year: '2024', title: '10K Learners', desc: 'Crossed 10,000 active learners across 50+ countries.' },
-  { year: '2025', title: '100+ Courses', desc: 'Expanded our catalog to over 100 courses with 50+ expert tutors.' },
-  { year: '2026', title: 'AI-Powered', desc: 'Launched personalized learning paths powered by AI.' },
-];
+import { Heart, Target, Lightbulb, Globe, Sparkles } from 'lucide-react';
 
 export default function AboutPage() {
   return (

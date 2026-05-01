@@ -37,14 +37,21 @@ const generateContentWithRetry = async (model: any, request: any, maxRetries = 3
   let attempt = 0;
   while (attempt < maxRetries) {
     try {
+      console.log(`[generateContentWithRetry] Attempt ${attempt + 1}/${maxRetries}`);
       return await model.generateContent(request);
     } catch (error: any) {
+      console.error(`[generateContentWithRetry] Error on attempt ${attempt + 1}:`);
+      console.error('   Message:', error?.message);
+      console.error('   Status:', error?.status);
+      console.error('   Error details:', JSON.stringify(error, null, 2));
+      
       if ((error?.message?.includes('503') || error?.status === 503) && attempt < maxRetries - 1) {
         attempt++;
         const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
         console.warn(`[503 Error] Retrying Gemini API call (attempt ${attempt}/${maxRetries - 1}) in ${Math.round(delay)}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       } else {
+        console.error(`[generateContentWithRetry] Final error - not retrying:`, error?.message);
         throw error;
       }
     }
@@ -290,22 +297,31 @@ export const analyzeResumeFromPDF = async (
   file: File
 ): Promise<{ resumeText: string; score: number; skills: string[]; experience: string; feedback: string }> => {
   try {
+    console.log('🔍 [analyzeResumeFromPDF] Starting resume analysis for:', file.name);
+    
     const base64Data = await new Promise<string>((resolve, reject) => {
+      console.log('📄 [analyzeResumeFromPDF] Converting PDF to base64...');
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
         const base64 = result.split(',')[1];
+        console.log('✅ [analyzeResumeFromPDF] Base64 conversion complete, size:', base64.length);
         resolve(base64);
       };
-      reader.onerror = reject;
+      reader.onerror = (err) => {
+        console.error('❌ [analyzeResumeFromPDF] FileReader error:', err);
+        reject(err);
+      };
       reader.readAsDataURL(file);
     });
 
+    console.log('🤖 [analyzeResumeFromPDF] Getting Gemini model...');
     const model = genAI.getGenerativeModel({
       model: INTERVIEW_MODEL,
       generationConfig: { responseMimeType: "application/json" }
     });
 
+    console.log('📤 [analyzeResumeFromPDF] Calling Gemini API with PDF...');
     const result = await generateContentWithRetry(model, [
       {
         inlineData: {
@@ -316,24 +332,36 @@ export const analyzeResumeFromPDF = async (
       INTERVIEWER_RESUME_ANALYSIS_PROMPT
     ]);
 
+    console.log('📥 [analyzeResumeFromPDF] Received response from Gemini');
     const response = result.response.text().trim();
+    console.log('📋 [analyzeResumeFromPDF] Response text length:', response.length);
+    
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(response);
 
+    console.log('✨ [analyzeResumeFromPDF] Parsed JSON:', parsed);
+    
     const resumeText = toDisplayText(parsed.resumeText, '').trim();
     if (resumeText.length < 50) {
+      console.warn('⚠️ [analyzeResumeFromPDF] Extracted text too short:', resumeText.length);
       throw new Error('Failed to extract meaningful text from PDF');
     }
 
-    return {
+    const result_obj = {
       resumeText,
       score: Math.min(100, Math.max(0, parseInt(parsed.score) || 70)),
       skills: toSkillsList(parsed.skills),
       experience: toDisplayText(parsed.experience, 'Experience details extracted'),
       feedback: toDisplayText(parsed.feedback, 'Resume analyzed successfully.')
     };
+    
+    console.log('✅ [analyzeResumeFromPDF] SUCCESS:', result_obj);
+    return result_obj;
   } catch (error: any) {
-    console.error('Resume analysis error:', error);
+    console.error('❌ [analyzeResumeFromPDF] Error:', error?.message);
+    console.error('   Status:', error?.status);
+    console.error('   Full error:', error);
+    
     if (error?.message?.includes('503') || error?.status === 503) {
       throw new Error('AI Service is currently experiencing high demand. Please try again in a moment.');
     }

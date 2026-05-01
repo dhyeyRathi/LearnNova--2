@@ -359,40 +359,49 @@ export default function AIInterviewerPage() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    console.log('File selected:', file.name, 'Type:', file.type, 'Size:', file.size);
+    setIsProcessingResume(true);
 
     if (file.type !== 'application/pdf') {
+      console.log('Invalid file type:', file.type);
       alert('Please upload a PDF file only.');
-        return (
-          <>
-            <AnimatePresence>
-              {/* ...existing content... */}
-            </AnimatePresence>
-          </>
-        );
-      }
+      setIsProcessingResume(false);
+      return;
+    }
+
     try {
+      console.log('Starting PDF analysis...');
       // Single Gemini call: extract + evaluate resume
       const analysis = await analyzeResumeFromPDF(file);
+      console.log('PDF analysis complete:', analysis);
       const extractedText = analysis.resumeText;
 
       if (!isLikelyResumeText(extractedText)) {
+        console.log('Text does not look like a resume');
         throw new Error('INVALID_RESUME_DOCUMENT');
       }
 
+      console.log('Resume validation passed, updating state');
       setResumeText(extractedText);
-
       setResumeSkills(analysis.skills);
       setResumeScore(analysis.score);
       setResumeExperience(analysis.experience);
       setResumeFeedback(analysis.feedback);
-
       setHasResume(true);
       setIsProcessingResume(false);
+      console.log('Starting greeting...');
       startGreeting(true);
     } catch (error) {
       console.error('Resume processing error:', error);
-      const message = error instanceof Error ? error.message : '';
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error message:', message);
+      
       if (message === 'INVALID_RESUME_DOCUMENT') {
         alert('Please upload a valid resume.');
       } else {

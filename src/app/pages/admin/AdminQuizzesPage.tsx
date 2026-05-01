@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useData } from '../../context/DataContext';
 import { deleteQuiz as deleteQuizFromDB } from '../../../utils/supabase/client';
+import { testQuizFetch } from '../../../utils/supabase/testQuizFetch';
 
 export default function AdminQuizzesPage() {
   const { quizzes: allQuizzes, courses, lessons, refreshData, isLoading } = useData();
@@ -27,19 +28,23 @@ export default function AdminQuizzesPage() {
   // Force refresh data on mount
   useEffect(() => {
     console.log('🔄 AdminQuizzesPage mounted, refreshing data...');
+    console.log('🧪 Running diagnostic test...');
+    testQuizFetch();
+    
     refreshData().then(() => {
       // After refresh, log the actual data received
       setTimeout(() => {
         console.log('✅ Data refresh complete');
       }, 100);
     });
-  }, [refreshData]);
+  }, []); // Empty dependency array - only run on mount
 
   console.log('🎯 AdminQuizzesPage data:', {
     allQuizzes: allQuizzes?.length,
     courses: courses?.length,
     lessons: lessons?.length,
     isLoading,
+    allQuizzesDetail: allQuizzes?.map(q => ({ id: q.id, title: q.title })) || []
   });
 
   if (!user || (user.role !== 'admin' && user.role !== 'tutor')) {
@@ -66,31 +71,13 @@ export default function AdminQuizzesPage() {
     );
   }
 
-  // Tutors can only see courses they authored; admins see all
-  const ownedCourseIds = user.role === 'admin'
-    ? (courses || []).map(c => c.id)
-    : (courses || []).filter(c => c.instructorId === user.id).map(c => c.id);
-
-  console.log('🔐 Admin check:', {
-    userRole: user.role,
-    isAdmin: user.role === 'admin',
-    ownedCourseIds,
-  });
-
-  // Filter quizzes: only those linked to owned courses (via lessons)
-  const visibleQuizzes = (allQuizzes || []).filter(q => {
-    const linkedLesson = (lessons || []).find(l => l.type === 'quiz' && l.content === q.id);
-    const isVisible = !linkedLesson ? user.role === 'admin' : ownedCourseIds.includes(linkedLesson.courseId);
-    if ((allQuizzes || []).length > 0) {
-      console.log('🔍 Quiz filter:', { quizId: q.id, title: q.title, linkedLesson: linkedLesson?.id, isVisible });
-    }
-    return isVisible;
-  });
-
-  console.log('📋 Filtered quizzes:', {
-    total: allQuizzes?.length,
-    visible: visibleQuizzes.length,
-    visibleQuizzes: visibleQuizzes.map(q => ({ id: q.id, title: q.title })),
+  // TEMP: Disable filtering to test if quizzes exist
+  const visibleQuizzes = (allQuizzes || []);
+  
+  console.log('🔍 TEMP FILTER DEBUG:', {
+    allQuizzesLength: allQuizzes?.length,
+    visibleQuizzesLength: visibleQuizzes.length,
+    allQuizzesDetail: allQuizzes?.map(q => ({ id: q.id, title: q.title, hasQuestions: !!q.questions })) || []
   });
 
   // Get course name for a quiz
@@ -104,8 +91,8 @@ export default function AdminQuizzesPage() {
   };
 
   const getQuizQuestionCount = (quizId: string) => {
-    const quiz = allQuizzes.find(q => q.id === quizId);
-    return quiz?.questions.length || 0;
+    const quiz = (allQuizzes || []).find(q => q.id === quizId);
+    return (quiz?.questions || []).length || 0;
   };
 
   const filteredQuizzes = visibleQuizzes.filter(q => {

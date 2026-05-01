@@ -851,9 +851,11 @@ export async function isUserEnrolled(userId: string, courseId: string) {
 
 export async function getQuizzes() {
   try {
+    // Students should only see published quizzes
     const { data, error } = await supabase
       .from('quizzes')
-      .select('*, quiz_questions(*)');
+      .select('*, quiz_questions(*)')
+      .eq('is_published', true);
 
     if (error) throw error;
     
@@ -872,7 +874,38 @@ export async function getQuizzes() {
       }))
     }));
   } catch (error) {
-    console.error('Error fetching quizzes:', error);
+    console.error('Error fetching quizzes for students:', error);
+    throw error;
+  }
+}
+
+export async function getAllQuizzesForAdmin() {
+  try {
+    // Admins should see ALL quizzes (published and unpublished)
+    const { data, error } = await supabase
+      .from('quizzes')
+      .select('*, quiz_questions(*)');
+
+    if (error) throw error;
+    
+    // Map to the shape AdminQuizzesPage expects
+    return data.map((quiz: any) => ({
+      id: quiz.id,
+      title: quiz.title,
+      courseId: quiz.course_id,
+      published: quiz.is_published || false,
+      description: quiz.description || '',
+      questions: (quiz.quiz_questions || []).map((q: any) => ({
+        id: q.id,
+        text: q.question_text,
+        options: q.options || [],
+        correctAnswer: q.correct_option_index,
+        basePoints: q.points,
+        pointsPerAttempt: q.points
+      }))
+    }));
+  } catch (error) {
+    console.error('Error fetching all quizzes for admin:', error);
     throw error;
   }
 }

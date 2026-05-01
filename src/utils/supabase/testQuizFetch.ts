@@ -62,5 +62,4 @@ export async function testQuizFetch() {
   }
 }
 
-// Run test on import
-testQuizFetch();
+// Export for manual testing - don't auto-run
