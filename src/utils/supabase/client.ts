@@ -598,13 +598,21 @@ export async function getQuizzesByCourse(courseId: string) {
       id: quiz.id,
       title: quiz.title,
       courseId: quiz.course_id,
-      questions: (quiz.quiz_questions || []).map((q: any) => ({
-        id: q.id,
-        text: q.question_text,
-        options: q.options || [],
-        correctAnswer: q.correct_option_index,
-        basePoints: q.points,
-      }))
+      questions: (quiz.quiz_questions || []).sort((a: any, b: any) => (a.sequence_number || 0) - (b.sequence_number || 0)).map((q: any) => {
+        let parsedOptions = [];
+        try {
+          parsedOptions = typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []);
+          if (!Array.isArray(parsedOptions)) parsedOptions = [];
+        } catch (e) { parsedOptions = []; }
+
+        return {
+          id: q.id,
+          text: q.question_text,
+          options: parsedOptions,
+          correctAnswer: parseInt(q.correct_answer) || 0,
+          basePoints: q.points,
+        };
+      })
     }));
   } catch (error) {
     console.error('Error fetching quizzes for course:', error);
@@ -612,29 +620,38 @@ export async function getQuizzesByCourse(courseId: string) {
   }
 }
 
-
-
 export async function createQuiz(quizData: {
-  course_id: string;
+  course_id: string | null;
   title: string;
   description?: string;
   is_published?: boolean;
 }, questions: Array<{
   question_text: string;
   options: string[];
-  correct_option_index: number;
+  correct_answer: string;
   points: number;
+  sequence_number: number;
   explanation?: string;
 }>) {
   try {
+    console.log('Attempting to create quiz with data:', quizData);
     // 1. Create the quiz
     const { data: quiz, error: quizError } = await supabase
       .from('quizzes')
-      .insert({ ...quizData, is_published: quizData.is_published ?? true })
+      .insert({ 
+        title: quizData.title,
+        description: quizData.description || '',
+        course_id: quizData.course_id,
+        is_published: quizData.is_published ?? true 
+      })
       .select()
       .single();
 
-    if (quizError) throw quizError;
+    if (quizError) {
+      console.error('Supabase Quiz Insertion Error:', quizError);
+      throw quizError;
+    }
+    console.log('Quiz created successfully, ID:', quiz.id);
 
     // 2. Create the questions
     if (questions.length > 0) {
@@ -643,15 +660,18 @@ export async function createQuiz(quizData: {
         quiz_id: quiz.id
       }));
 
+      console.log('Attempting to insert questions:', questionsWithQuizId.length);
       const { error: questionsError } = await supabase
         .from('quiz_questions')
         .insert(questionsWithQuizId);
 
       if (questionsError) {
+        console.error('Supabase Questions Insertion Error:', questionsError);
         // Rollback quiz creation if questions fail
         await supabase.from('quizzes').delete().eq('id', quiz.id);
         throw questionsError;
       }
+      console.log('Questions inserted successfully');
     }
 
     return quiz;
@@ -663,20 +683,27 @@ export async function createQuiz(quizData: {
 
 export async function updateQuiz(quizId: string, quizData: {
   title?: string;
+  course_id?: string | null;
   description?: string;
   is_published?: boolean;
 }, questions: Array<{
   question_text: string;
   options: string[];
-  correct_option_index: number;
+  correct_answer: string;
   points: number;
+  sequence_number: number;
   explanation?: string;
 }>) {
   try {
     // 1. Update the quiz
     const { error: quizError } = await supabase
       .from('quizzes')
-      .update({ ...quizData, updated_at: new Date().toISOString() })
+      .update({ 
+        title: quizData.title,
+        description: quizData.description,
+        course_id: quizData.course_id,
+        is_published: quizData.is_published 
+      })
       .eq('id', quizId);
 
     if (quizError) throw quizError;
@@ -859,23 +886,48 @@ export async function getQuizzes() {
 
     if (error) throw error;
     
+    console.log('Fetched published quizzes:', data?.length);
+
     // Map to the shape QuizzesPage expects
     return data.map((quiz: any) => ({
       id: quiz.id,
       title: quiz.title,
       courseId: quiz.course_id,
-      questions: (quiz.quiz_questions || []).map((q: any) => ({
-        id: q.id,
-        text: q.question_text,
-        options: q.options || [],
-        correctAnswer: q.correct_option_index,
-        basePoints: q.points,
-        pointsPerAttempt: q.points
-      }))
+      questions: (quiz.quiz_questions || []).sort((a: any, b: any) => (a.sequence_number || 0) - (b.sequence_number || 0)).map((q: any) => {
+        let parsedOptions = [];
+        try {
+          parsedOptions = typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []);
+          if (!Array.isArray(parsedOptions)) parsedOptions = [];
+        } catch (e) { parsedOptions = []; }
+        
+        return {
+          id: q.id,
+          text: q.question_text,
+          options: parsedOptions,
+          correctAnswer: parseInt(q.correct_answer) || 0,
+          basePoints: q.points,
+          pointsPerAttempt: q.points
+        };
+      })
     }));
   } catch (error) {
     console.error('Error fetching quizzes for students:', error);
     throw error;
+  }
+}
+
+export async function getUserQuizAttempts(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_attempts')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching quiz attempts:', error);
+    return [];
   }
 }
 
@@ -895,14 +947,22 @@ export async function getAllQuizzesForAdmin() {
       courseId: quiz.course_id,
       published: quiz.is_published || false,
       description: quiz.description || '',
-      questions: (quiz.quiz_questions || []).map((q: any) => ({
-        id: q.id,
-        text: q.question_text,
-        options: q.options || [],
-        correctAnswer: q.correct_option_index,
-        basePoints: q.points,
-        pointsPerAttempt: q.points
-      }))
+      questions: (quiz.quiz_questions || []).sort((a: any, b: any) => (a.sequence_number || 0) - (b.sequence_number || 0)).map((q: any) => {
+        let parsedOptions = [];
+        try {
+          parsedOptions = typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []);
+          if (!Array.isArray(parsedOptions)) parsedOptions = [];
+        } catch (e) { parsedOptions = []; }
+
+        return {
+          id: q.id,
+          text: q.question_text,
+          options: parsedOptions,
+          correctAnswer: parseInt(q.correct_answer) || 0,
+          basePoints: q.points,
+          pointsPerAttempt: q.points
+        };
+      })
     }));
   } catch (error) {
     console.error('Error fetching all quizzes for admin:', error);

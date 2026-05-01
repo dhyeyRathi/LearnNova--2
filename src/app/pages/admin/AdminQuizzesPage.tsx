@@ -112,8 +112,21 @@ export default function AdminQuizzesPage() {
     toast.info('Duplication via UI coming soon. Please create a new quiz.');
   };
 
-  const handlePublishQuiz = async (quizId: string) => {
-    toast.info('Publishing logic should be implemented in DB directly.');
+  const handleTogglePublish = async (quizId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('quizzes')
+        .update({ is_published: !currentStatus })
+        .eq('id', quizId);
+
+      if (error) throw error;
+      
+      toast.success(`Quiz ${!currentStatus ? 'published' : 'unpublished'} successfully`);
+      await refreshData();
+    } catch (error) {
+      console.error('Error toggling publish status:', error);
+      toast.error('Failed to update quiz status');
+    }
   };
 
   return (
@@ -214,9 +227,13 @@ export default function AdminQuizzesPage() {
                             <Badge variant="secondary" className="rounded-lg text-xs">
                               <BookOpen className="w-3 h-3 mr-1" />{getCourseForQuiz(quiz.id)}
                             </Badge>
-                            {quiz.published && (
+                            {quiz.published ? (
                               <Badge className="rounded-lg text-xs bg-green-500/10 text-green-700 border border-green-200">
                                 <Check className="w-3 h-3 mr-1" />Published
+                              </Badge>
+                            ) : (
+                              <Badge className="rounded-lg text-xs bg-slate-100 text-slate-500 border border-slate-200">
+                                <Clock className="w-3 h-3 mr-1" />Draft
                               </Badge>
                             )}
                           </div>
@@ -228,13 +245,13 @@ export default function AdminQuizzesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="glass-card rounded-xl">
-                            {!quiz.published ? (
-                              <DropdownMenuItem onClick={() => handlePublishQuiz(quiz.id)} className="rounded-lg text-purple-600">
-                                <Upload className="w-4 h-4 mr-2" />Publish Quiz
+                            {quiz.published ? (
+                              <DropdownMenuItem onClick={() => handleTogglePublish(quiz.id, true)} className="rounded-lg text-slate-600">
+                                <X className="w-4 h-4 mr-2" />Unpublish Quiz
                               </DropdownMenuItem>
                             ) : (
-                              <DropdownMenuItem disabled className="rounded-lg text-green-600">
-                                <Check className="w-4 h-4 mr-2" />Published
+                              <DropdownMenuItem onClick={() => handleTogglePublish(quiz.id, false)} className="rounded-lg text-purple-600">
+                                <Upload className="w-4 h-4 mr-2" />Publish Quiz
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => openEditQuiz(quiz.id)} className="rounded-lg">

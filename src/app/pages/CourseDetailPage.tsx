@@ -10,7 +10,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 
-import { getCourse, isUserEnrolled, enrollInCourse, createCourseReview, getCourseReviews, getLessonsByCourse, getUserProgress, completeEnrollment, supabase, type Course } from '../../utils/supabase/client';
+import { getCourse, isUserEnrolled, enrollInCourse, createCourseReview, getCourseReviews, getLessonsByCourse, getQuizzesByCourse, getUserProgress, completeEnrollment, supabase, type Course } from '../../utils/supabase/client';
 import { Play, FileText, Image as ImageIcon, HelpCircle, CheckCircle, Circle, Star, Clock, Award, Users, ArrowRight, Sparkles, Search, Lock, ShoppingCart, Trophy, Paperclip, BookOpen, Loader2, Download, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -40,6 +40,8 @@ export default function CourseDetailPage() {
   
   // Database state
   const [courseLessons, setCourseLessons] = useState<any[]>([]);
+  const [courseQuizzes, setCourseQuizzes] = useState<any[]>([]);
+  const [userQuizAttempts, setUserQuizAttempts] = useState<any[]>([]);
   const [progress, setProgress] = useState<any | null>(null);
   const [courseReviews, setCourseReviews] = useState<any[]>([]);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -52,22 +54,25 @@ export default function CourseDetailPage() {
 
       try {
         setLoading(true);
-        // Load course, lessons, and reviews in parallel
-        const [courseData, lessonsData, reviewsData] = await Promise.all([
+        // Load course, lessons, quizzes, and reviews in parallel
+        const [courseData, lessonsData, quizzesData, reviewsData] = await Promise.all([
           getCourse(id),
           getLessonsByCourse(id),
+          getQuizzesByCourse(id),
           getCourseReviews(id)
         ]);
         
         setCourse(courseData);
         setCourseLessons(lessonsData || []);
+        setCourseQuizzes(quizzesData || []);
         setCourseReviews(reviewsData || []);
 
         // Check enrollment status
         if (user?.id) {
-          const [enrollmentData, userProgressData, cert] = await Promise.all([
+          const [enrollmentData, userProgressData, quizAttemptsData, cert] = await Promise.all([
             supabase.from('course_enrollments').select('*').eq('user_id', user.id).eq('course_id', id).maybeSingle(),
             getUserProgress(user.id),
+            getUserQuizAttempts(user.id),
             getCertificate(user.id, id)
           ]);
           
@@ -84,6 +89,8 @@ export default function CourseDetailPage() {
           // Find progress for this specific course
           const currentProgress = userProgressData.find(p => p.courseId === id);
           if (currentProgress) setProgress(currentProgress);
+
+          setUserQuizAttempts(quizAttemptsData || []);
 
           // Check for existing certificate
           if (cert) {
@@ -153,12 +160,12 @@ export default function CourseDetailPage() {
     }
   };
 
-  // Auto-complete course when all lessons are done
+  // Auto-complete course when all items (lessons + quizzes) are done
   useEffect(() => {
-    if (allLessonsComplete && enrollment && !enrollment.completed && !isIssuingCert) {
+    if (allItemsComplete && enrollment && !enrollment.completed && !isIssuingCert) {
       handleCompleteCourse();
     }
-  }, [allLessonsComplete, enrollment, isIssuingCert]);
+  }, [allItemsComplete, enrollment, isIssuingCert]);
 
   // Loading state
   if (loading) {
@@ -182,8 +189,8 @@ export default function CourseDetailPage() {
 
   if (!course) return null;
 
-  const completionPercentage = progress && courseLessons.length > 0
-    ? (progress.completedLessons.length / courseLessons.length) * 100 : 0;
+  const completionPercentage = progress && totalItems > 0
+    ? (completedItems / totalItems) * 100 : 0;
 
   // Access control
   const canAccess = () => {
@@ -209,8 +216,6 @@ export default function CourseDetailPage() {
 
   // Already reviewed?
   const hasReviewed = user ? courseReviews.some(r => r.userId === user.id) : false;
-
-
 
   const handleSubmitReview = async () => {
     if (!user) { navigate('/login'); return; }
@@ -329,14 +334,12 @@ export default function CourseDetailPage() {
 
   const handleLessonClick = (lessonId: string) => {
     if (!isAuthenticated) { navigate('/login'); return; }
-    if (!hasAccess) {
+    if (!(user?.role === 'admin' || user?.role === 'tutor' || !!enrollment)) {
       toast.error('You need to enroll in this course to view lessons');
       return;
     }
     navigate(`/lesson/${id}/${lessonId}`);
   };
-
-  const firstIncompleteLesson = courseLessons.find(l => !completedLessonIds.includes(l.id));
 
   return (
     <DashboardLayout>
@@ -373,7 +376,7 @@ export default function CourseDetailPage() {
               </p>
               <div className="flex items-center justify-center gap-2 mb-4">
                 <Trophy className="w-5 h-5 text-violet-400" />
-                <span className="text-lg font-bold text-violet-600">+20 bonus points earned!</span>
+                <span className="text-lg font-bold text-violet-600">+{20} bonus points earned!</span>
               </div>
               {certificateNumber && (
                 <motion.div
@@ -500,21 +503,21 @@ export default function CourseDetailPage() {
                     </div>
                     <div className="grid grid-cols-3 gap-4 text-sm text-center">
                       <div className="bg-slate-50 rounded-xl py-3">
-                        <p className="text-2xl font-bold text-slate-700">{courseLessons.length}</p>
-                        <p className="text-slate-400 text-xs">Total</p>
+                        <p className="text-2xl font-bold text-slate-700">{totalItems}</p>
+                        <p className="text-slate-400 text-xs">Total Items</p>
                       </div>
                       <div className="bg-emerald-50 rounded-xl py-3">
-                        <p className="text-2xl font-bold text-emerald-600">{completedLessonIds.length}</p>
+                        <p className="text-2xl font-bold text-emerald-600">{completedItems}</p>
                         <p className="text-slate-400 text-xs">Completed</p>
                       </div>
                       <div className="bg-purple-50 rounded-xl py-3">
-                        <p className="text-2xl font-bold text-purple-700">{courseLessons.length - completedLessonIds.length}</p>
+                        <p className="text-2xl font-bold text-purple-700">{totalItems - completedItems}</p>
                         <p className="text-slate-400 text-xs">Remaining</p>
                       </div>
                     </div>
 
-                    {/* Auto-complete course when all lessons are done */}
-                    {allLessonsComplete && !enrollment?.completed && (
+                    {/* Auto-complete course when all items are done */}
+                    {allItemsComplete && !enrollment?.completed && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -522,7 +525,7 @@ export default function CourseDetailPage() {
                       >
                         <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
                           <p className="text-emerald-700 font-semibold flex items-center justify-center gap-2 mb-1">
-                            <CheckCircle className="w-5 h-5" /> All lessons completed!
+                            <CheckCircle className="w-5 h-5" /> All items completed!
                           </p>
                           <p className="text-emerald-600 text-sm">Your certificate is being prepared</p>
                         </div>
@@ -536,7 +539,7 @@ export default function CourseDetailPage() {
                             <CheckCircle className="w-5 h-5" /> Course completed on {enrollment.completedAt}
                           </p>
                           <p className="text-emerald-600 text-sm mt-1 flex items-center justify-center gap-1">
-                            <Trophy className="w-3.5 h-3.5" /> {(courseLessons.length * 10) + 20} points earned
+                            <Trophy className="w-3.5 h-3.5" /> {(totalItems * 10) + 20} points earned
                           </p>
                         </div>
                         {certificateNumber ? (
@@ -640,6 +643,44 @@ export default function CourseDetailPage() {
                             </motion.div>
                           );
                         })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Course Quizzes */}
+                  {courseQuizzes.length > 0 && (
+                    <div className="mt-8">
+                      <h3 className="text-lg font-bold mb-4 flex items-center text-slate-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                        <div className="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center mr-3">
+                          <HelpCircle className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        Course Quizzes ({courseQuizzes.length})
+                      </h3>
+                      <div className="space-y-3">
+                        {courseQuizzes.map((quiz, index) => (
+                          <motion.div key={quiz.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (incompleteLessons.length + index) * 0.05 }}>
+                            <div
+                              onClick={() => navigate('/quizzes')}
+                              className="p-4 rounded-2xl glass-card hover:shadow-xl transition-all cursor-pointer border-l-4 border-l-amber-500 group/quiz"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4 flex-1">
+                                  <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center group-hover/quiz:scale-110 transition-transform">
+                                    <HelpCircle className="w-6 h-6" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-slate-800">{quiz.title}</h4>
+                                    <p className="text-sm text-slate-500">{quiz.questions.length} questions • Earn up to {quiz.questions.length * 10} points</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                  <Badge className="bg-amber-100 text-amber-700 rounded-lg">Quiz</Badge>
+                                  <ArrowRight className="w-5 h-5 text-slate-300 group-hover/quiz:text-amber-500 transition-colors" />
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
                       </div>
                     </div>
                   )}

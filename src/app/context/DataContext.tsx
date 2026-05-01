@@ -137,14 +137,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           courseId: q.course_id,
           published: q.is_published ?? q.published ?? false,
           description: q.description || '',
-          questions: (q.quiz_questions || []).map((qq: any) => ({
-            id: qq.id, 
-            text: qq.question_text, 
-            options: qq.options || [], 
-            correctAnswer: qq.correct_option_index, 
-            basePoints: qq.points || 10, 
-            pointsPerAttempt: qq.points || 10
-          }))
+          questions: (q.quiz_questions || []).sort((a: any, b: any) => (a.sequence_number || 0) - (b.sequence_number || 0)).map((qq: any) => {
+            let parsedOptions = [];
+            try {
+              const rawOptions = typeof qq.options === 'string' ? JSON.parse(qq.options) : qq.options;
+              parsedOptions = Array.isArray(rawOptions) ? rawOptions : [];
+            } catch (e) {
+              parsedOptions = [];
+            }
+            
+            return {
+              id: qq.id, 
+              text: qq.question_text, 
+              options: parsedOptions, 
+              correctAnswer: parseInt(qq.correct_answer) || 0, 
+              basePoints: qq.points || 10, 
+              pointsPerAttempt: qq.points || 10
+            };
+          })
         })),
         userProgress: (userProgress || []).map(p => ({
           userId: p.user_id, 
