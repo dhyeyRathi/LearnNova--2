@@ -9,13 +9,12 @@ import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Checkbox } from '../../components/ui/checkbox';
 
-import { Plus, Trash2, Check, Edit, Search, Crown, Copy, MoreVertical, BookOpen, Clock, Users, ArrowRight, X, Upload, HelpCircle, Trophy } from 'lucide-react';
+import { Plus, Trash2, Check, Edit, Search, Crown, Copy, MoreVertical, BookOpen, Clock, Users, ArrowRight, X, Upload, HelpCircle, Trophy, RefreshCcw, Loader2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useData } from '../../context/DataContext';
 import { deleteQuiz as deleteQuizFromDB } from '../../../utils/supabase/client';
-import { testQuizFetch } from '../../../utils/supabase/testQuizFetch';
 
 export default function AdminQuizzesPage() {
   const { quizzes: allQuizzes, courses, lessons, refreshData, isLoading } = useData();
@@ -25,27 +24,11 @@ export default function AdminQuizzesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Force refresh data on mount
+  // Refresh data on mount
   useEffect(() => {
-    console.log('🔄 AdminQuizzesPage mounted, refreshing data...');
-    console.log('🧪 Running diagnostic test...');
-    testQuizFetch();
-    
-    refreshData().then(() => {
-      // After refresh, log the actual data received
-      setTimeout(() => {
-        console.log('✅ Data refresh complete');
-      }, 100);
-    });
+    refreshData();
   }, []); // Empty dependency array - only run on mount
 
-  console.log('🎯 AdminQuizzesPage data:', {
-    allQuizzes: allQuizzes?.length,
-    courses: courses?.length,
-    lessons: lessons?.length,
-    isLoading,
-    allQuizzesDetail: allQuizzes?.map(q => ({ id: q.id, title: q.title })) || []
-  });
 
   if (!user || (user.role !== 'admin' && user.role !== 'tutor')) {
     return (
@@ -71,14 +54,9 @@ export default function AdminQuizzesPage() {
     );
   }
 
-  // TEMP: Disable filtering to test if quizzes exist
-  const visibleQuizzes = (allQuizzes || []);
-  
-  console.log('🔍 TEMP FILTER DEBUG:', {
-    allQuizzesLength: allQuizzes?.length,
-    visibleQuizzesLength: visibleQuizzes.length,
-    allQuizzesDetail: allQuizzes?.map(q => ({ id: q.id, title: q.title, hasQuestions: !!q.questions })) || []
-  });
+  // Use directly from context
+  const visibleQuizzes = allQuizzes || [];
+
 
   // Get course name for a quiz
   const getCourseForQuiz = (quizId: string) => {
@@ -156,9 +134,15 @@ export default function AdminQuizzesPage() {
             </div>
             <p className="text-slate-600">Create, edit, and manage all quizzes across courses</p>
           </div>
-          <Button onClick={openNewQuiz} className="bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 h-12 px-6 rounded-xl">
-            <Plus className="w-5 h-5 mr-2" />Create Quiz
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => refreshData()} disabled={isLoading} className="rounded-xl">
+              {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCcw className="w-4 h-4 mr-2" />}
+              Refresh
+            </Button>
+            <Button onClick={openNewQuiz} className="bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 h-12 px-6 rounded-xl">
+              <Plus className="w-5 h-5 mr-2" />Create Quiz
+            </Button>
+          </div>
         </div>
 
         {/* Stats Row */}

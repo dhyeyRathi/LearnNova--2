@@ -58,14 +58,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [badges, setBadges] = useState<Badge[]>(FALLBACK_BADGES);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Debug: Log when data changes
+  // Log data changes (optional, can be removed if strictly no logs wanted)
   useEffect(() => {
-    console.log('📊 Data state updated:', {
-      quizzes: data.quizzes.length,
-      courses: data.courses.length,
-      lessons: data.lessons.length,
-      users: data.users.length,
-    });
+    // Silent
   }, [data]);
 
   const getBadgeLevel = (points: number): Badge => {
@@ -73,104 +68,102 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshData = async () => {
-    console.log('🔄 refreshData() called');
     try {
-      console.log('Step 1: Setting isLoading to true');
       setIsLoading(true);
       
-      console.log('Step 2: Fetching data individually...');
+      const { data: users, error: usersErr } = await supabase.from('users').select('*');
+      if (usersErr) console.error('❌ Users fetch error:', usersErr);
       
-      // Fetch each data type separately to avoid Promise.all hanging
-      console.log('Fetching users...');
-      const { data: users } = await supabase.from('users').select('*').catch((e) => { console.error('Users error', e); return { data: [] }; });
+      const { data: courses, error: coursesErr } = await supabase.from('courses').select('*');
+      if (coursesErr) console.error('❌ Courses fetch error:', coursesErr);
       
-      console.log('Fetching courses...');
-      const { data: courses } = await supabase.from('courses').select('*').catch((e) => { console.error('Courses error', e); return { data: [] }; });
+      const { data: lessons, error: lessonsErr } = await supabase.from('lessons').select('*');
+      if (lessonsErr) console.error('❌ Lessons fetch error:', lessonsErr);
       
-      console.log('Fetching lessons...');
-      const { data: lessons } = await supabase.from('lessons').select('*').catch((e) => { console.error('Lessons error', e); return { data: [] }; });
+      const { data: rawQuizzes, error: quizErr } = await supabase.from('quizzes').select('*, quiz_questions(*)');
+      if (quizErr) console.error('❌ Quizzes fetch error:', quizErr);
       
-      console.log('Fetching quizzes...');
-      const quizzesResult = await supabase.from('quizzes').select('*, quiz_questions(*)').catch((e) => { 
-        console.error('❌ Quizzes error:', e); 
-        return { data: [], error: e }; 
-      });
+      const [
+        { data: userProgress },
+        { data: reviews },
+        { data: blogs },
+        { data: enrollments },
+        { data: tutorApplications },
+        { data: badgesData },
+        { data: certificates }
+      ] = await Promise.all([
+        supabase.from('user_progress').select('*'),
+        supabase.from('course_reviews').select('*'),
+        supabase.from('blogs').select('*'),
+        supabase.from('course_enrollments').select('*'),
+        supabase.from('tutor_applications').select('*'),
+        supabase.from('badges').select('*').order('min_points', { ascending: true }),
+        supabase.from('certificates').select('*, courses(title, instructor_name)')
+      ]).catch(err => {
+        console.error('❌ Error in bulk fetch:', err);
+        return [
+          { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }
+        ];
+      }) as any[];
+
+      let finalQuizzes = rawQuizzes || [];
       
-      if (quizzesResult.error) {
-        console.error('⚠️ Quizzes query had error:', quizzesResult.error);
-      }
-      
-      console.log('✅ Quizzes fetched - count:', quizzesResult.data?.length || 0);
-      
-      console.log('Fetching userProgress...');
-      const { data: userProgress } = await supabase.from('user_progress').select('*').catch(() => ({ data: [] }));
-      
-      console.log('Fetching reviews...');
-      const { data: reviews } = await supabase.from('course_reviews').select('*').catch(() => ({ data: [] }));
-      
-      console.log('Fetching blogs...');
-      const { data: blogs } = await supabase.from('blogs').select('*').catch(() => ({ data: [] }));
-      
-      console.log('Fetching enrollments...');
-      const { data: enrollments } = await supabase.from('course_enrollments').select('*').catch(() => ({ data: [] }));
-      
-      console.log('Fetching tutorApplications...');
-      const { data: tutorApplications } = await supabase.from('tutor_applications').select('*').catch(() => ({ data: [] }));
-      
-      console.log('Fetching badges...');
-      const { data: badgesData } = await supabase.from('badges').select('*').order('min_points', { ascending: true }).catch(() => ({ data: [] }));
-      
-      console.log('Fetching certificates...');
-      const { data: certificates } = await supabase.from('certificates').select('*, courses(title, instructor_name)').catch(() => ({ data: [] }));
-      
-      console.log('Step 3: All individual fetches completed');
-      
-      if (quizzesResult.error) {
-        console.error('❌ Quiz fetch error details:', quizzesResult.error);
-      }
-      
-      let quizzes = quizzesResult.data || [];
-      console.log('Step 4: Got quizzes from result:', quizzes.length);
-      
-      console.log('🎯 Raw quizzes from Supabase:', {
-        hasData: !!quizzesResult.data,
-        length: quizzes.length,
-        firstQuiz: quizzes[0] || null
-      });
-      
-      // If quiz_questions weren't included, fetch them separately
-      if (quizzes.length > 0 && (!quizzes[0].quiz_questions || quizzes[0].quiz_questions.length === 0)) {
-        console.log('⚠️  quiz_questions not populated in JOIN, fetching separately...');
-        const { data: allQuestions } = await supabase.from('quiz_questions').select('*').catch(() => ({ data: [] }));
-        
-        // Map questions to each quiz
-        quizzes = quizzes.map(q => ({
-          ...q,
-          quiz_questions: (allQuestions || []).filter(qq => qq.quiz_id === q.id)
-        }));
-        
-        console.log('✅ Quizzes with separately fetched questions:', quizzes.map(q => ({ id: q.id, questions: q.quiz_questions?.length })));
+      const needsQuestions = finalQuizzes.some(q => !q.quiz_questions || q.quiz_questions.length === 0);
+      if (needsQuestions || finalQuizzes.length === 0) {
+        const { data: allQuestions } = await supabase.from('quiz_questions').select('*');
+        if (allQuestions && allQuestions.length > 0) {
+          finalQuizzes = finalQuizzes.map(q => ({
+            ...q,
+            quiz_questions: (allQuestions || []).filter(qq => qq.quiz_id === q.id)
+          }));
+        }
       }
 
-      console.log('📊 DataContext loaded:', {
-        users: users?.length,
-        courses: courses?.length,
-        lessons: lessons?.length,
-        quizzes: quizzes?.length,
-        userProgress: userProgress?.length,
-        reviews: reviews?.length,
-        blogs: blogs?.length,
-        enrollments: enrollments?.length,
-        tutorApplications: tutorApplications?.length,
-        certificates: certificates?.length,
+      setData({
+        users: users || [],
+        courses: (courses || []).map(c => ({
+          ...c, 
+          instructorId: c.instructor_id, 
+          coverImage: c.cover_image, 
+          accessRule: c.access_rule
+        })),
+        lessons: (lessons || []).map(l => ({
+          ...l, 
+          courseId: l.course_id
+        })),
+        quizzes: finalQuizzes.map(q => ({
+          id: q.id, 
+          title: q.title, 
+          courseId: q.course_id,
+          published: q.is_published ?? q.published ?? false,
+          description: q.description || '',
+          questions: (q.quiz_questions || []).map((qq: any) => ({
+            id: qq.id, 
+            text: qq.question_text, 
+            options: qq.options || [], 
+            correctAnswer: qq.correct_option_index, 
+            basePoints: qq.points || 10, 
+            pointsPerAttempt: qq.points || 10
+          }))
+        })),
+        userProgress: (userProgress || []).map(p => ({
+          userId: p.user_id, 
+          courseId: p.course_id, 
+          completedLessons: p.completed_lessons || [], 
+          timeSpent: p.time_spent_minutes || 0
+        })),
+        reviews: reviews || [],
+        blogs: blogs || [],
+        enrollments: (enrollments || []).map(e => ({
+          userId: e.user_id, 
+          courseId: e.course_id, 
+          completed: e.is_completed
+        })),
+        tutorApplications: tutorApplications || [],
+        courseInvitations: [],
+        certificates: certificates || [],
       });
-      
-      // Log first quiz structure
-      if (quizzes && quizzes.length > 0) {
-        console.log('🎯 First quiz structure:', JSON.stringify(quizzes[0], null, 2));
-      }
 
-      // Use DB badges if available, otherwise fallback
       if (badgesData && badgesData.length > 0) {
         const mapped: Badge[] = badgesData.map((b: any, i: number) => ({
           level: b.name,
@@ -182,55 +175,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setBadges(mapped);
       }
 
-      console.log('🔧 About to call setData with:', {
-        quizzesBefore: quizzes?.length,
-        coursesLength: courses?.length,
-        lessonsLength: lessons?.length,
-      });
-      
-      setData({
-        users: users || [],
-        courses: (courses || []).map(c => ({...c, instructorId: c.instructor_id, coverImage: c.cover_image, accessRule: c.access_rule})),
-        lessons: (lessons || []).map(l => ({...l, courseId: l.course_id})),
-        quizzes: (quizzes || []).map(q => {
-          try {
-            console.log('📝 Quiz raw data:', { id: q.id, title: q.title, courseId: q.course_id, published: q.published, questionsCount: q.quiz_questions?.length });
-            return {
-              id: q.id, 
-              title: q.title, 
-              courseId: q.course_id,
-              published: q.is_published || false,
-              description: q.description || '',
-              questions: (q.quiz_questions || []).map((qq: any) => ({
-                id: qq.id, 
-                text: qq.question_text, 
-                options: qq.options, 
-                correctAnswer: qq.correct_option_index, 
-                basePoints: qq.points, 
-                pointsPerAttempt: qq.points
-              }))
-            };
-          } catch (err) {
-            console.error('❌ Error mapping quiz:', q, err);
-            return null;
-          }
-        }).filter((q): q is any => q !== null),
-        userProgress: (userProgress || []).map(p => ({
-          userId: p.user_id, courseId: p.course_id, completedLessons: p.completed_lessons || [], timeSpent: p.time_spent_minutes || 0
-        })),
-        reviews: reviews || [],
-        blogs: blogs || [],
-        enrollments: (enrollments || []).map(e => ({
-          userId: e.user_id, courseId: e.course_id, completed: e.is_completed
-        })),
-        tutorApplications: tutorApplications || [],
-        courseInvitations: [],
-        certificates: certificates || [],
-      });
-      
-      console.log('✅ Data set in state, quizzes count:', (quizzes || []).length);
     } catch (err) {
-      console.error("❌ ERROR in refreshData:", err);
+      console.error("❌ ERROR in DataContext refreshData:", err);
     } finally {
       setIsLoading(false);
     }
