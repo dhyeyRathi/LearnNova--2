@@ -10,7 +10,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 
-import { getCourse, isUserEnrolled, enrollInCourse, createCourseReview, getCourseReviews, getLessonsByCourse, getQuizzesByCourse, getUserProgress, completeEnrollment, supabase, type Course } from '../../utils/supabase/client';
+import { getCourse, isUserEnrolled, enrollInCourse, createCourseReview, getCourseReviews, getLessonsByCourse, getQuizzesByCourse, getUserProgress, getUserQuizAttempts, completeEnrollment, supabase, type Course } from '../../utils/supabase/client';
 import { Play, FileText, Image as ImageIcon, HelpCircle, CheckCircle, Circle, Star, Clock, Award, Users, ArrowRight, Sparkles, Search, Lock, ShoppingCart, Trophy, Paperclip, BookOpen, Loader2, Download, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -41,7 +41,7 @@ export default function CourseDetailPage() {
   // Database state
   const [courseLessons, setCourseLessons] = useState<any[]>([]);
   const [courseQuizzes, setCourseQuizzes] = useState<any[]>([]);
-  const [userQuizAttempts, setUserQuizAttempts] = useState<any[]>([]);
+  const [userQuizAttemptsData, setUserQuizAttemptsData] = useState<any[]>([]);
   const [progress, setProgress] = useState<any | null>(null);
   const [courseReviews, setCourseReviews] = useState<any[]>([]);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -55,14 +55,19 @@ export default function CourseDetailPage() {
       try {
         setLoading(true);
         // Load course, lessons, quizzes, and reviews in parallel
-        const [courseData, lessonsData, quizzesData, reviewsData] = await Promise.all([
-          getCourse(id),
-          getLessonsByCourse(id),
-          getQuizzesByCourse(id),
-          getCourseReviews(id)
+        const courseData = await getCourse(id);
+        if (!courseData) {
+          navigate('/courses');
+          return;
+        }
+        setCourse(courseData);
+
+        const [lessonsData, quizzesData, reviewsData] = await Promise.all([
+          getLessonsByCourse(id).catch(err => { console.error('Lessons fetch error:', err); return []; }),
+          getQuizzesByCourse(id).catch(err => { console.error('Quizzes fetch error:', err); return []; }),
+          getCourseReviews(id).catch(err => { console.error('Reviews fetch error:', err); return []; })
         ]);
         
-        setCourse(courseData);
         setCourseLessons(lessonsData || []);
         setCourseQuizzes(quizzesData || []);
         setCourseReviews(reviewsData || []);
@@ -90,7 +95,7 @@ export default function CourseDetailPage() {
           const currentProgress = userProgressData.find(p => p.courseId === id);
           if (currentProgress) setProgress(currentProgress);
 
-          setUserQuizAttempts(quizAttemptsData || []);
+          setUserQuizAttemptsData(quizAttemptsData || []);
 
           // Check for existing certificate
           if (cert) {
@@ -119,7 +124,24 @@ export default function CourseDetailPage() {
   }, [course, loading, isAuthenticated, navigate]);
 
   const completedLessonIds = progress?.completedLessons || [];
-  const allLessonsComplete = courseLessons.length > 0 && completedLessonIds.length === courseLessons.length;
+  const completedQuizIds = courseQuizzes.filter(q => userQuizAttemptsData.some(a => a.quiz_id === q.id)).map(q => q.id);
+  
+  const totalItems = courseLessons.length + courseQuizzes.length;
+  const completedItems = completedLessonIds.length + completedQuizIds.length;
+  const allItemsComplete = totalItems > 0 && completedItems === totalItems;
+
+  // Calculate average quiz score (best attempt per quiz)
+  const quizScores = courseQuizzes.map(quiz => {
+    const attempts = userQuizAttemptsData.filter(a => a.quiz_id === quiz.id);
+    if (attempts.length === 0) return 0;
+    return Math.max(...attempts.map(a => (a.score / (a.total_questions || 1)) * 100));
+  });
+  
+  const averageQuizScore = quizScores.length > 0 
+    ? Math.round(quizScores.reduce((a, b) => a + b, 0) / quizScores.length)
+    : 100;
+
+  const isEligibleForCertificate = allItemsComplete && averageQuizScore >= 90;
 
   const handleCompleteCourse = async () => {
     if (enrollment && user && course) {
@@ -139,20 +161,24 @@ export default function CourseDetailPage() {
         await updateUser({ points: (user.points || 0) + bonus });
         const u = users.find(u => u.id === user.id);
         if (u) u.points = (user.points || 0) + bonus;
-        
-        toast.success(`Course completed! +${bonus} bonus points!`);
-        setShowCompletionModal(true);
 
-        // Issue certificate
-        try {
-          setIsIssuingCert(true);
-          const certNum = await issueCertificate(user.id, course.id);
-          setCertificateNumber(certNum);
-        } catch (err) {
-          console.error('Certificate issuance error:', err);
-        } finally {
-          setIsIssuingCert(false);
+        // Issue certificate only if eligible (>= 90% score)
+        if (isEligibleForCertificate) {
+          try {
+            setIsIssuingCert(true);
+            const certNum = await issueCertificate(user.id, course.id);
+            setCertificateNumber(certNum);
+            toast.success(`Course completed and certificate issued! +${bonus} bonus points!`);
+          } catch (err) {
+            console.error('Certificate issuance error:', err);
+          } finally {
+            setIsIssuingCert(false);
+          }
+        } else {
+          toast.success(`Course completed! +${bonus} bonus points! (Score at least 90% to earn a certificate)`);
         }
+        
+        setShowCompletionModal(true);
       } catch (error) {
         console.error('Error completing course:', error);
         toast.error('Failed to complete course. Please try again.');
@@ -550,6 +576,16 @@ export default function CourseDetailPage() {
                             <Download className="w-5 h-5 mr-2" />
                             Download Certificate
                           </Button>
+                        ) : !isEligibleForCertificate ? (
+                          <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                            <p className="text-amber-800 text-sm font-semibold flex items-center gap-2 mb-1">
+                              <Lock className="w-4 h-4" /> Certificate Locked
+                            </p>
+                            <p className="text-amber-700 text-xs">
+                              Your average quiz score is <span className="font-bold">{averageQuizScore}%</span>. 
+                              Reach <span className="font-bold">90%</span> to unlock your certificate.
+                            </p>
+                          </div>
                         ) : (
                           <div className="flex items-center justify-center gap-2 p-3 bg-slate-50 rounded-xl text-slate-400">
                             <Loader2 className="w-4 h-4 animate-spin" />

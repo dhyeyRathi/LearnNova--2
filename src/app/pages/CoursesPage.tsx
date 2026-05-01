@@ -5,9 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Star, Users, Clock, TrendingUp, Image as ImageIcon, Zap, Target, Loader2 } from 'lucide-react';
+import { Star, Users, Clock, TrendingUp, Image as ImageIcon, Zap, Target, Loader2, CheckCircle } from 'lucide-react';
 import { motion } from 'motion/react';
-import { getCourses, type Course } from '../../utils/supabase/client';
+import { getCourses, supabase, type Course } from '../../utils/supabase/client';
 
 export default function CoursesPage() {
   const navigate = useNavigate();
@@ -26,13 +26,20 @@ export default function CoursesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
-  // Fetch courses from database
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+  // Fetch courses and enrollments from database
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchCoursesData = async () => {
       try {
         setLoading(true);
-        const coursesData = await getCourses();
+        const [coursesData, enrollmentsData] = await Promise.all([
+          getCourses(),
+          user?.id ? supabase.from('course_enrollments').select('course_id').eq('user_id', user.id) : Promise.resolve({ data: [] })
+        ]);
         setCourses(coursesData);
+        if (enrollmentsData?.data) {
+          setEnrollments(enrollmentsData.data.map((e: any) => e.course_id));
+        }
       } catch (err) {
         console.error('Error fetching courses:', err);
         setError('Failed to load courses');
@@ -41,8 +48,8 @@ export default function CoursesPage() {
       }
     };
 
-    fetchCourses();
-  }, []);
+    fetchCoursesData();
+  }, [user?.id]);
 
   const handleImageError = (courseId: string) => {
     setFailedImages(prev => new Set([...prev, courseId]));
@@ -280,12 +287,22 @@ export default function CoursesPage() {
                         e.stopPropagation();
                         navigate(`/course/${course.id}`);
                       }}
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl h-11 text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+                      disabled={enrollments.includes(course.id)}
+                      className={`w-full rounded-xl h-11 text-sm font-semibold shadow-md transition-all duration-200 ${
+                        enrollments.includes(course.id)
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-default'
+                          : 'bg-purple-600 hover:bg-purple-700 text-white hover:shadow-lg'
+                      }`}
                     >
-                      {course.access_rule === 'payment'
-                        ? `Buy Now - $${course.price?.toFixed(2)}`
-                        : 'Enroll Now'
-                      }
+                      {enrollments.includes(course.id) ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <CheckCircle className="w-4 h-4" /> Enrolled
+                        </span>
+                      ) : (
+                        course.access_rule === 'payment'
+                          ? `Buy Now - $${course.price?.toFixed(2)}`
+                          : 'Enroll Now'
+                      )}
                     </Button>
                   </div>
                 </Card>

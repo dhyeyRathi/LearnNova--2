@@ -47,8 +47,9 @@ export default function LeaderboardPage() {
     );
   }
 
-  // Get all users sorted by points
+  // Get all users sorted by points, excluding admins
   const learners = effectiveUsers
+    .filter(u => u.role !== 'admin' && u.role !== 'tutor') // Only show students/learners
     .map(learner => {
       const badge = getBadgeLevel(learner.points);
       const enrolled = enrollments.filter(e => e.userId === learner.id).length;
