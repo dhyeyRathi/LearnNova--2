@@ -163,7 +163,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           timeSpent: p.time_spent_minutes || 0
         })),
         reviews: reviews || [],
-        blogs: blogs || [],
+        blogs: (blogs || []).map(b => ({
+          ...b,
+          featuredImage: b.featured_image,
+          authorId: b.author_id,
+          authorName: b.author_name,
+          commentsCount: b.comments_count || 0,
+          readTime: b.read_time,
+          createdAt: b.created_at,
+          updatedAt: b.updated_at
+        })),
         enrollments: (enrollments || []).map(e => ({
           userId: e.user_id, 
           courseId: e.course_id, 

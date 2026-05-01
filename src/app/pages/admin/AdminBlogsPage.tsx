@@ -15,6 +15,7 @@ import { Search, Plus, Eye, Calendar, User, Edit, Share2, Trash2, FileText, Mess
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useData } from '../../context/DataContext';
+import { supabase } from '../../../utils/supabase/client';
 
 type ViewMode = 'kanban' | 'list';
 
@@ -81,35 +82,47 @@ export default function AdminBlogsPage() {
     }
 
     const newBlog = {
-      id: `blog-${Date.now()}`,
       title: newBlogTitle,
       excerpt: newBlogExcerpt,
       content: newBlogContent,
-      featuredImage: newBlogFeaturedImage || 'https://via.placeholder.com/600x400?text=' + encodeURIComponent(newBlogTitle),
+      featured_image: newBlogFeaturedImage || 'https://via.placeholder.com/600x400?text=' + encodeURIComponent(newBlogTitle),
       category: newBlogCategory,
-      authorId: user?.id || 'unknown',
-      authorName: user?.email?.split('@')[0] || 'Author',
+      author_id: user?.id,
+      author_name: user?.email?.split('@')[0] || 'Author',
       published: false,
       views: 0,
       likes: 0,
-      comments: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      readTime: '5 min',
+      comments_count: 0,
+      read_time: '5 min',
     };
 
-    setBlogsList([...blogsList, newBlog]);
+    const saveBlog = async () => {
+      try {
+        const { data: created, error } = await supabase
+          .from('blogs')
+          .insert(newBlog)
+          .select()
+          .single();
 
-    toast.success(`Blog "${newBlogTitle}" created!`, {
-      description: 'You can now edit and publish it',
-    });
+        if (error) throw error;
+        
+        refreshData(); // Sync with context
+        toast.success(`Blog "${newBlogTitle}" created!`, {
+          description: 'You can now edit and publish it',
+        });
 
-    setNewBlogTitle('');
-    setNewBlogContent('');
-    setNewBlogExcerpt('');
-    setNewBlogFeaturedImage('');
-    setNewBlogCategory('Technology');
-    setCreateOpen(false);
+        setNewBlogTitle('');
+        setNewBlogContent('');
+        setNewBlogExcerpt('');
+        setNewBlogFeaturedImage('');
+        setNewBlogCategory('Technology');
+        setCreateOpen(false);
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to create blog');
+      }
+    };
+
+    saveBlog();
   };
 
   const handleShare = (blogId: string, blogTitle: string) => {
@@ -131,12 +144,23 @@ export default function AdminBlogsPage() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDeleteBlog = () => {
+  const confirmDeleteBlog = async () => {
     if (blogToDelete) {
-      setBlogsList(blogsList.filter(b => b.id !== blogToDelete.id));
-      toast.success(`Blog "${blogToDelete.title}" deleted successfully`);
-      setDeleteDialogOpen(false);
-      setBlogToDelete(null);
+      try {
+        const { error } = await supabase
+          .from('blogs')
+          .delete()
+          .eq('id', blogToDelete.id);
+
+        if (error) throw error;
+        
+        refreshData();
+        toast.success(`Blog "${blogToDelete.title}" deleted successfully`);
+        setDeleteDialogOpen(false);
+        setBlogToDelete(null);
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to delete blog');
+      }
     }
   };
 
@@ -177,7 +201,7 @@ export default function AdminBlogsPage() {
             </div>
             <div className="bg-[#F7F6F3] rounded-lg py-1.5">
               <MessageSquare className="w-3 h-3 mx-auto mb-0.5 text-[#7A766F]" />
-              <span className="font-semibold text-[#1A1F2E]">{blog.comments}</span>
+              <span className="font-semibold text-[#1A1F2E]">{blog.commentsCount}</span>
               <p className="text-[10px] text-[#7A766F]">Comments</p>
             </div>
             <div className="bg-[#F7F6F3] rounded-lg py-1.5">

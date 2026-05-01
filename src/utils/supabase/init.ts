@@ -85,10 +85,13 @@ CREATE TABLE IF NOT EXISTS lessons (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   title VARCHAR(255) NOT NULL,
+  type VARCHAR(50) DEFAULT 'video',
   description TEXT,
   content TEXT,
   video_url TEXT,
   video_duration INTEGER,
+  duration VARCHAR(50),
+  resources JSONB DEFAULT '[]',
   reading_time_minutes INTEGER,
   sequence_number INTEGER NOT NULL,
   is_published BOOLEAN DEFAULT TRUE,
@@ -289,6 +292,28 @@ CREATE INDEX IF NOT EXISTS idx_quizzes_course_id ON quizzes(course_id);
 CREATE INDEX IF NOT EXISTS idx_quiz_questions_quiz_id ON quiz_questions(quiz_id);
 CREATE INDEX IF NOT EXISTS idx_quiz_attempts_user_id ON quiz_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_invitations_user_id ON course_invitations(user_id);
+
+CREATE TABLE IF NOT EXISTS blogs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title VARCHAR(255) NOT NULL,
+  excerpt TEXT,
+  content TEXT NOT NULL,
+  featured_image TEXT,
+  category VARCHAR(100) DEFAULT 'Technology',
+  author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  author_name VARCHAR(255),
+  published BOOLEAN DEFAULT FALSE,
+  views INTEGER DEFAULT 0,
+  likes INTEGER DEFAULT 0,
+  comments_count INTEGER DEFAULT 0,
+  read_time VARCHAR(50) DEFAULT '5 min',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_blogs_author_id ON blogs(author_id);
+CREATE INDEX IF NOT EXISTS idx_blogs_published ON blogs(published);
+
 CREATE INDEX IF NOT EXISTS idx_interview_history_user_id ON interview_history(user_id);
     `;
 

@@ -262,6 +262,8 @@ export default function CourseEditorPage() {
           content: lessonType !== 'video' ? lessonContent : undefined,
           video_url: lessonType === 'video' ? lessonContent : undefined,
           video_duration: parsedDuration,
+          duration: lessonDuration,
+          resources: resources,
         });
         setCourseLessons(prev => prev.map(l => l.id === updated.id ? updated : l));
         toast.success('Lesson updated!');
@@ -275,6 +277,8 @@ export default function CourseEditorPage() {
           video_url: lessonType === 'video' ? lessonContent : undefined,
           sequence_number: courseLessons.length + 1,
           video_duration: parsedDuration,
+          duration: lessonDuration,
+          resources: resources,
         });
         setCourseLessons(prev => [...prev, created]);
         toast.success('Lesson created!');

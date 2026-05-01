@@ -77,6 +77,24 @@ export interface CourseEnrollment {
   progress_percentage: number;
 }
 
+export interface Blog {
+  id: string;
+  title: string;
+  excerpt?: string;
+  content: string;
+  featured_image?: string;
+  category: string;
+  author_id: string;
+  author_name: string;
+  published: boolean;
+  views: number;
+  likes: number;
+  comments_count: number;
+  read_time: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface UserProgress {
   id: string;
   user_id: string;
@@ -536,13 +554,19 @@ export async function createLesson(lessonData: {
   content?: string;
   video_url?: string;
   video_duration?: number;
+  duration?: string;
+  resources?: any[];
   sequence_number: number;
   is_published?: boolean;
 }) {
   try {
     const { data, error } = await supabase
       .from('lessons')
-      .insert({ ...lessonData, is_published: lessonData.is_published ?? true })
+      .insert({ 
+        ...lessonData, 
+        is_published: lessonData.is_published ?? true,
+        resources: lessonData.resources || []
+      })
       .select()
       .single();
 
